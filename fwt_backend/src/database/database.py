@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine.url import URL
+from .schemas import Base
 
 URL_DATABASE: URL = URL.create(
     drivername="postgresql+psycopg2",
@@ -20,3 +21,7 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+# Base.metadata.drop_all(bind=engine)
+Base.metadata.create_all(bind=engine)
