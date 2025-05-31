@@ -1,0 +1,97 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.pdb
+*.egg-info/
+*.egg
+*.log
+*.sqlite3
+*.db
+*.env
+.env.*
+.venv/
+venv/
+ENV/
+env/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# uv
+fwt_backend/.python-version
+fwt_backend/pyproject.toml
+
+# FastAPI/Starlette
+instance/
+*.db-journal
+
+# VSCode
+.vscode/
+.history/
+
+# OS
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Icon?
+desktop.ini
+
+# Test/coverage
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pydantic
+*.json
+
+# Docker
+*.pid
+*.pid.lock
+
+# React/Frontend
+frontend/node_modules/
+frontend/build/
+frontend/dist/
+frontend/.env
+frontend/.env.*
+
+# Yarn
+frontend/yarn.lock
+
+# npm
+frontend/package-lock.json
+
+# Lock files (Python)
+poetry.lock
+Pipfile.lock
+uv.lock
+
+# Misc
+*.swp
+*.swo
+*.bak
+*.tmp
+*.orig
+*.rej
+
+# IDEs
+.idea/
+*.iml
+
+# Backup files
+*~
