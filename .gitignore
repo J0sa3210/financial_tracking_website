@@ -63,18 +63,18 @@ dmypy.json
 *.pid
 *.pid.lock
 
-# React/Frontend
-frontend/node_modules/
-frontend/build/
-frontend/dist/
-frontend/.env
-frontend/.env.*
+# React/ftw_frontend
+ftw_frontend/node_modules/
+ftw_frontend/build/
+ftw_frontend/dist/
+ftw_frontend/.env
+ftw_frontend/.env.*
 
 # Yarn
-frontend/yarn.lock
+ftw_frontend/yarn.lock
 
 # npm
-frontend/package-lock.json
+ftw_frontend/package-lock.json
 
 # Lock files (Python)
 poetry.lock
