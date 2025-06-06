@@ -1,18 +1,13 @@
-import {
-  Avatar,
-  Box,
-  Button,
-  ButtonGroup,
-  Grid,
-  GridItem,
-  HStack,
-  Text,
-} from "@chakra-ui/react";
+import { Avatar, Box, Grid, GridItem, HStack, Text } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
+import { useLocation } from "react-router-dom";
+import NavBarButton from "./navigation_bar_link";
 
 function NavBar() {
   const titles = ["Transactions", "Settings"];
   const links = ["/transactions", "/settings"];
+
+  const current_path = useLocation().pathname;
 
   return (
     <>
@@ -32,12 +27,15 @@ function NavBar() {
           <GridItem colSpan={3} justifySelf='start'>
             <HStack gap={10}>
               {titles.map((title: string, index: number) => {
+                const link: string = links[index];
+                const isSelected: boolean = link === current_path;
                 return (
-                  <Link to={links[index]}>
-                    <Text fontSize='2xl' fontFamily='body'>
-                      {title}
-                    </Text>
-                  </Link>
+                  <NavBarButton
+                    key={index}
+                    title={title}
+                    link={link}
+                    isSelected={isSelected}
+                  />
                 );
               })}
             </HStack>
