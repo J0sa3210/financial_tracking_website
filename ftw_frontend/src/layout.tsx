@@ -1,9 +1,10 @@
-import { Box, Container } from "@chakra-ui/react";
+import { Container } from "@chakra-ui/react";
+import { Outlet } from "react-router-dom";
 import NavBar from "./components/navigation/navigation_bar";
 
-function App() {
+const Layout = () => {
   return (
-    <>
+    <div>
       <NavBar />
       <Container
         maxW='100%'
@@ -12,11 +13,11 @@ function App() {
         color='text'
         fontFamily='body'>
         <Container maxW='100%' maxH='100%' px='3%' background='background'>
-          <Box minH='100vw'>Hello</Box>
+          <Outlet />
         </Container>
       </Container>
-    </>
+    </div>
   );
-}
+};
 
-export default App;
+export default Layout;

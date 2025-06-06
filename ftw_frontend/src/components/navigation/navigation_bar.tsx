@@ -8,9 +8,11 @@ import {
   HStack,
   Text,
 } from "@chakra-ui/react";
+import { Link } from "react-router-dom";
 
 function NavBar() {
   const titles = ["Transactions", "Settings"];
+  const links = ["/transactions", "/settings"];
 
   return (
     <>
@@ -19,20 +21,25 @@ function NavBar() {
           templateColumns='repeat(6, 1fr)'
           height='70px'
           alignItems='center'>
-          <GridItem colSpan={2} fontFamily='cursive' fontSize='3xl' pl='15px'>
-            Financial Tracking Website
+          <GridItem
+            colSpan={2}
+            fontFamily='cursive'
+            fontSize='3xl'
+            pl='15px'
+            maxW='600px'>
+            <Link to='/'>Financial Tracking Website</Link>
           </GridItem>
-          <GridItem colSpan={3}>
+          <GridItem colSpan={3} justifySelf='start'>
             <HStack gap={10}>
-              <ButtonGroup fontSize='xl'>
-                {titles.map((title) => {
-                  return (
-                    <Button variant='plain' fontSize='2xl' fontFamily='body'>
+              {titles.map((title: string, index: number) => {
+                return (
+                  <Link to={links[index]}>
+                    <Text fontSize='2xl' fontFamily='body'>
                       {title}
-                    </Button>
-                  );
-                })}
-              </ButtonGroup>
+                    </Text>
+                  </Link>
+                );
+              })}
             </HStack>
           </GridItem>
           <GridItem colSpan={1} justifySelf='end' pr='20px'>
