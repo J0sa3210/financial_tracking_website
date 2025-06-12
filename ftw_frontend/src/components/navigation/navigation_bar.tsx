@@ -1,4 +1,12 @@
-import { Avatar, Box, Grid, GridItem, HStack, Text } from "@chakra-ui/react";
+import {
+  Avatar,
+  Box,
+  Grid,
+  GridItem,
+  HStack,
+  Text,
+  Button,
+} from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import NavBarButton from "./navigation_bar_link";
