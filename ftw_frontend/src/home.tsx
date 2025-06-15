@@ -1,9 +1,7 @@
-import { Box } from "@chakra-ui/react";
-
 const Home = () => {
   return (
     <div>
-      <Box>Home</Box>
+      <p>Home</p>
     </div>
   );
 };

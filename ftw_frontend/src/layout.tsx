@@ -1,23 +1,18 @@
-import { Container } from "@chakra-ui/react";
-import { Outlet } from "react-router-dom";
 import NavBar from "./components/navigation/navigation_bar";
+import { Outlet } from "react-router-dom";
 
-const Layout = () => {
+export default function Layout() {
   return (
-    <div>
-      <NavBar />
-      <Container
-        maxW='100%'
-        px='5%'
-        background='gray.200'
-        color='text'
-        fontFamily='body'>
-        <Container maxW='100%' maxH='100%' px='3%' background='background'>
-          <Outlet />
-        </Container>
-      </Container>
+    <div className='min-h-screen flex flex-col bg-background text-foreground'>
+      <div className='w-full'>
+        <NavBar />
+      </div>
+      <div className='flex-1 container mx-auto px-4 py-6'>
+        <Outlet />
+      </div>
+      <footer className='w-full py-4 text-center text-sm text-muted-foreground'>
+        &copy; {new Date().getFullYear()} Financial Tracker
+      </footer>
     </div>
   );
-};
-
-export default Layout;
+}

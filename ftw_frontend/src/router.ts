@@ -1,9 +1,9 @@
 import React from "react";
 import { createBrowserRouter } from "react-router-dom";
-import TransactionsPage from "./pages/transactions";
+import TransactionsPage from "./pages/transactions.tsx";
 import Layout from "./layout";
 import Home from "./home";
-import SettingsPage from "./pages/settings";
+import SettingsPage from "./pages/settings.tsx";
 
 const router = createBrowserRouter([
   {

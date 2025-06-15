@@ -1,11 +1,8 @@
-import { Box } from "@chakra-ui/react";
-
-const SettingsPage = () => {
+export default function SettingsPage() {
   return (
     <div>
-      <Box>Settings</Box>
+      <h1>Settings</h1>
+      <p>This is the settings page.</p>
     </div>
   );
-};
-
-export default SettingsPage;
+}

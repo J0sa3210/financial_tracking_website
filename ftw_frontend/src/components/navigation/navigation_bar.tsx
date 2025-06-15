@@ -1,65 +1,57 @@
-import {
-  Avatar,
-  Box,
-  Grid,
-  GridItem,
-  HStack,
-  Text,
-  Button,
-} from "@chakra-ui/react";
-import { Link } from "react-router-dom";
-import { useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { Button } from "../ui/button";
+import { Avatar, AvatarFallback } from "../ui/avatar";
 import NavBarButton from "./navigation_bar_link";
+import { Sun, Moon } from "lucide-react";
+import { useState } from "react";
 
-function NavBar() {
+export default function NavBar() {
   const titles = ["Transactions", "Settings"];
   const links = ["/transactions", "/settings"];
-
   const current_path = useLocation().pathname;
+  const [isDarkMode, setIsDarkMode] = useState(
+    document.documentElement.classList.contains("dark")
+  );
+
+  function toggleDarkMode() {
+    document.documentElement.classList.toggle("dark");
+    setIsDarkMode(document.documentElement.classList.contains("dark"));
+  }
 
   return (
-    <>
-      <Box background='primary' p={0} minHeight='70px'>
-        <Grid
-          templateColumns='repeat(6, 1fr)'
-          height='70px'
-          alignItems='center'>
-          <GridItem
-            colSpan={2}
-            fontFamily='cursive'
-            fontSize='3xl'
-            pl='15px'
-            maxW='600px'>
-            <Link to='/'>Financial Tracking Website</Link>
-          </GridItem>
-          <GridItem colSpan={3} justifySelf='start'>
-            <HStack gap={10}>
-              {titles.map((title: string, index: number) => {
-                const link: string = links[index];
-                const isSelected: boolean = link === current_path;
-                return (
-                  <NavBarButton
-                    key={index}
-                    title={title}
-                    link={link}
-                    isSelected={isSelected}
-                  />
-                );
-              })}
-            </HStack>
-          </GridItem>
-          <GridItem colSpan={1} justifySelf='end' pr='20px'>
-            <HStack gap='5'>
-              <Text fontWeight='semibold'>Joeri Winckelmans</Text>
-              <Avatar.Root>
-                <Avatar.Fallback name='Joeri Winckelmans' />
-              </Avatar.Root>
-            </HStack>
-          </GridItem>
-        </Grid>
-      </Box>
-    </>
+    <nav className='bg-primary min-h-[70px] w-full'>
+      <div className='ml-5 flex items-center h-[70px]'>
+        <div className='flex-1 max-w-[600px] text-3xl font-cursive'>
+          <Link to='/'>Financial Tracker</Link>
+        </div>
+        <div className='flex-[2] flex items-center gap-8'>
+          {titles.map((title, index) => (
+            <NavBarButton
+              key={index}
+              title={title}
+              link={links[index]}
+              isSelected={links[index] === current_path}
+            />
+          ))}
+        </div>
+        <div className='flex-1 flex items-center justify-end pr-5 gap-5'>
+          <Button
+            variant='outline'
+            size='icon'
+            onClick={() => toggleDarkMode()}
+            aria-label='Toggle theme'>
+            {isDarkMode ? (
+              <Sun className='w-5 h-5' />
+            ) : (
+              <Moon className='w-5 h-5' />
+            )}
+          </Button>
+          <span className='font-semibold'>Joeri Winckelmans</span>
+          <Avatar>
+            <AvatarFallback>JW</AvatarFallback>
+          </Avatar>
+        </div>
+      </div>
+    </nav>
   );
 }
-
-export default NavBar;
