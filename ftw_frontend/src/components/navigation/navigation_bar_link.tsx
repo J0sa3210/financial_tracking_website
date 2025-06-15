@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 
 export default function NavBarButton({
@@ -11,7 +12,7 @@ export default function NavBarButton({
 }) {
   return (
     <Link to={link}>
-      <div className={isSelected ? "bg-white text-primary" : "bg-primary "}>
+      <div className={cn("text-xl px-1", isSelected && "font-bold")}>
         {title}
       </div>
     </Link>

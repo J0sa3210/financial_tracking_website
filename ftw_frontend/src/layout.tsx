@@ -3,11 +3,11 @@ import { Outlet } from "react-router-dom";
 
 export default function Layout() {
   return (
-    <div className='min-h-screen flex flex-col bg-background text-foreground'>
+    <div className='min-h-screen flex flex-col bg-muted text-foreground'>
       <div className='w-full'>
         <NavBar />
       </div>
-      <div className='flex-1 container mx-auto px-4 py-6'>
+      <div className='flex-1 container mx-auto px-4 py-6 bg-background rounded-b-2xl'>
         <Outlet />
       </div>
       <footer className='w-full py-4 text-center text-sm text-muted-foreground'>

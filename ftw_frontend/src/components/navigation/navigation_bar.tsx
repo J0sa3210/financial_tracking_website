@@ -19,12 +19,12 @@ export default function NavBar() {
   }
 
   return (
-    <nav className='bg-primary min-h-[70px] w-full'>
+    <nav className='bg-primary min-h-[70px] w-full text-primary-foreground'>
       <div className='ml-5 flex items-center h-[70px]'>
-        <div className='flex-1 max-w-[600px] text-3xl font-cursive'>
+        <div className='flex-1 max-w-[600px] text-3xl font-cursive font-black'>
           <Link to='/'>Financial Tracker</Link>
         </div>
-        <div className='flex-[2] flex items-center gap-8'>
+        <div className='flex-[2] flex items-center gap-8 ml-10'>
           {titles.map((title, index) => (
             <NavBarButton
               key={index}
@@ -36,19 +36,22 @@ export default function NavBar() {
         </div>
         <div className='flex-1 flex items-center justify-end pr-5 gap-5'>
           <Button
+            className='text-foreground rounded-full'
             variant='outline'
             size='icon'
             onClick={() => toggleDarkMode()}
             aria-label='Toggle theme'>
             {isDarkMode ? (
-              <Sun className='w-5 h-5' />
+              <Sun className='w-5 h-5 m-2' />
             ) : (
-              <Moon className='w-5 h-5' />
+              <Moon className='w-5 h-5 m-2' />
             )}
           </Button>
           <span className='font-semibold'>Joeri Winckelmans</span>
-          <Avatar>
-            <AvatarFallback>JW</AvatarFallback>
+          <Avatar className='bg-secondary text-secondary-foreground rounded-full'>
+            <AvatarFallback className='bg-secondary w-5 h-5 m-2'>
+              JW
+            </AvatarFallback>
           </Avatar>
         </div>
       </div>

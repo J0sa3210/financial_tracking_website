@@ -1,5 +1,6 @@
+@import url("https://fonts.googleapis.com/css2?family=Playwrite+IE&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Homenaje&display=swap");
 @import "tailwindcss";
-@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 @theme {
@@ -38,6 +39,10 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Fonts */
+  --font-cursive: "Playwrite IE";
+  --font-header: "Homenaje";
 }
 
 :root {
@@ -84,7 +89,7 @@
   --sidebar-ring: rgb(0, 200, 185);
 }
 .dark {
-  --primary: rgb(0, 180, 163); /* vibrant teal for dark UI */
+  --primary: rgb(0, 137, 123); /* bold tropical teal */
   --secondary: rgb(255, 220, 100); /* soft golden yellow for warmth */
   --radius: 0.625rem;
 
