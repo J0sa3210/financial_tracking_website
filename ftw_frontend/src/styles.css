@@ -1,5 +1,4 @@
 @import url("https://fonts.googleapis.com/css2?family=Playwrite+IE&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Homenaje&display=swap");
 @import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
@@ -42,7 +41,6 @@
 
   /* Fonts */
   --font-cursive: "Playwrite IE";
-  --font-header: "Homenaje";
 }
 
 :root {
@@ -89,45 +87,45 @@
   --sidebar-ring: rgb(0, 200, 185);
 }
 .dark {
-  --primary: rgb(0, 137, 123); /* bold tropical teal */
-  --secondary: rgb(255, 220, 100); /* soft golden yellow for warmth */
+  --primary: rgb(28, 151, 143); /* brighter teal for dark bg */
+  --secondary: rgb(255, 212, 90); /* soft golden yellow */
   --radius: 0.625rem;
 
-  --background: rgb(14, 18, 17); /* deep teal-black background */
-  --foreground: rgb(230, 240, 238); /* light text for contrast */
+  --background: rgb(18, 20, 20); /* charcoal base */
+  --foreground: rgb(245, 245, 242); /* near-white text */
 
-  --card: rgb(25, 32, 31); /* dark cool gray with a hint of green */
-  --card-foreground: rgb(230, 240, 238); /* readable on card */
+  --card: rgb(28, 32, 30); /* dark card base */
+  --card-foreground: rgb(220, 235, 230); /* soft light text */
 
-  --popover: rgb(28, 35, 34); /* slightly lighter than background */
-  --popover-foreground: rgb(240, 250, 248);
+  --popover: rgb(34, 39, 38); /* dark popover */
+  --popover-foreground: rgb(240, 255, 250); /* high contrast text */
 
-  --primary-foreground: rgb(255, 255, 255); /* high contrast on teal */
-  --secondary-foreground: rgb(35, 25, 10); /* readable over yellow */
+  --primary-foreground: rgb(255, 255, 255); /* white on teal */
+  --secondary-foreground: rgb(25, 20, 5); /* dark text on yellow */
 
-  --muted: rgb(40, 50, 48); /* dark muted tone */
-  --muted-foreground: rgb(160, 175, 170); /* subdued text */
+  --muted: rgb(40, 50, 48); /* muted dark mint */
+  --muted-foreground: rgb(180, 210, 205); /* softened minty text */
 
-  --accent: rgb(91, 155, 255); /* sky blue still pops */
-  --accent-foreground: rgb(255, 255, 255);
+  --accent: rgb(91, 155, 255); /* keep vibrant sky blue */
+  --accent-foreground: rgb(255, 255, 255); /* white on blue */
 
-  --destructive: rgb(255, 115, 100); /* coral stays vivid in dark */
-  --border: rgb(55, 70, 68); /* defined but subtle borders */
-  --input: rgb(30, 38, 37); /* dark form fields */
-  --ring: rgb(0, 200, 185); /* vibrant teal ring for focus */
+  --destructive: rgb(255, 110, 85); /* keep coral */
+  --border: rgb(55, 70, 65); /* dark mint border */
+  --input: rgb(28, 35, 33); /* dark input base */
+  --ring: rgb(0, 255, 230); /* electric teal for rings */
 
-  --chart-1: rgb(0, 180, 163); /* brighter teal */
-  --chart-2: rgb(255, 115, 100); /* coral */
-  --chart-3: rgb(255, 220, 100); /* warm yellow */
-  --chart-4: rgb(91, 155, 255); /* sky blue */
-  --chart-5: rgb(120, 230, 190); /* sea green */
+  --chart-1: rgb(0, 200, 185);
+  --chart-2: rgb(255, 110, 85);
+  --chart-3: rgb(255, 200, 50);
+  --chart-4: rgb(91, 155, 255);
+  --chart-5: rgb(110, 220, 180);
 
-  --sidebar: rgb(20, 26, 25); /* slightly lighter than background */
-  --sidebar-foreground: rgb(220, 235, 233);
-  --sidebar-primary: rgb(0, 180, 163);
+  --sidebar: rgb(24, 28, 26); /* deep neutral sidebar */
+  --sidebar-foreground: rgb(220, 235, 230); /* readable text */
+  --sidebar-primary: rgb(0, 200, 185);
   --sidebar-primary-foreground: rgb(255, 255, 255);
-  --sidebar-accent: rgb(255, 200, 100);
-  --sidebar-accent-foreground: rgb(30, 20, 10);
-  --sidebar-border: rgb(55, 70, 68);
-  --sidebar-ring: rgb(0, 200, 185);
+  --sidebar-accent: rgb(255, 200, 50); /* yellow highlight */
+  --sidebar-accent-foreground: rgb(25, 25, 10);
+  --sidebar-border: rgb(55, 70, 65);
+  --sidebar-ring: rgb(0, 255, 230);
 }
