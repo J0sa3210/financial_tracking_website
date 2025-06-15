@@ -3,83 +3,6 @@
 
 @custom-variant dark (&:is(.dark *));
 @theme {
-  --color-primary: var(--primary);
-  --color-secondary: var(--secondary);
-}
-
-:root {
-  --primary: oklch(85% 0.08 150); /* pastel mint green */
-  --secondary: oklch(
-    98% 0.02 120
-  ); /* very soft off-white with a hint of green */
-  --radius: 0.625rem;
-  --background: oklch(99% 0.01 140); /* very light pastel mint */
-  --foreground: oklch(35% 0.01 140); /* soft muted green-gray */
-  --card: oklch(98% 0.01 140); /* pastel off-white mint */
-  --card-foreground: oklch(40% 0.01 140); /* soft muted green */
-  --popover: oklch(99% 0.01 140);
-  --popover-foreground: oklch(35% 0.01 140);
-  --primary-foreground: oklch(99% 0.01 140); /* for contrast on primary */
-  --secondary-foreground: oklch(45% 0.01 140);
-  --muted: oklch(96% 0.01 140); /* gentle pastel mint */
-  --muted-foreground: oklch(55% 0.01 140);
-  --accent: oklch(92% 0.06 170); /* pastel blue-green accent */
-  --accent-foreground: oklch(40% 0.01 140);
-  --destructive: oklch(85% 0.08 30); /* pastel coral for warnings */
-  --border: oklch(94% 0.01 140); /* subtle pastel border */
-  --input: oklch(97% 0.01 140);
-  --ring: oklch(80% 0.04 150);
-  --chart-1: oklch(85% 0.08 150);
-  --chart-2: oklch(90% 0.06 170);
-  --chart-3: oklch(95% 0.03 140);
-  --chart-4: oklch(88% 0.06 120);
-  --chart-5: oklch(92% 0.05 180);
-  --sidebar: oklch(98% 0.01 140);
-  --sidebar-foreground: oklch(40% 0.01 140);
-  --sidebar-primary: oklch(85% 0.08 150);
-  --sidebar-primary-foreground: oklch(99% 0.01 140);
-  --sidebar-accent: oklch(92% 0.06 170);
-  --sidebar-accent-foreground: oklch(40% 0.01 140);
-  --sidebar-border: oklch(94% 0.01 140);
-  --sidebar-ring: oklch(80% 0.04 150);
-}
-
-.dark {
-  --primary: oklch(45.921% 0.21414 262.121);
-  --secondart: rgb(70, 130, 70);
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
-}
-
-@theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -117,11 +40,89 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
+:root {
+  --primary: rgb(0, 137, 123); /* bold tropical teal */
+  --secondary: rgb(255, 237, 150); /* cheerful, sunny yellow */
+  --radius: 0.625rem;
+
+  --background: rgb(255, 251, 246); /* bright cream, daylight-inspired */
+  --foreground: rgb(18, 20, 20); /* crisp neutral charcoal */
+
+  --card: rgb(243, 250, 248); /* light minty backdrop */
+  --card-foreground: rgb(28, 50, 46); /* clear, strong text */
+
+  --popover: rgb(255, 255, 255); /* full white for pop clarity */
+  --popover-foreground: rgb(34, 45, 42);
+
+  --primary-foreground: rgb(255, 255, 255); /* contrast on teal */
+  --secondary-foreground: rgb(40, 40, 25); /* dark enough on yellow */
+
+  --muted: rgb(234, 242, 240); /* breezy, low-saturation mint */
+  --muted-foreground: rgb(65, 90, 85); /* comfortable and legible */
+
+  --accent: rgb(91, 155, 255); /* vibrant sky blue */
+  --accent-foreground: rgb(255, 255, 255); /* white on blue */
+
+  --destructive: rgb(255, 110, 85); /* vivid but friendly coral */
+  --border: rgb(220, 240, 235); /* bright, minty border */
+  --input: rgb(248, 253, 252); /* ultra-light input base */
+  --ring: rgb(0, 200, 185); /* brighter teal ring */
+
+  --chart-1: rgb(0, 137, 123); /* main teal */
+  --chart-2: rgb(255, 110, 85); /* coral */
+  --chart-3: rgb(255, 200, 50); /* bright golden yellow */
+  --chart-4: rgb(91, 155, 255); /* blue */
+  --chart-5: rgb(110, 220, 180); /* light sea green */
+
+  --sidebar: rgb(243, 250, 248); /* light and inviting */
+  --sidebar-foreground: rgb(28, 50, 46);
+  --sidebar-primary: rgb(0, 137, 123);
+  --sidebar-primary-foreground: rgb(255, 255, 255);
+  --sidebar-accent: rgb(255, 200, 50); /* sunny sidebar highlight */
+  --sidebar-accent-foreground: rgb(40, 40, 25);
+  --sidebar-border: rgb(220, 240, 235);
+  --sidebar-ring: rgb(0, 200, 185);
+}
+.dark {
+  --primary: rgb(0, 180, 163); /* vibrant teal for dark UI */
+  --secondary: rgb(255, 220, 100); /* soft golden yellow for warmth */
+  --radius: 0.625rem;
+
+  --background: rgb(14, 18, 17); /* deep teal-black background */
+  --foreground: rgb(230, 240, 238); /* light text for contrast */
+
+  --card: rgb(25, 32, 31); /* dark cool gray with a hint of green */
+  --card-foreground: rgb(230, 240, 238); /* readable on card */
+
+  --popover: rgb(28, 35, 34); /* slightly lighter than background */
+  --popover-foreground: rgb(240, 250, 248);
+
+  --primary-foreground: rgb(255, 255, 255); /* high contrast on teal */
+  --secondary-foreground: rgb(35, 25, 10); /* readable over yellow */
+
+  --muted: rgb(40, 50, 48); /* dark muted tone */
+  --muted-foreground: rgb(160, 175, 170); /* subdued text */
+
+  --accent: rgb(91, 155, 255); /* sky blue still pops */
+  --accent-foreground: rgb(255, 255, 255);
+
+  --destructive: rgb(255, 115, 100); /* coral stays vivid in dark */
+  --border: rgb(55, 70, 68); /* defined but subtle borders */
+  --input: rgb(30, 38, 37); /* dark form fields */
+  --ring: rgb(0, 200, 185); /* vibrant teal ring for focus */
+
+  --chart-1: rgb(0, 180, 163); /* brighter teal */
+  --chart-2: rgb(255, 115, 100); /* coral */
+  --chart-3: rgb(255, 220, 100); /* warm yellow */
+  --chart-4: rgb(91, 155, 255); /* sky blue */
+  --chart-5: rgb(120, 230, 190); /* sea green */
+
+  --sidebar: rgb(20, 26, 25); /* slightly lighter than background */
+  --sidebar-foreground: rgb(220, 235, 233);
+  --sidebar-primary: rgb(0, 180, 163);
+  --sidebar-primary-foreground: rgb(255, 255, 255);
+  --sidebar-accent: rgb(255, 200, 100);
+  --sidebar-accent-foreground: rgb(30, 20, 10);
+  --sidebar-border: rgb(55, 70, 68);
+  --sidebar-ring: rgb(0, 200, 185);
 }
