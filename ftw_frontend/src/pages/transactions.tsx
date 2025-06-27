@@ -48,34 +48,65 @@ export default function TransactionsPage() {
   });
 
   return (
-    <div>
-      <h1 className='text-xl font-bold underline'>Transactions</h1>
-      <Table>
-        <TableHeader>
-          <TableRow className='text-left'>
-            <TableHead>ID</TableHead>
-            <TableHead>Category</TableHead>
-            <TableHead>Description</TableHead>
-            <TableHead>Amount</TableHead>
-            <TableHead>Date</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {transactions.map((transaction) => (
-            <TableRow className='text-left'>
-              <TableCell>{transaction.id}</TableCell>
-              <TableCell>{transaction.transaction_type}</TableCell>
-              <TableCell>{transaction.description}</TableCell>
-              <TableCell>
-                {currencyFormatter.format(transaction.value)}
-              </TableCell>
-              <TableCell>
-                {dateTimeFormatter.format(transaction.dateTime_executed)}
-              </TableCell>
+    <div className='mx-auto max-w-5xl p-4'>
+      <h1 className='text-2xl font-bold mb-6 text-center underline'>
+        Transactions
+      </h1>
+      <div className='overflow-x-auto rounded-lg shadow border'>
+        <Table>
+          <TableHeader>
+            <TableRow className=''>
+              <TableHead className='w-1/12 text-left px-4 py-2'>ID</TableHead>
+              <TableHead className='w-2/12 text-left px-4 py-2'>
+                Category
+              </TableHead>
+              <TableHead className='w-5/12 text-left px-4 py-2'>
+                Description
+              </TableHead>
+              <TableHead className='w-2/12 text-left px-4 py-2'>
+                Amount
+              </TableHead>
+              <TableHead className='w-2/12 text-left px-4 py-2'>Date</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {transactions.map((transaction, idx) => (
+              <TableRow
+                key={transaction.id}
+                className={`hover:bg-accent cursor-pointer ${
+                  idx % 2 === 0
+                    ? "bg-background-table-1"
+                    : "bg-background-table-2"
+                }`}
+                tabIndex={0}>
+                <TableCell className='px-4 py-2'>{transaction.id}</TableCell>
+                <TableCell className='px-4 py-2'>
+                  {transaction.transaction_type}
+                </TableCell>
+                <TableCell
+                  className='px-4 py-2 truncate max-w-xs'
+                  title={transaction.description}>
+                  {transaction.description}
+                </TableCell>
+                <TableCell
+                  className={`px-4 py-2 font-semibold ${
+                    transaction.value < 0 ? "text-red-600" : "text-green-600"
+                  }`}>
+                  {currencyFormatter.format(transaction.value)}
+                </TableCell>
+                <TableCell className='px-4 py-2'>
+                  {dateTimeFormatter.format(transaction.dateTime_executed)}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+      {transactions.length === 0 && (
+        <div className='text-center text-gray-500 mt-6'>
+          No transactions found.
+        </div>
+      )}
     </div>
   );
 }

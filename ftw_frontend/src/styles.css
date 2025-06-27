@@ -39,6 +39,9 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
+  --color-background-table-1: var(--table-background-1);
+  --color-background-table-2: var(--table-background-2);
+
   /* Fonts */
   --font-cursive: "Playwrite IE";
 }
@@ -63,7 +66,7 @@
   --muted: rgb(234, 242, 240); /* breezy, low-saturation mint */
   --muted-foreground: rgb(65, 90, 85); /* comfortable and legible */
 
-  --accent: rgb(91, 155, 255); /* vibrant sky blue */
+  --accent: rgba(0, 137, 123, 0.219); /* vibrant sky blue */
   --accent-foreground: rgb(255, 255, 255); /* white on blue */
 
   --destructive: rgb(255, 110, 85); /* vivid but friendly coral */
@@ -85,6 +88,9 @@
   --sidebar-accent-foreground: rgb(40, 40, 25);
   --sidebar-border: rgb(220, 240, 235);
   --sidebar-ring: rgb(0, 200, 185);
+
+  --table-background-1: rgba(220, 240, 235, 0.5);
+  --table-background-2: rgba(247, 255, 255, 0.5);
 }
 .dark {
   --primary: rgb(28, 151, 143); /* brighter teal for dark bg */
@@ -106,7 +112,7 @@
   --muted: rgb(40, 50, 48); /* muted dark mint */
   --muted-foreground: rgb(180, 210, 205); /* softened minty text */
 
-  --accent: rgb(91, 155, 255); /* keep vibrant sky blue */
+  --accent: rgba(0, 137, 123, 0.219); /* vibrant sky blue */
   --accent-foreground: rgb(255, 255, 255); /* white on blue */
 
   --destructive: rgb(255, 110, 85); /* keep coral */
@@ -128,4 +134,7 @@
   --sidebar-accent-foreground: rgb(25, 25, 10);
   --sidebar-border: rgb(55, 70, 65);
   --sidebar-ring: rgb(0, 255, 230);
+
+  --table-background-1: rgba(255, 255, 255, 0.205);
+  --table-background-2: rgba(26, 65, 52, 0.5);
 }
