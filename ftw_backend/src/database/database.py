@@ -7,7 +7,7 @@ URL_DATABASE: URL = URL.create(
     drivername="postgresql+psycopg2",
     username="postgres",
     password="password",
-    host="localhost",
+    host="db",
     port=5432,
     database="FinancialTracker"
 )
