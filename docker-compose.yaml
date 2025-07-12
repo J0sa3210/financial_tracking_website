@@ -9,17 +9,17 @@ services:
       - ./:/code:ro
 
   db:
-      image: postgres
-      hostname: db
-      volumes:
-        - postgres_data:/var/lib/postgresql/data/
-        - ./ftw_database/pg_hba.conf:/var/lib/postgresql/data/pg_hba.conf
-      ports:
-        - "5432:5432"
-      environment:
-        - POSTGRES_USER=postgres
-        - POSTGRES_PASSWORD=password
-        - POSTGRES_DB=FinancialTracker
+    build: ./ftw_database
+    hostname: db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=FinancialTracker
+      - PGDATA=/var/lib/postgresql/data/
 
 volumes:
-      postgres_data: 
+  postgres_data:
