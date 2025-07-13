@@ -13,6 +13,7 @@ register_global_exception_handlers(app)
 
 origins = [
     "http://localhost:5173",
+    "http://localhost:8080"
 ]
 
 app.add_middleware(
