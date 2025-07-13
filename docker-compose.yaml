@@ -6,7 +6,7 @@ services:
     depends_on:
       - db
     volumes:
-      - ./:/code:ro
+      - ./ftw_backend/src:/app
 
   db:
     build: ./ftw_database
@@ -20,15 +20,20 @@ services:
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=FinancialTracker
       - PGDATA=/var/lib/postgresql/data/
-  
+
   frontend:
     build: ./ftw_frontend
     hostname: frontend
     depends_on:
-    - backend
+      - backend
 
     ports:
-    - "8080:8080"
+      - "8080:8080"
+
+    volumes:
+      - ./ftw_frontend/src:/app/src # <-- Mount local src to /app/src in the container
+      - ./ftw_frontend/package.json:/app/package.json # (optional, for hot reload on package.json changes)
+      - ./ftw_frontend/vite.config.js:/app/vite.config.js # (optional, for vite config changes)
 
 volumes:
   postgres_data:
