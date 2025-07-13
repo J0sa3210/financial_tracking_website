@@ -20,6 +20,15 @@ services:
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=FinancialTracker
       - PGDATA=/var/lib/postgresql/data/
+  
+  frontend:
+    build: ./ftw_frontend
+    hostname: frontend
+    depends_on:
+    - backend
+
+    ports:
+    - "8080:8080"
 
 volumes:
   postgres_data:
