@@ -1,4 +1,4 @@
-# Python
+# Python bytecode and cache
 __pycache__/
 *.py[cod]
 *.pyo
@@ -7,9 +7,14 @@ __pycache__/
 *.pdb
 *.egg-info/
 *.egg
+
+# Logs and databases
 *.log
 *.sqlite3
 *.db
+*.db-journal
+
+# Environments
 *.env
 *.venv
 .env.*
@@ -17,70 +22,23 @@ __pycache__/
 venv/
 ENV/
 env/
+
+# Pip
 pip-log.txt
 pip-delete-this-directory.txt
 
-# uv
-fwt_backend/.python-version
-fwt_backend/pyproject.toml
-
-# FastAPI/Starlette
-instance/
-*.db-journal
-
-# VSCode
+# IDEs and editors
 .vscode/
+.idea/
 .history/
+*.iml
 
-# OS
+# OS files
 .DS_Store
 Thumbs.db
 ehthumbs.db
 Icon?
 desktop.ini
-
-# Test/coverage
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-.pytest_cache/
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-# Pydantic
-*.json
-
-# Docker
-*.pid
-*.pid.lock
-
-# React/ftw_frontend
-ftw_frontend/node_modules/
-ftw_frontend/build/
-ftw_frontend/dist/
-ftw_frontend/.env
-ftw_frontend/.env.*
-
-# Yarn
-ftw_frontend/yarn.lock
-
-# npm
-ftw_frontend/package-lock.json
-
-# Lock files (Python)
-poetry.lock
-Pipfile.lock
-uv.lock
 
 # Misc
 *.swp
@@ -89,10 +47,4 @@ uv.lock
 *.tmp
 *.orig
 *.rej
-
-# IDEs
-.idea/
-*.iml
-
-# Backup files
 *~

@@ -1,0 +1,54 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.pdb
+*.egg-info/
+*.egg
+
+# Logs and databases
+*.log
+*.sqlite3
+*.db
+*.db-journal
+
+# Environments
+*.env
+*.venv
+.env.*
+.venv/
+venv/
+ENV/
+env/
+
+# Poetry/Lock files
+poetry.lock
+Pipfile.lock
+uv.lock
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Test/coverage
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+
+# FastAPI/Starlette
+instance/
+
+# Docker
+*.pid
+*.pid.lock
