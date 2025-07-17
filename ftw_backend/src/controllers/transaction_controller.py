@@ -21,6 +21,11 @@ async def add_transaction(transaction: TransactionEdit, db : Session = Depends(g
     added_transaction: Transaction = transaction_service.add_transaction(new_transaction=transaction, db=db)
     return added_transaction
 
+@transaction_controller.get("/total", response_model=dict[str, float])
+async def calculate_total_amount(db: Session = Depends(get_db)):
+    total_amount: dict[str, float] = transaction_service.calculate_total_amount_of_transactions(db=db)
+    return total_amount
+
 @transaction_controller.delete("/{transaction_id}", response_model=Transaction)
 async def delete_transaction(transaction_id: int, db: Session = Depends(get_db)):
     removed_transaction: Transaction = transaction_service.delete_transaction(transaction_id=transaction_id, db=db)

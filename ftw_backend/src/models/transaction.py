@@ -26,3 +26,4 @@ class TransactionEdit(BaseModel):
     description: str = None
 
     model_config = {'from_attributes': True}
+ 

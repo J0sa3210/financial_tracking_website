@@ -155,3 +155,29 @@ class TransactionService:
         """
         return TransactionSchema(**model.model_dump())
 
+    @staticmethod
+    def calculate_total_amount_of_transactions(db: Session) -> dict[str, float]:
+        # Get transactions from the db
+        transaction: list[Transaction] = db.query(TransactionSchema).all()
+
+        total_savings: float = 0
+        total_income: float = 0
+        total_expenses: float = 0
+        for transaction in transaction:
+            match transaction.transaction_type:
+                case "Expenses":
+                    total_expenses += transaction.value
+                case "Savings":
+                    total_savings += transaction.value
+                case "Income":
+                    total_income += transaction.value
+        response: dict[str, float] = {
+            "total_income": total_income,
+            "total_expenses": total_expenses,
+            "total_savings": total_savings
+        }
+
+        # print(f"Total amount of transactions: {response}")
+        return response
+
+             
