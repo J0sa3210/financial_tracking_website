@@ -4,6 +4,7 @@ from datetime import date, time
 class TransactionTypes(StrEnum):
     EXPENSES: str = "Expenses"
     INCOME: str = "Income"
+    SAVINGS: str = "Savings",
     NONE: str = "None"
 
 
