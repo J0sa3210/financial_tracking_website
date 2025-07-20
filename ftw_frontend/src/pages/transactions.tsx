@@ -8,15 +8,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { useEffect, useState } from "react";
 
@@ -121,65 +113,57 @@ export default function TransactionsPage() {
 
   return (
     <div className='mx-auto max-w-5xl p-4'>
-      {/* <h1 className='text-2xl font-bold mb-6 text-center underline'>
-        Transactions
-      </h1> */}
-      <div className='rounded-lg py-2'>
+      <div className='rounded-lg py-2 pb-6'>
         <div className='flex gap-4'>
-          <Card className='flex-auto px-2'>
+          <Card className='flex-1 px-2'>
             <CardHeader>
               <CardTitle>
-                <div className='flex justify-between text-2xl font-bold'>
-                  <span>Total:</span>
-                  <span>
-                    {currencyFormatter.format(
-                      totals?.total_income -
-                        totals?.total_expenses +
-                        totals?.total_savings
-                    )}
-                  </span>
-                </div>
+                <div className='text-2xl font-bold'>Total Tracking Balance</div>
               </CardTitle>
             </CardHeader>
-            <CardContent className='-mt-6 text-sm'>
-              <div className='flex justify-between text-green-700 '>
-                <span>Income:</span>
-                <span>{currencyFormatter.format(totals.total_income)}</span>
-              </div>
-              <div className='flex justify-between text-red-700 '>
-                <span>Expenses:</span>
-                <span>{currencyFormatter.format(totals.total_expenses)}</span>
-              </div>
-              <div className='flex justify-between text-blue-700 '>
-                <span>Savings:</span>
-                <span>{currencyFormatter.format(totals.total_savings)}</span>
+            <CardContent className='-mt-4 text-xl'>
+              <div className='flex gap-10'>
+                <span className='font-bold'>
+                  {currencyFormatter.format(
+                    totals?.total_income - totals?.total_expenses
+                  )}
+                </span>
+                <span className='flex font-normal text-base items-center'>
+                  (
+                  {currencyFormatter.format(
+                    totals?.total_income -
+                      totals?.total_expenses +
+                      totals?.total_savings
+                  )}{" "}
+                  with savings)
+                </span>
               </div>
             </CardContent>
           </Card>
-          <Card className='flex-auto px-2 '>
+          <Card className='flex-1 px-2 '>
             <CardHeader>
               <CardTitle className='text-2xl font-bold'>
                 N° of Transactions
               </CardTitle>
             </CardHeader>
-            <CardContent className='-mt-1 text-xl'>
-              <div className='flex gap-20'>
+            <CardContent className='-mt-4 text-xl'>
+              <div className='flex gap-28'>
                 <span className='font-bold'>{transactions.length}</span>
-                <span className='font-normal'>
+                <span className='flex font-normal text-base items-center'>
                   ({get_n_transactions_this_year(transactions)} this year)
                 </span>
               </div>
             </CardContent>
           </Card>
-          <Card className='flex-auto px-2 '>
+          <Card className='flex-1 px-2 '>
             <CardHeader>
               <CardTitle className='text-2xl font-bold'>
                 Date Last Transaction
               </CardTitle>
             </CardHeader>
-            <CardContent className='-mt-1 text-xl font-semibold'>
+            <CardContent className='-mt-4 text-xl font-semibold'>
               {latest_transaction ? (
-                <div className='flex gap-3'>
+                <div className='flex gap-9'>
                   <span className='font-bold'>
                     {
                       dateTimeFormatter
@@ -187,7 +171,7 @@ export default function TransactionsPage() {
                         .split(",")[0]
                     }
                   </span>
-                  <span className='font-normal text-md'>
+                  <span className='flex font-normal text-base items-center'>
                     ({time_passed} days ago)
                   </span>
                 </div>
@@ -236,7 +220,9 @@ export default function TransactionsPage() {
                 </TableCell>
                 <TableCell
                   className={`px-4 py-2 font-semibold ${
-                    transaction.value < 0 ? "text-red-600" : "text-green-600"
+                    transaction.transaction_type == "Expenses"
+                      ? "text-red-600"
+                      : "text-green-600"
                   }`}>
                   {currencyFormatter.format(transaction.value)}
                 </TableCell>
@@ -248,11 +234,6 @@ export default function TransactionsPage() {
           </TableBody>
         </Table>
       </div>
-      {transactions.length === 0 && (
-        <div className='text-center text-gray-500 mt-6'>
-          No transactions found.
-        </div>
-      )}
     </div>
   );
 }
