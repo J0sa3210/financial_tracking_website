@@ -33,7 +33,7 @@ export default function TransactionTable(
   const transactions: Transaction[] = transactionsProp.transactions;
 
   return (
-    <div className='overflow-x-auto rounded-lg shadow border'>
+    <div className='overflow-x-auto rounded-lg shadow border my-2'>
       <Table>
         <TableHeader>
           <TableRow className=''>

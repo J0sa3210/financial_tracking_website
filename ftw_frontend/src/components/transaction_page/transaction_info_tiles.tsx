@@ -73,7 +73,7 @@ export default function TransactionInfoTiles(
     : 0;
 
   return (
-    <div className='rounded-lg py-2 pb-6'>
+    <div className='rounded-lg py-2'>
       <div className='flex gap-4'>
         <Card className='flex-1 px-2'>
           <CardHeader>
@@ -81,22 +81,20 @@ export default function TransactionInfoTiles(
               <div className='text-2xl font-bold'>Total Tracking Balance</div>
             </CardTitle>
           </CardHeader>
-          <CardContent className='-mt-4 text-xl'>
-            <div className='flex gap-10'>
-              <span className='font-bold'>
-                {currencyFormatter.format(
-                  totals?.total_income - totals?.total_expenses
-                )}
-              </span>
-              <span className='flex font-normal text-base items-center'>
-                (
-                {currencyFormatter.format(
-                  totals?.total_income -
-                    totals?.total_expenses +
-                    totals?.total_savings
-                )}{" "}
-                with savings)
-              </span>
+          <CardContent className='-mt-4 text-2xl'>
+            <div className='font-bold pb-1'>
+              {currencyFormatter.format(
+                totals?.total_income - totals?.total_expenses
+              )}
+            </div>
+            <div className='flex font-normal text-base items-center'>
+              (
+              {currencyFormatter.format(
+                totals?.total_income -
+                  totals?.total_expenses +
+                  totals?.total_savings
+              )}{" "}
+              with savings)
             </div>
           </CardContent>
         </Card>
@@ -106,12 +104,10 @@ export default function TransactionInfoTiles(
               N° of Transactions
             </CardTitle>
           </CardHeader>
-          <CardContent className='-mt-4 text-xl'>
-            <div className='flex gap-28'>
-              <span className='font-bold'>{transactions.length}</span>
-              <span className='flex font-normal text-base items-center'>
-                ({get_n_transactions_this_year(transactions)} this year)
-              </span>
+          <CardContent className='-mt-4 text-2xl'>
+            <div className='font-bold pb-1'>{transactions.length}</div>
+            <div className='flex font-normal text-base items-center'>
+              ({get_n_transactions_this_year(transactions)} this year)
             </div>
           </CardContent>
         </Card>
@@ -121,19 +117,19 @@ export default function TransactionInfoTiles(
               Date Last Transaction
             </CardTitle>
           </CardHeader>
-          <CardContent className='-mt-4 text-xl font-semibold'>
+          <CardContent className='-mt-4 text-2xl font-semibold'>
             {latest_transaction ? (
-              <div className='flex gap-9'>
-                <span className='font-bold'>
+              <div>
+                <div className='font-bold pb-1'>
                   {
                     dateTimeFormatter
                       .format(latest_transaction.dateTime_executed)
                       .split(",")[0]
                   }
-                </span>
-                <span className='flex font-normal text-base items-center'>
+                </div>
+                <div className='flex font-normal text-base items-center'>
                   ({time_passed} days ago)
-                </span>
+                </div>
               </div>
             ) : (
               "No transactions yet"
