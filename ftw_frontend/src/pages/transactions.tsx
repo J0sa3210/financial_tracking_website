@@ -51,7 +51,7 @@ export default function TransactionsPage() {
   }, []);
 
   return (
-    <div className='mx-auto max-w-5xl'>
+    <div className='mx-auto max-w-5xl p-4'>
       <TransactionInfoTiles transactions={transactions} totals={totals} />
       <TransactionButtonGroup />
       <TransactionTable transactions={transactions} />

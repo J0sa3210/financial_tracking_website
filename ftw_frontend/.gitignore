@@ -2,6 +2,8 @@
 node_modules/
 build/
 dist/
+src/components/ui/*
+src/hooks/*
 
 # Environment files
 .env

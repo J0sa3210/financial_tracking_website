@@ -7,7 +7,8 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@radix-ui/react-dialog": ["node_modules/@radix-ui/react-dialog"]
     }
   }
 }
