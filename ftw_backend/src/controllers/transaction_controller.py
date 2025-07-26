@@ -5,6 +5,7 @@ from database.schemas import TransactionSchema
 from models.transaction import Transaction, TransactionEdit
 from database import get_db
 from services.transaction_service import TransactionService
+from exceptions.exceptions import FileTypeExpection
 from utils.logging import setup_loggers
 from logging import Logger
 logger: Logger = setup_loggers()
@@ -47,6 +48,9 @@ async def edit_transaction(transaction_id: int, new_transaction: TransactionEdit
 
 @transaction_controller.post("/upload_csv/")
 async def upload_csv(file: UploadFile = File(...)):
+    if not file.filename.endswith('.csv'):
+        raise FileTypeExpection(file_type=file.filename.split('.')[-1])
+    
     try:
         contents = await file.read()
         # Process the file contents as needed

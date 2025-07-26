@@ -8,6 +8,7 @@ import { Progress } from "../ui/progress";
 type uploadStatus = "idle" | "uploading" | "success" | "error";
 
 export default function CsvUploadHandler() {
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState<uploadStatus>("idle");
   const [uploadProgress, setUploadProgress] = useState<number>(0);
@@ -49,8 +50,13 @@ export default function CsvUploadHandler() {
         setUploadProgress(100);
         setFile(null);
       })
-      .catch(() => {
+      .catch((error) => {
         setStatus("error");
+        console.error(error);
+        setErrorMsg(
+          error.response?.data?.detail ||
+            "An error occurred while uploading the file."
+        );
         setUploadProgress(0);
       });
   }
@@ -80,7 +86,7 @@ export default function CsvUploadHandler() {
       )}
       {status === "error" && (
         <div className='pl-2 pt-1 text-red-600'>
-          Error while uploading file...
+          {errorMsg || "An error occurred while uploading the file."}
         </div>
       )}
       {status === "success" && (

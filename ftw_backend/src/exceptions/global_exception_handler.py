@@ -1,7 +1,7 @@
 from fastapi import Request, FastAPI
 from sqlalchemy.exc import NoResultFound
 from fastapi.exceptions import HTTPException, RequestValidationError
-from .exceptions import FormattingException
+from .exceptions import FormattingException, FileTypeExpection
 import logging
 
 logger: logging.Logger = logging.getLogger(__name__) 
@@ -22,3 +22,10 @@ def register_global_exception_handlers(app: FastAPI):
             detail=exc.msg
         )
     
+    @app.exception_handler(FileTypeExpection)
+    async def file_type_exception_handler(request: Request, exc: FileTypeExpection):
+        logger.error(exc.msg)
+        raise HTTPException(
+            status_code=415,
+            detail=exc.msg
+        )
