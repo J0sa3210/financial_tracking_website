@@ -3,6 +3,7 @@ services:
     build: ./ftw_backend
     ports:
       - "8000:8000"
+      - "5678:5678" # Debug port
     depends_on:
       - db
     volumes:

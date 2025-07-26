@@ -2,7 +2,7 @@ import { DialogHeader, DialogTitle } from "../ui/dialog";
 import { useState, type ChangeEvent } from "react";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
-import axios from "axios";
+import axios, { type AxiosProgressEvent, type AxiosRequestConfig } from "axios";
 import { Progress } from "../ui/progress";
 
 type uploadStatus = "idle" | "uploading" | "success" | "error";
@@ -27,16 +27,23 @@ export default function CsvUploadHandler() {
     const formData = new FormData();
     formData.append("file", file);
 
+    const options: AxiosRequestConfig = {
+      url: "http://localhost:8000/transaction/upload_csv/",
+      data: formData,
+      method: "POST",
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+      onUploadProgress: (progressEvent: AxiosProgressEvent) => {
+        const progress = progressEvent.total
+          ? Math.round((progressEvent.loaded * 100) / progressEvent.total)
+          : 0;
+        setUploadProgress(progress);
+      },
+    };
+
     await axios
-      .post("http://localhost:8000/", {
-        body: formData,
-        onUploadProgress: (progressEvent: ProgressEvent) => {
-          const progress = progressEvent.total
-            ? Math.round((progressEvent.loaded * 100) / progressEvent.total)
-            : 0;
-          setUploadProgress(progress);
-        },
-      })
+      .post("http://localhost:8000/transaction/upload_csv/", formData, options)
       .then(() => {
         setStatus("success");
         setUploadProgress(100);
