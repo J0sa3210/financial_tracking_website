@@ -4,10 +4,11 @@ from typing import Annotated
 from database.schemas import TransactionSchema
 from models.transaction import Transaction, TransactionEdit
 from database import get_db
-from services.transaction_service import TransactionService
+from services import TransactionService, CSV_handler
 from exceptions.exceptions import FileTypeExpection
 from utils.logging import setup_loggers
 from logging import Logger
+
 logger: Logger = setup_loggers()
 
 transaction_controller = APIRouter(
@@ -22,8 +23,12 @@ async def get_all_transactions(db : Session = Depends(get_db)):
     return results
 
 @transaction_controller.put("/", response_model=Transaction)
-async def add_transaction(transaction: TransactionEdit, db : Session = Depends(get_db)):
-    added_transaction: Transaction = transaction_service.add_transaction(new_transaction=transaction, db=db)
+async def add_transaction(transactions: list[TransactionEdit], db : Session = Depends(get_db)):
+    transactions_added: int = 0
+    
+    for transaction in transactions:
+        added_transaction: Transaction = transaction_service.add_transaction(new_transaction=transaction, db=db)
+        transactions_added += 1   
     return added_transaction
 
 @transaction_controller.get("/total/", response_model=dict[str, float])
@@ -51,11 +56,7 @@ async def upload_csv(file: UploadFile = File(...)):
     if not file.filename.endswith('.csv'):
         raise FileTypeExpection(file_type=file.filename.split('.')[-1])
     
-    try:
-        contents = await file.read()
-        # Process the file contents as needed
-        logger.info(f"filename: {file.filename}")
-        logger.info(f"file contents: {contents[:100]}...")  # Log first 100 bytes for brevity
-    except Exception as e:
-        logger.error(f"Error reading file: {e}")
+    file_handler: CSV_handler = CSV_handler(file=file)
+
+    file_handler.process_file()
     

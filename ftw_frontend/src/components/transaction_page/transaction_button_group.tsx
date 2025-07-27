@@ -1,14 +1,7 @@
 import { Button } from "../ui/button";
 import { FaPlus } from "react-icons/fa";
 import { useState } from "react";
-import {
-  Dialog,
-  DialogTrigger,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "../ui/dialog";
-import { Input } from "../ui/input";
+import { Dialog, DialogTrigger, DialogContent } from "../ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import { TabsContent } from "@radix-ui/react-tabs";
 import CsvUploadHandler from "../upload_data_handler/csv_upload_handler";
@@ -19,7 +12,9 @@ export default function TransactionButtonGroup() {
 
   return (
     <div className='flex py-2 justify-end'>
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+      <Dialog
+        open={showDialog}
+        onOpenChange={setShowDialog}>
         <DialogTrigger asChild>
           <Button className='bg-primary text-primary-foreground hover:bg-primary/90'>
             <FaPlus className='mr-2' />
@@ -33,7 +28,9 @@ export default function TransactionButtonGroup() {
               <TabsTrigger value='csv'>CSV</TabsTrigger>
               <TabsTrigger value='json'>JSON</TabsTrigger>
             </TabsList>
-            <TabsContent value='csv' className='pt-4'>
+            <TabsContent
+              value='csv'
+              className='pt-4'>
               <CsvUploadHandler />
             </TabsContent>
           </Tabs>

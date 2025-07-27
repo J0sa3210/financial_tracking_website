@@ -29,9 +29,7 @@ const currencyFormatter = new Intl.NumberFormat("nl-BE", {
 
 function get_n_transactions_this_year(transactions: Transaction[]) {
   const currentYear = new Date().getFullYear();
-  return transactions.filter(
-    (t) => t.dateTime_executed.getFullYear() === currentYear
-  ).length;
+  return transactions.filter((t) => t.date_executed.getFullYear() === currentYear).length;
 }
 
 function get_latest_transaction(transactions: Transaction[]) {
@@ -42,7 +40,7 @@ function get_latest_transaction(transactions: Transaction[]) {
   var latest = transactions[0];
 
   for (const transaction of transactions) {
-    if (transaction.dateTime_executed > latest.dateTime_executed) {
+    if (transaction.date_executed > latest.date_executed) {
       latest = transaction;
     }
   }
@@ -57,19 +55,16 @@ function get_days_between(dt1: Date, dt2: Date): number {
   );
 }
 
-export default function TransactionInfoTiles(
-  transactionProps: TransactionProps
-) {
+export default function TransactionInfoTiles(transactionProps: TransactionProps) {
   const transactions: Transaction[] = transactionProps.transactions;
   const totals: totalsType = transactionProps.totals;
 
   const current_date = new Date();
 
-  const latest_transaction: Transaction | null =
-    get_latest_transaction(transactions);
+  const latest_transaction: Transaction | null = get_latest_transaction(transactions);
 
-  const time_passed: number = latest_transaction?.dateTime_executed
-    ? get_days_between(latest_transaction!.dateTime_executed, current_date)
+  const time_passed: number = latest_transaction?.date_executed
+    ? get_days_between(latest_transaction!.date_executed, current_date)
     : 0;
 
   return (
@@ -83,26 +78,17 @@ export default function TransactionInfoTiles(
           </CardHeader>
           <CardContent className='-mt-4 text-2xl'>
             <div className='font-bold pb-1'>
-              {currencyFormatter.format(
-                totals?.total_income - totals?.total_expenses
-              )}
+              {currencyFormatter.format(totals?.total_income - totals?.total_expenses)}
             </div>
             <div className='flex font-normal text-base items-center'>
-              (
-              {currencyFormatter.format(
-                totals?.total_income -
-                  totals?.total_expenses +
-                  totals?.total_savings
-              )}{" "}
-              with savings)
+              ({currencyFormatter.format(totals?.total_income - totals?.total_expenses + totals?.total_savings)} with
+              savings)
             </div>
           </CardContent>
         </Card>
         <Card className='flex-1 px-2 '>
           <CardHeader>
-            <CardTitle className='text-2xl font-bold'>
-              N° of Transactions
-            </CardTitle>
+            <CardTitle className='text-2xl font-bold'>N° of Transactions</CardTitle>
           </CardHeader>
           <CardContent className='-mt-4 text-2xl'>
             <div className='font-bold pb-1'>{transactions.length}</div>
@@ -113,23 +99,15 @@ export default function TransactionInfoTiles(
         </Card>
         <Card className='flex-1 px-2 '>
           <CardHeader>
-            <CardTitle className='text-2xl font-bold'>
-              Date Last Transaction
-            </CardTitle>
+            <CardTitle className='text-2xl font-bold'>Date Last Transaction</CardTitle>
           </CardHeader>
           <CardContent className='-mt-4 text-2xl font-semibold'>
             {latest_transaction ? (
               <div>
                 <div className='font-bold pb-1'>
-                  {
-                    dateTimeFormatter
-                      .format(latest_transaction.dateTime_executed)
-                      .split(",")[0]
-                  }
+                  {dateTimeFormatter.format(latest_transaction.date_executed).split(",")[0]}
                 </div>
-                <div className='flex font-normal text-base items-center'>
-                  ({time_passed} days ago)
-                </div>
+                <div className='flex font-normal text-base items-center'>({time_passed} days ago)</div>
               </div>
             ) : (
               "No transactions yet"

@@ -32,8 +32,11 @@ export default function TransactionsPage() {
               t.value,
               t.description,
               t.date_executed,
-              t.time_executed,
-              t.transaction_type
+              t.transaction_type,
+              t.transaction_category,
+              t.transaction_owner_account_number,
+              t.transaction_counterpart_name,
+              t.transaction_counterpart_account_number
             )
         )
       );
@@ -52,7 +55,10 @@ export default function TransactionsPage() {
 
   return (
     <div className='mx-auto max-w-5xl p-4'>
-      <TransactionInfoTiles transactions={transactions} totals={totals} />
+      <TransactionInfoTiles
+        transactions={transactions}
+        totals={totals}
+      />
       <TransactionButtonGroup />
       <TransactionTable transactions={transactions} />
     </div>

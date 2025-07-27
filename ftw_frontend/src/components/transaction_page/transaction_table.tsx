@@ -1,11 +1,4 @@
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 import { Transaction } from "@/assets/types/Transaction";
 
@@ -22,14 +15,9 @@ const dateTimeFormatter = new Intl.DateTimeFormat("nl-BE", {
   year: "numeric",
   month: "short",
   day: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-  second: "2-digit",
 });
 
-export default function TransactionTable(
-  transactionsProp: TransactionListProps
-) {
+export default function TransactionTable(transactionsProp: TransactionListProps) {
   const transactions: Transaction[] = transactionsProp.transactions;
 
   return (
@@ -38,14 +26,12 @@ export default function TransactionTable(
         <TableHeader>
           <TableRow className=''>
             <TableHead className='w-1/12 text-left px-4 py-2'>ID</TableHead>
-            <TableHead className='w-2/12 text-left px-4 py-2'>
-              Category
-            </TableHead>
-            <TableHead className='w-5/12 text-left px-4 py-2'>
-              Description
-            </TableHead>
+            <TableHead className='w-1/12 text-left px-4 py-2'>Type</TableHead>
+            <TableHead className='w-1/12 text-left px-4 py-2'>Category</TableHead>
+            <TableHead className='w-5/12 text-left px-4 py-2'>Description</TableHead>
             <TableHead className='w-2/12 text-left px-4 py-2'>Amount</TableHead>
-            <TableHead className='w-2/12 text-left px-4 py-2'>Date</TableHead>
+            <TableHead className='w-2/12 text-left px-4 py-2'>Counterpart</TableHead>
+            <TableHead className='w-1/12 text-left px-4 py-2'>Date</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -53,15 +39,12 @@ export default function TransactionTable(
             <TableRow
               key={transaction.id}
               className={`hover:bg-accent cursor-pointer ${
-                idx % 2 === 0
-                  ? "bg-background-table-1"
-                  : "bg-background-table-2"
+                idx % 2 === 0 ? "bg-background-table-1" : "bg-background-table-2"
               }`}
               tabIndex={0}>
               <TableCell className='px-4 py-2'>{transaction.id}</TableCell>
-              <TableCell className='px-4 py-2'>
-                {transaction.transaction_type}
-              </TableCell>
+              <TableCell className='px-4 py-2'>{transaction.transaction_type}</TableCell>
+              <TableCell className='px-4 py-2'>{transaction.transaction_category}</TableCell>
               <TableCell
                 className='px-4 py-2 truncate max-w-xs'
                 title={transaction.description}>
@@ -69,15 +52,13 @@ export default function TransactionTable(
               </TableCell>
               <TableCell
                 className={`px-4 py-2 font-semibold ${
-                  transaction.transaction_type == "Expenses"
-                    ? "text-red-600"
-                    : "text-green-600"
+                  transaction.transaction_type == "Expenses" ? "text-red-600" : "text-green-600"
                 }`}>
                 {currencyFormatter.format(transaction.value)}
               </TableCell>
-              <TableCell className='px-4 py-2'>
-                {dateTimeFormatter.format(transaction.dateTime_executed)}
-              </TableCell>
+              <TableCell className='px-4 py-2'>{transaction.transaction_counterpart_name}</TableCell>
+
+              <TableCell className='px-4 py-2'>{dateTimeFormatter.format(transaction.date_executed)}</TableCell>
             </TableRow>
           ))}
         </TableBody>

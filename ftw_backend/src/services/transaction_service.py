@@ -120,8 +120,6 @@ class TransactionService:
             try:
                 if field == "date_executed":
                     value = date.fromisoformat(value)
-                if field == "time_executed":
-                    value = time.fromisoformat(value)
             except:
                 raise FormattingException(field=field, value=value)
 
