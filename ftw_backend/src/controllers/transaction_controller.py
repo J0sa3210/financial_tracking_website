@@ -23,7 +23,7 @@ async def get_all_transactions(db : Session = Depends(get_db)):
     return results
 
 @transaction_controller.put("/", response_model=Transaction)
-async def add_transaction(transactions: list[TransactionEdit], db : Session = Depends(get_db)):
+async def add_transactions(transactions: list[TransactionEdit], db : Session = Depends(get_db)):
     transactions_added: int = 0
     
     for transaction in transactions:
@@ -52,11 +52,11 @@ async def edit_transaction(transaction_id: int, new_transaction: TransactionEdit
     return changed_transaction
 
 @transaction_controller.post("/upload_csv/")
-async def upload_csv(file: UploadFile = File(...)):
+async def upload_csv(file: UploadFile = File(...), db: Session = Depends(get_db)):
     if not file.filename.endswith('.csv'):
         raise FileTypeExpection(file_type=file.filename.split('.')[-1])
     
     file_handler: CSV_handler = CSV_handler(file=file)
 
-    file_handler.process_file()
+    file_handler.process_file(db=db)
     

@@ -78,10 +78,10 @@ export default function TransactionInfoTiles(transactionProps: TransactionProps)
           </CardHeader>
           <CardContent className='-mt-4 text-2xl'>
             <div className='font-bold pb-1'>
-              {currencyFormatter.format(totals?.total_income - totals?.total_expenses)}
+              {currencyFormatter.format(totals?.total_income + totals?.total_expenses)}
             </div>
             <div className='flex font-normal text-base items-center'>
-              ({currencyFormatter.format(totals?.total_income - totals?.total_expenses + totals?.total_savings)} with
+              ({currencyFormatter.format(totals?.total_income + totals?.total_expenses + totals?.total_savings)} with
               savings)
             </div>
           </CardContent>

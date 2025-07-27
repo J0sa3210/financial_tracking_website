@@ -26,7 +26,7 @@ class Transaction(BaseModel):
     transaction_counterpart_name: str = ""
     transaction_counterpart_account_number: str = ""
 
-    value: int = 0
+    value: float = 0
     date_executed: date = "1990-01-01"
     
     description: str = ""
@@ -42,7 +42,7 @@ class TransactionEdit(BaseModel):
     transaction_counterpart_name: str = ""
     transaction_counterpart_account_number: str = ""
 
-    value: int = None
+    value: float = None
     date_executed: str = None
 
     description: str = None

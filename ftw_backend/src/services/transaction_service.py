@@ -8,7 +8,7 @@ from exceptions.exceptions import FormattingException
 
 class TransactionService:
     @staticmethod
-    def add_transaction(new_transaction: TransactionEdit, db: Session) -> Transaction:
+    def add_transactions(new_transactions: list[TransactionEdit], db: Session) -> Transaction:
         """
         Add a new transaction to the database.
 
@@ -19,9 +19,10 @@ class TransactionService:
         Returns:
             Transaction: The added transaction as a Pydantic model.
         """
-        new_transaction_schema: Transaction = TransactionService.convert_transaction_data(TransactionSchema(), new_transaction)
-        
-        db.add(new_transaction_schema)
+        for transaction in new_transactions:
+            new_transaction_schema: Transaction = TransactionService.convert_transaction_data(TransactionSchema(), transaction)
+            db.add(new_transaction_schema)
+
         db.commit()
         db.refresh(new_transaction_schema)
 

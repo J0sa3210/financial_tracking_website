@@ -1,7 +1,11 @@
-from fastapi import UploadFile
+from fastapi import UploadFile, Depends
 from utils.logging import setup_loggers
 from pandas import read_csv, DataFrame
 from io import BytesIO
+from database import get_db
+from sqlalchemy.orm import Session
+from .transaction_service import TransactionService
+from models.transaction import TransactionEdit, TransactionTypes, TransactionCategories
 
 logger = setup_loggers()
 
@@ -27,12 +31,9 @@ class CSV_handler():
         return df
 
     def clean_df(self, df: DataFrame) -> DataFrame:
-        df.dropna(inplace=True)
-        
         useful_columns =  [
         "Rekening",
-        "Boekingsdatum",
-        "Rekeninguittrekselnummer",
+        "Valutadatum",
         "Rekening tegenpartij",
         "Naam tegenpartij bevat",
         "Transactie",
@@ -41,16 +42,70 @@ class CSV_handler():
         ]
 
         df = df[useful_columns]
+        
+        df["Rekening tegenpartij"] = df["Rekening tegenpartij"].fillna("")
+        df["Mededelingen"] = df["Mededelingen"].fillna("")
+        df["Naam tegenpartij bevat"] = df["Naam tegenpartij bevat"].fillna("")
+
+        df["Naam tegenpartij bevat"] = df["Naam tegenpartij bevat"].str.lower()
+        
+        
         return df
+    
+    def get_transaction_type(self, amount: float, counterpart_account: str) -> TransactionTypes:
+        if amount < 0:
+            return TransactionTypes.EXPENSES
+        elif amount > 0:
+            return TransactionTypes.INCOME
+        else:
+            if counterpart_account:
+                return TransactionTypes.SAVINGS
+            else:
+                return TransactionTypes.NONE
+            
+    def convert_to_ISO_format(self, date_str: str) -> str:
+        """
+        Convert a date string to ISO format (YYYY-MM-DD).
+        """
+        # Convert DD/MM/YYYY to YYYY-MM-DD
+        try:
+            split_date: str = date_str.split("/")[::-1]
+            return "-".join(split_date)  
+        except Exception as e:
+            logger.error(f"Error converting date to ISO format: {e}")
+            raise e
 
+    def convert_df_to_transactions(self, df: DataFrame):
+        transactions: list[TransactionEdit] = []
 
-    def process_file(self):
+        for _, row in df.iterrows():
+
+            transaction_type: TransactionTypes = self.get_transaction_type(row["Bedrag"], row["Rekening tegenpartij"])
+            transaction_date: str = self.convert_to_ISO_format(row["Valutadatum"])
+
+            transaction: TransactionEdit = TransactionEdit(
+                transaction_type = transaction_type,
+                transaction_category = TransactionCategories.NONE,
+
+                transaction_owner_account_number = row["Rekening"],
+                transaction_counterpart_name = row["Naam tegenpartij bevat"],
+                transaction_counterpart_account_number = row["Rekening tegenpartij"],
+                value = float(row["Bedrag"]/ 100),  # The value is in cents
+                date_executed = transaction_date,  # Convert to YYYY-MM-DD format
+                description = row["Mededelingen"]
+            )
+
+            transactions.append(transaction)
+
+        return transactions
+
+    def process_file(self, db: Session = Depends(get_db)):
         # Convert file to DataFrame
         df: DataFrame = self.convert_to_df()
-        df = self.clean_df(df)
+        df: DataFrame = self.clean_df(df)
 
-
-
-
-        print(df.head(20))
-
+        # Convert DataFrame to transactions
+        transactions: list[TransactionEdit] = self.convert_df_to_transactions(df)
+        TransactionService.add_transactions(transactions, db)
+        
+        logger.info("CSV file processed and transactions added successfully.")
