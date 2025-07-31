@@ -1,5 +1,5 @@
-from sqlalchemy.orm import declarative_base
-from sqlalchemy import Integer, Column, String, Float, Date, Time, DateTime
+from sqlalchemy.orm import declarative_base, relationship
+from sqlalchemy import Integer, Column, String, Float, Date, DateTime, ForeignKey
 from datetime import datetime
 
 
@@ -24,3 +24,21 @@ class TransactionSchema(Base):
 
     time_created = Column(DateTime, default=datetime.now())
     time_updated = Column(DateTime, default=datetime.now(), onupdate=datetime.now())
+
+class CategorySchema(Base):
+    __tablename__ = "categories"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, index=True)
+    description = Column(String, nullable=True)
+
+    counterparts = relationship("CounterpartSchema", back_populates="category")
+
+class CounterpartSchema(Base):
+    __tablename__ = "counterparts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, index=True)
+
+    category_id = Column(Integer, ForeignKey("categories.id"))
+    category = relationship("CategorySchema", back_populates="counterparts")

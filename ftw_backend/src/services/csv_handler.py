@@ -5,7 +5,7 @@ from io import BytesIO
 from database import get_db
 from sqlalchemy.orm import Session
 from .transaction_service import TransactionService
-from models.transaction import TransactionEdit, TransactionTypes, TransactionCategories
+from models.transaction import TransactionEdit, TransactionTypes
 
 logger = setup_loggers()
 
@@ -63,6 +63,12 @@ class CSV_handler():
             else:
                 return TransactionTypes.NONE
             
+    
+    def get_transaction_category(self, counterpart_name: str) -> str:
+        counterpart_name = counterpart_name.lower()
+
+        
+    
     def convert_to_ISO_format(self, date_str: str) -> str:
         """
         Convert a date string to ISO format (YYYY-MM-DD).
@@ -85,7 +91,7 @@ class CSV_handler():
 
             transaction: TransactionEdit = TransactionEdit(
                 transaction_type = transaction_type,
-                transaction_category = TransactionCategories.NONE,
+                transaction_category = "",
 
                 transaction_owner_account_number = row["Rekening"],
                 transaction_counterpart_name = row["Naam tegenpartij bevat"],
