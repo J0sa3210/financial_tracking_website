@@ -7,7 +7,7 @@ import { TabsContent } from "@radix-ui/react-tabs";
 import CsvUploadHandler from "../upload_data_handler/csv_upload_handler";
 import { DialogDescription } from "@radix-ui/react-dialog";
 
-export default function TransactionButtonGroup() {
+export default function InputDialog() {
   const [showDialog, setShowDialog] = useState(false);
 
   return (

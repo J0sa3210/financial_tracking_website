@@ -2,8 +2,6 @@ import { useEffect, useState } from "react";
 import { Transaction } from "@/assets/types/Transaction";
 import TransactionTable from "@/components/transaction_page/transaction_table";
 import TransactionInfoTiles from "@/components/transaction_page/transaction_info_tiles";
-import TransactionButtonGroup from "@/components/transaction_page/transaction_button_group";
-
 interface totalsType {
   total_income: number;
   total_expenses: number;
@@ -59,7 +57,6 @@ export default function TransactionsPage() {
         transactions={transactions}
         totals={totals}
       />
-      <TransactionButtonGroup />
       <TransactionTable transactions={transactions} />
     </div>
   );
