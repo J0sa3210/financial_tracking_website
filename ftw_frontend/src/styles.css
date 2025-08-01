@@ -1,4 +1,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Playwrite+IE&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Farsan&family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Open+Sans:wght@400;600&display=swap");
+
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -39,16 +42,20 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-primary-dark: var(--primary-dark);
 
   --color-background-table-1: var(--table-background-1);
   --color-background-table-2: var(--table-background-2);
 
   /* Fonts */
   --font-cursive: "Playwrite IE";
+  --font-setting: "Open Sans", sans-serif;
+  --font-settings: "Roboto", sans-serif;
 }
 
 :root {
   --primary: rgb(0, 137, 123); /* bold tropical teal */
+  --primary-dark: rgb(0, 100, 90); /* deeper teal for dark mode */
   --secondary: rgb(255, 237, 150); /* cheerful, sunny yellow */
   --radius: 0.625rem;
 
@@ -95,6 +102,7 @@
 }
 .dark {
   --primary: rgb(28, 151, 143); /* brighter teal for dark bg */
+  --primary-dark: rgb(0, 137, 123); /* main teal */
   --secondary: rgb(255, 212, 90); /* soft golden yellow */
   --radius: 0.625rem;
 

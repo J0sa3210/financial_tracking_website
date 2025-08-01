@@ -12,9 +12,7 @@ export default function NavBarButton({
 }) {
   return (
     <Link to={link}>
-      <div className={cn("text-xl px-1", isSelected && "font-bold")}>
-        {title}
-      </div>
+      <div className={cn("text-xl px-1 font-setting", isSelected && "text-2xl font-bold")}>{title}</div>
     </Link>
   );
 }

@@ -52,7 +52,7 @@ export default function TransactionsPage() {
   }, []);
 
   return (
-    <div className='mx-auto max-w-5xl p-4'>
+    <div className='mx-auto max-w-7xl p-4'>
       <TransactionInfoTiles
         transactions={transactions}
         totals={totals}

@@ -9,9 +9,7 @@ export default function NavBar() {
   const titles = ["Transactions", "Settings"];
   const links = ["/transactions", "/settings"];
   const current_path = useLocation().pathname;
-  const [isDarkMode, setIsDarkMode] = useState(
-    document.documentElement.classList.contains("dark")
-  );
+  const [isDarkMode, setIsDarkMode] = useState(document.documentElement.classList.contains("dark"));
 
   function toggleDarkMode() {
     document.documentElement.classList.toggle("dark");
@@ -24,7 +22,7 @@ export default function NavBar() {
         <div className='flex-1 max-w-[600px] text-3xl font-cursive font-black'>
           <Link to='/'>Financial Tracker</Link>
         </div>
-        <div className='flex-[2] flex items-center gap-8 ml-10'>
+        <div className='flex-[3] flex items-center gap-8'>
           {titles.map((title, index) => (
             <NavBarButton
               key={index}
@@ -41,17 +39,11 @@ export default function NavBar() {
             size='icon'
             onClick={() => toggleDarkMode()}
             aria-label='Toggle theme'>
-            {isDarkMode ? (
-              <Sun className='w-5 h-5 m-2' />
-            ) : (
-              <Moon className='w-5 h-5 m-2' />
-            )}
+            {isDarkMode ? <Sun className='w-5 h-5 m-2' /> : <Moon className='w-5 h-5 m-2' />}
           </Button>
           <span className='font-semibold'>Joeri Winckelmans</span>
           <Avatar className='bg-secondary text-secondary-foreground rounded-full'>
-            <AvatarFallback className='bg-secondary w-5 h-5 m-2'>
-              JW
-            </AvatarFallback>
+            <AvatarFallback className='bg-secondary w-5 h-5 m-2'>JW</AvatarFallback>
           </Avatar>
         </div>
       </div>
