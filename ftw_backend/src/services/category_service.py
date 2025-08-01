@@ -1,4 +1,4 @@
-from models.category import Category, CategoryCreate, Counterpart
+from models.category import Category, CategoryCreate
 from database.schemas import CategorySchema
 from sqlalchemy.orm import Session
 

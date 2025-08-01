@@ -40,5 +40,5 @@ class CounterpartSchema(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True)
 
-    category_id = Column(Integer, ForeignKey("categories.id"))
+    category_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
     category = relationship("CategorySchema", back_populates="counterparts")

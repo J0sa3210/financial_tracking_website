@@ -6,6 +6,8 @@ from database import get_db
 from sqlalchemy.orm import Session
 from .transaction_service import TransactionService
 from models.transaction import TransactionEdit, TransactionTypes
+from models.counterpart import Counterpart
+from database.schemas import CounterpartSchema
 
 logger = setup_loggers()
 
@@ -105,10 +107,35 @@ class CSV_handler():
 
         return transactions
 
+    def export_counterparts(self, counterparts: list[str], db: Session):
+        """
+        Export all counterparts to the database.
+        """
+        # Get all previous counterparts
+        counterparts_from_db = db.query(CounterpartSchema).all()
+
+        # Convert them to set of Counterpart names
+        existing_counterparts: set[str] = {counterpart.name.lower() for counterpart in counterparts_from_db}
+
+        # Filter out counterparts that already exist
+        new_counterparts = [Counterpart(name=name) for name in counterparts if name.lower() not in existing_counterparts]
+
+        # Add new counterparts to the database
+        if new_counterparts:
+            db.add_all(new_counterparts)
+            db.commit()
+            logger.info(f"Added {len(new_counterparts)} new counterparts to the database.")
+        else:
+            logger.info("No new counterparts to add to the database.")
+        
+
     def process_file(self, db: Session = Depends(get_db)):
         # Convert file to DataFrame
         df: DataFrame = self.convert_to_df()
         df: DataFrame = self.clean_df(df)
+
+        # Export all counterparts
+        self.export_counterparts(df["Naam tegenpartij bevat"].unique(), db)
 
         # Convert DataFrame to transactions
         transactions: list[TransactionEdit] = self.convert_df_to_transactions(df)
