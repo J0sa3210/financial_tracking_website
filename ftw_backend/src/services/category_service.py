@@ -2,6 +2,7 @@ from models.category import Category, CategoryCreate
 from database.schemas import CategorySchema, CounterpartSchema
 from sqlalchemy.orm import Session
 
+from fastapi import HTTPException
 
 class CategoryService():
     def __init__(self):
@@ -24,14 +25,23 @@ class CategoryService():
         return response
         
     def add_category(self, new_category: CategoryCreate, db: Session) -> CategorySchema:
-            """
-            Add a new category to the database.
-            """
-            category_instance = self.convert_category_data(CategorySchema(), new_category, db)
-            db.add(category_instance)
-            db.commit()
-            db.refresh(category_instance)
-            return category_instance
+        """
+        Add a new category to the database.
+        """
+        category_instance = self.convert_category_data(CategorySchema(), new_category, db)
+        db.add(category_instance)
+        db.commit()
+        db.refresh(category_instance)
+        return category_instance
+    
+    def update_category(self, category_id: int, updated_category: CategoryCreate, db: Session) -> CategorySchema:
+        existing_category = db.query(CategorySchema).filter(CategorySchema.id == category_id).first()
+        if not existing_category:
+            raise HTTPException(status_code=404, detail="Category not found")
+        updated_category = self.convert_category_data(existing_category, updated_category, db)
+        db.commit()
+        db.refresh(updated_category)
+        return updated_category
 
     @staticmethod
     def convert_category_data(category_instance: CategorySchema, new_category: CategoryCreate, db: Session) -> CategorySchema:
@@ -45,3 +55,15 @@ class CategoryService():
                 setattr(category_instance, field, value)
 
         return category_instance
+    
+    def delete_category(self, category_id: int, db: Session) -> CategorySchema:
+        existing_category = db.query(CategorySchema).filter(CategorySchema.id == category_id).first()
+
+        if not existing_category:
+            raise HTTPException(status_code=404, detail="Category not found")
+
+        db.delete(existing_category)
+        db.commit()
+
+        return existing_category
+        

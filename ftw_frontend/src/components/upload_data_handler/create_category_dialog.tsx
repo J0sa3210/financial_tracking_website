@@ -8,7 +8,13 @@ import Select from "react-select";
 
 type CounterpartOptions = { value: string; label: string }[];
 
-export default function CreateCategoryDialog({ counterpartOptions }: { counterpartOptions: CounterpartOptions }) {
+export default function CreateCategoryDialog({
+  counterpartOptions,
+  onCreate,
+}: {
+  counterpartOptions: CounterpartOptions;
+  onCreate?: () => void;
+}) {
   const [categoryName, setCategoryName] = useState("");
   const [description, setDescription] = useState("");
   const [counterparts, setCounterparts] = useState<string[]>([]);
@@ -47,6 +53,9 @@ export default function CreateCategoryDialog({ counterpartOptions }: { counterpa
       setDescription("");
       setCounterparts([]);
       setErrorMsg(null);
+
+      // Reload categories
+      if (onCreate) onCreate();
     } catch (error) {
       console.error(error);
       setErrorMsg("An error occurred while creating the category.");
@@ -70,12 +79,14 @@ export default function CreateCategoryDialog({ counterpartOptions }: { counterpa
             <Input
               type='text'
               placeholder='Category Name'
+              defaultValue=''
               value={categoryName}
               onChange={(e) => setCategoryName(e.target.value)}
             />
             <Input
               type='text'
               placeholder='Description'
+              defaultValue=''
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />

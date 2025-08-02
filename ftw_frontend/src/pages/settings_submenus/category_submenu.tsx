@@ -3,6 +3,7 @@ import { Category } from "@/assets/types/Category";
 import { Button } from "@/components/ui/button";
 import Select from "react-select";
 import CreateCategoryDialog from "@/components/upload_data_handler/create_category_dialog";
+import { FaTrash } from "react-icons/fa";
 
 export default function CategorySubmenu() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -22,28 +23,29 @@ export default function CategorySubmenu() {
       setCounterpartOptions(options);
     }
     fetchCounterpartOptions();
-  }, []); // Fetch options only once when categories are loaded or counterparts change
+  }, [categories]); // Fetch options only once when categories are loaded or counterparts change
+
+  async function get_categories() {
+    const resp = await fetch("http://localhost:8000/categories/");
+    const data = await resp.json();
+    const loadedCategories = data.map((c: any) => new Category(c.id, c.name, c.description, c.counterparts));
+    setCategories(loadedCategories);
+
+    // Initialize counterparts state
+    const initialCounterparts = loadedCategories.reduce(
+      (acc: { [key: number]: { value: string; label: string }[] }, category: Category) => {
+        acc[category.id] = category.counterparts.map((counterpart: string) => ({
+          value: counterpart,
+          label: counterpart,
+        }));
+        return acc;
+      },
+      {}
+    );
+    setCounterparts(initialCounterparts);
+  }
 
   useEffect(() => {
-    async function get_categories() {
-      const resp = await fetch("http://localhost:8000/categories/");
-      const data = await resp.json();
-      const loadedCategories = data.map((c: any) => new Category(c.id, c.name, c.description, c.counterparts));
-      setCategories(loadedCategories);
-
-      // Initialize counterparts state
-      const initialCounterparts = loadedCategories.reduce(
-        (acc: { [key: number]: { value: string; label: string }[] }, category: Category) => {
-          acc[category.id] = category.counterparts.map((counterpart: string) => ({
-            value: counterpart,
-            label: counterpart,
-          }));
-          return acc;
-        },
-        {}
-      );
-      setCounterparts(initialCounterparts);
-    }
     get_categories();
   }, []);
 
@@ -53,6 +55,19 @@ export default function CategorySubmenu() {
         ...counterparts,
         [categoryId]: selectedOptions,
       });
+    }
+  };
+
+  const deleteCategory = async (categoryId: number) => {
+    try {
+      await fetch("http://localhost:8000/categories/" + categoryId + "/", {
+        method: "DELETE",
+      });
+    } catch (error) {
+      console.error("Error deleting category:", error);
+      alert("An error occurred while deleting the category");
+    } finally {
+      get_categories(); // Refresh the categories after deletion}
     }
   };
 
@@ -72,6 +87,8 @@ export default function CategorySubmenu() {
     } catch (error) {
       console.error("Error updating categories:", error);
       alert("An error occurred while updating categories");
+    } finally {
+      get_categories(); // Refresh the categories after deletion}
     }
   };
 
@@ -80,7 +97,10 @@ export default function CategorySubmenu() {
       <div className='flex justify-between items-center mb-4'>
         <h2 className='text-2xl font-bold'>Category Settings</h2>
         <span className='flex gap-1'>
-          <CreateCategoryDialog counterpartOptions={counterpartOptions} />
+          <CreateCategoryDialog
+            counterpartOptions={counterpartOptions}
+            onCreate={get_categories}
+          />
         </span>
       </div>
       {categories.map((category) => (
@@ -89,11 +109,18 @@ export default function CategorySubmenu() {
           className='mb-4 p-2 border  rounded-lg'>
           <span className='flex gap-1 justify-between items-center'>
             <h3 className='text-xl font-semibold'>{category.name}</h3>
-            <Button
-              className='w-15 text-lg hover:bg-background hover:text-primary hover:border hover:border-primary'
-              onClick={() => handleSave(category)}>
-              Save
-            </Button>
+            <span className='flex gap-1'>
+              <Button
+                className='w-15 text-lg hover:bg-background hover:text-primary hover:border hover:border-primary'
+                onClick={() => handleSave(category)}>
+                Save
+              </Button>
+              <Button
+                className='bg-red-500 text-white hover:bg-white hover:text-red-500 hover:border hover:border-red-500'
+                onClick={() => deleteCategory(category.id)}>
+                <FaTrash />
+              </Button>
+            </span>
           </span>
 
           <p>{category.description}</p>

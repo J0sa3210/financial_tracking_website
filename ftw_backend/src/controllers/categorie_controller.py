@@ -29,15 +29,16 @@ def create_category(category: CategoryCreate, db: Session = Depends(get_db)):
     return category
 
 # Update an existing category
-@categorie_controller.put("/{category_id}", response_model=CategoryView)
+@categorie_controller.put("/{category_id}/", response_model=CategoryView)
 def update_category(category_id: int, category: CategoryEdit, db: Session = Depends(get_db)):
-    existing_category = db.query(CategorySchema).filter(CategorySchema.id == category_id).first()
-    if not existing_category:
-        raise HTTPException(status_code=404, detail="Category not found")
-    updated_category = categoryService.convert_category_data(existing_category, category, db)
-    db.commit()
-    db.refresh(updated_category)
+    updated_category = categoryService.update_category(category_id=category_id, updated_category=category, db=db)
     return updated_category
+
+@categorie_controller.delete("/{category_id}/", response_model=CategoryView)
+def delete_category(category_id: int, db: Session = Depends(get_db)):
+    deleted_category = categoryService.delete_category(category_id=category_id, db=db)
+    
+    return deleted_category
 
 # Get all names for a category
 @categorie_controller.get("/{category_id}/counterparts/", response_model=list[str])
