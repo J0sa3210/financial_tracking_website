@@ -1,5 +1,5 @@
 from models.category import Category, CategoryCreate
-from database.schemas import CategorySchema
+from database.schemas import CategorySchema, CounterpartSchema
 from sqlalchemy.orm import Session
 
 
@@ -23,39 +23,25 @@ class CategoryService():
 
         return response
         
-    
-    def add_category(self, new_category: CategoryCreate, db: Session) -> Category:
-        """
-        Add a new category to the database.
+    def add_category(self, new_category: CategoryCreate, db: Session) -> CategorySchema:
+            """
+            Add a new category to the database.
+            """
+            category_instance = self.convert_category_data(CategorySchema(), new_category, db)
+            db.add(category_instance)
+            db.commit()
+            db.refresh(category_instance)
+            return category_instance
 
-        Args:
-            new_category (CategoryCreate): The category to add.
-            db (Session): The SQLAlchemy database session.
-
-        Returns:
-            Category: The added category as a Pydantic model.
-        """
-        new_category_schema = self.convert_category_data(CategorySchema(), new_category)
-        db.add(new_category_schema)
-        db.commit()
-        db.refresh(new_category_schema)
-        
-        return new_category_schema
-    
     @staticmethod
-    def convert_category_data(old_transaction: Category | CategorySchema, new_category: CategoryCreate) -> Category:
+    def convert_category_data(category_instance: CategorySchema, new_category: CategoryCreate, db: Session) -> CategorySchema:
         """
         Update an existing category object with new data.
-
-        Args:
-            old_transaction (category | CategorySchema): The existing category object.
-            new_category (TransactionEdit): The new category data.
-
-        Returns:
-            category: The updated category object.
         """
         for field, value in new_category.model_dump(exclude_none=True).items():
-            # Convert values into right types
-            setattr(old_transaction, field, value)
-        
-        return old_transaction
+            if field == "counterparts":
+                category_instance.counterparts = db.query(CounterpartSchema).filter(CounterpartSchema.name.in_(value)).all()
+            else:
+                setattr(category_instance, field, value)
+
+        return category_instance

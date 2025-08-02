@@ -1,0 +1,97 @@
+import { useState } from "react";
+import { Dialog, DialogHeader, DialogContent, DialogTrigger, DialogTitle } from "../ui/dialog";
+import { Button } from "../ui/button";
+import { FaPlus } from "react-icons/fa";
+import { Card, CardAction, CardContent } from "@/components/ui/card";
+import { Input } from "../ui/input";
+import Select from "react-select";
+
+type CounterpartOptions = { value: string; label: string }[];
+
+export default function CreateCategoryDialog({ counterpartOptions }: { counterpartOptions: CounterpartOptions }) {
+  const [categoryName, setCategoryName] = useState("");
+  const [description, setDescription] = useState("");
+  const [counterparts, setCounterparts] = useState<string[]>([]);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const handleCreateCategory = async () => {
+    if (!categoryName) {
+      setErrorMsg("Category name is required.");
+      return;
+    }
+
+    try {
+      console.log("Creating category with data:", {
+        name: categoryName,
+        description,
+        counterparts,
+      });
+      const response = await fetch("http://localhost:8000/categories/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: categoryName,
+          description,
+          counterparts,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create category");
+      }
+
+      // Reset form fields
+      setCategoryName("");
+      setDescription("");
+      setCounterparts([]);
+      setErrorMsg(null);
+    } catch (error) {
+      console.error(error);
+      setErrorMsg("An error occurred while creating the category.");
+    }
+  };
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button className='w-30 text-lg hover:bg-background hover:text-primary hover:border hover:border-primary'>
+          <FaPlus className='mt-0.5 -mr-1' />
+          <p>Category</p>
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Create New Category</DialogTitle>
+        </DialogHeader>
+        <Card className='bg-background shadow-none border border-none'>
+          <CardContent>
+            <Input
+              type='text'
+              placeholder='Category Name'
+              value={categoryName}
+              onChange={(e) => setCategoryName(e.target.value)}
+            />
+            <Input
+              type='text'
+              placeholder='Description'
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+            <Select
+              isMulti
+              options={counterpartOptions}
+              onChange={(selectedOptions) => setCounterparts(selectedOptions.map((option) => option.value))}
+              className='mt-2'
+            />
+
+            <CardAction>
+              <Button onClick={handleCreateCategory}>Create Category</Button>
+            </CardAction>
+          </CardContent>
+        </Card>
+      </DialogContent>
+    </Dialog>
+  );
+}

@@ -23,5 +23,5 @@ def get_db():
         db.close()
 
 
-Base.metadata.drop_all(bind=engine)
+# Base.metadata.drop_all(bind=engine)
 Base.metadata.create_all(bind=engine)

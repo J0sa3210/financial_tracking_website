@@ -11,3 +11,10 @@ class Counterpart(BaseModel):
 class CounterpartCreate(BaseModel):
     name: str
     category_id: int = None
+
+class CounterpartView(BaseModel):
+    id: int
+    name: str
+    
+    # Ensures we can easily convert from schema to model
+    model_config = {'from_attributes': True}

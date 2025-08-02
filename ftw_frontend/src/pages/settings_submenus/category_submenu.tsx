@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Category } from "@/assets/types/Category";
 import { Button } from "@/components/ui/button";
 import Select from "react-select";
+import CreateCategoryDialog from "@/components/upload_data_handler/create_category_dialog";
 
 export default function CategorySubmenu() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -55,26 +56,19 @@ export default function CategorySubmenu() {
     }
   };
 
-  const handleSave = async () => {
-    const updatedCategories = categories.map((category) => ({
-      ...category,
-      counterparts: counterparts[category.id] ? counterparts[category.id].map((option) => option.value) : [],
-    }));
+  const handleSave = async (category: Category) => {
+    if (counterparts[category.id]) {
+      category.counterparts = counterparts[category.id].map((option) => option.value);
+    }
 
     try {
-      const resp = await fetch("http://localhost:8000/categories/", {
-        method: "POST",
+      await fetch("http://localhost:8000/categories/" + category.id + "/", {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(updatedCategories),
+        body: JSON.stringify(category),
       });
-
-      if (resp.ok) {
-        alert("Categories updated successfully");
-      } else {
-        alert("Failed to update categories");
-      }
     } catch (error) {
       console.error("Error updating categories:", error);
       alert("An error occurred while updating categories");
@@ -85,13 +79,23 @@ export default function CategorySubmenu() {
     <div className='p-4'>
       <div className='flex justify-between items-center mb-4'>
         <h2 className='text-2xl font-bold'>Category Settings</h2>
-        <Button onClick={handleSave}>Save</Button>
+        <span className='flex gap-1'>
+          <CreateCategoryDialog counterpartOptions={counterpartOptions} />
+        </span>
       </div>
       {categories.map((category) => (
         <div
           key={category.id}
-          className='mb-4 p-2 border rounded-lg'>
-          <h3 className='text-xl font-semibold'>{category.name}</h3>
+          className='mb-4 p-2 border  rounded-lg'>
+          <span className='flex gap-1 justify-between items-center'>
+            <h3 className='text-xl font-semibold'>{category.name}</h3>
+            <Button
+              className='w-15 text-lg hover:bg-background hover:text-primary hover:border hover:border-primary'
+              onClick={() => handleSave(category)}>
+              Save
+            </Button>
+          </span>
+
           <p>{category.description}</p>
           <Select
             isMulti
