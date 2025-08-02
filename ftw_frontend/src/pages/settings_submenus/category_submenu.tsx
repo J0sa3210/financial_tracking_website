@@ -6,14 +6,22 @@ import Select from "react-select";
 export default function CategorySubmenu() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [counterparts, setCounterparts] = useState<{ [key: number]: { value: string; label: string }[] }>({});
+  const [counterpartOptions, setCounterpartOptions] = useState<{ value: string; label: string }[]>([]);
 
   // Define the options for the multiselect component
-  const counterpartOptions = [
-    { value: "option1", label: "Option 1" },
-    { value: "option2", label: "Option 2" },
-    { value: "option3", label: "Option 3" },
-    // Add more options as needed
-  ];
+  useEffect(() => {
+    async function fetchCounterpartOptions() {
+      const resp = await fetch("http://localhost:8000/counterparts/names/");
+      const data = await resp.json();
+
+      const options = data.map((name: string) => ({
+        value: name,
+        label: name,
+      }));
+      setCounterpartOptions(options);
+    }
+    fetchCounterpartOptions();
+  }, []); // Fetch options only once when categories are loaded or counterparts change
 
   useEffect(() => {
     async function get_categories() {

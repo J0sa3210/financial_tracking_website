@@ -20,6 +20,14 @@ def get_all_counterparts(db: Session = Depends(get_db)):
     counterparts = db.query(CounterpartSchema).all()
     return counterparts
 
+@counterpart_controller.get("/names/")
+def get_counterpart_names(db: Session = Depends(get_db)):
+    """
+    Get all counterpart names.
+    """
+    counterparts = db.query(CounterpartSchema.name).all()
+    return [counterpart.name for counterpart in counterparts]
+
 # Create a new counterpart for a category
 @counterpart_controller.post("/")
 def create_counterpart(counterpart: CounterpartCreate, db: Session = Depends(get_db)):

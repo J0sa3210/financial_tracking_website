@@ -118,7 +118,7 @@ class CSV_handler():
         existing_counterparts: set[str] = {counterpart.name.lower() for counterpart in counterparts_from_db}
 
         # Filter out counterparts that already exist
-        new_counterparts = [Counterpart(name=name) for name in counterparts if name.lower() not in existing_counterparts]
+        new_counterparts = [CounterpartSchema(name=name) for name in counterparts if name.lower() not in existing_counterparts]
 
         # Add new counterparts to the database
         if new_counterparts:
