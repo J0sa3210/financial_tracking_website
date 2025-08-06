@@ -8,12 +8,10 @@ class TransactionTypes(StrEnum):
     SAVINGS: str = "Savings",
     NONE: str = "None"
 
-
-
 class Transaction(BaseModel):
     id: int = None
     transaction_type: TransactionTypes = TransactionTypes.NONE
-    transaction_category: str = None
+    transaction_category: str = ""
 
     transaction_owner_account_number: str = ""
     transaction_counterpart_name: str = ""

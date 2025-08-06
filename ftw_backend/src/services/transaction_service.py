@@ -7,8 +7,15 @@ from datetime import date, time
 from exceptions.exceptions import FormattingException
 
 class TransactionService:
-    @staticmethod
-    def add_transactions(new_transactions: list[TransactionEdit], db: Session) -> Transaction:
+    def get_all_transactions(self, db: Session) -> list[Transaction]:
+        transaction_schemas = db.query(TransactionSchema).all()
+        
+        return [Transaction.model_validate(schema) for schema in transaction_schemas]
+
+    def get_all_transaction_schemas(self, db: Session) -> list[TransactionSchema]:
+        return db.query(TransactionSchema).all()
+
+    def add_transactions(self, new_transactions: list[TransactionEdit], db: Session) -> Transaction:
         """
         Add a new transaction to the database.
 
@@ -20,16 +27,15 @@ class TransactionService:
             Transaction: The added transaction as a Pydantic model.
         """
         for transaction in new_transactions:
-            new_transaction_schema: Transaction = TransactionService.convert_transaction_data(TransactionSchema(), transaction)
+            new_transaction_schema: Transaction = self.convert_transaction_data(TransactionSchema(), transaction)
             db.add(new_transaction_schema)
 
         db.commit()
         db.refresh(new_transaction_schema)
 
-        return TransactionService.schema_to_model(new_transaction_schema)
+        return self.schema_to_model(new_transaction_schema)
     
-    @staticmethod
-    def delete_transaction(transaction_id: int, db: Session) -> Transaction | None:
+    def delete_transaction(self, transaction_id: int, db: Session) -> Transaction | None:
         """
         Delete a transaction by its ID.
 
@@ -40,14 +46,14 @@ class TransactionService:
         Returns:
             Transaction | None: The deleted transaction as a Pydantic model, or None if not found.
         """
-        transaction_schema: TransactionSchema = TransactionService.get_transaction_schema(transaction_id=transaction_id, db=db)
-        deleted_transaction = TransactionService.schema_to_model(transaction_schema)
+        transaction_schema: TransactionSchema = self.get_transaction_schema(transaction_id=transaction_id, db=db)
+        deleted_transaction = self.schema_to_model(transaction_schema)
         db.delete(transaction_schema)
         db.commit()
         return deleted_transaction
 
-    @staticmethod
-    def get_transaction_schema(transaction_id: int, db: Session) -> TransactionSchema:
+    
+    def get_transaction_schema(self, transaction_id: int, db: Session) -> TransactionSchema:
         """
         Retrieve a transaction schema object by its ID.
 
@@ -67,8 +73,8 @@ class TransactionService:
             raise NoResultFound()
         return transaction_schema
         
-    @staticmethod
-    def get_transaction(transaction_id: int, db: Session) -> Transaction:
+    
+    def get_transaction(self, transaction_id: int, db: Session) -> Transaction:
         """
         Retrieve a transaction as a Pydantic model by its ID.
 
@@ -79,12 +85,12 @@ class TransactionService:
         Returns:
             Transaction: The transaction as a Pydantic model.
         """
-        transaction_schema: TransactionSchema = TransactionService.get_transaction_schema(transaction_id=transaction_id, db=db)
+        transaction_schema: TransactionSchema = self.get_transaction_schema(transaction_id=transaction_id, db=db)
         
-        return TransactionService.schema_to_model(transaction_schema)
+        return self.transaction_service.schema_to_model(transaction_schema)
     
-    @staticmethod
-    def edit_transaction(transaction_id: int, new_transaction: TransactionEdit, db: Session) -> Transaction:
+    
+    def edit_transaction(self, transaction_id: int, new_transaction: TransactionEdit, db: Session) -> Transaction:
         """
         Edit an existing transaction.
 
@@ -97,15 +103,15 @@ class TransactionService:
             Transaction: The updated transaction as a Pydantic model.
         """
         # Check if transaction exists
-        transaction_schema: Transaction = TransactionService.get_transaction_schema(transaction_id=transaction_id, db=db)
-        editted_transaction_schema: Transaction = TransactionService.convert_transaction_data(transaction_schema, new_transaction)
+        transaction_schema: Transaction = self.get_transaction_schema(transaction_id=transaction_id, db=db)
+        editted_transaction_schema: Transaction = self.convert_transaction_data(transaction_schema, new_transaction)
 
         db.commit()
         db.refresh(editted_transaction_schema)
         return Transaction.model_validate(editted_transaction_schema)    
     
-    @staticmethod
-    def convert_transaction_data(old_transaction: Transaction | TransactionSchema, new_transaction: TransactionEdit) -> Transaction:
+    
+    def convert_transaction_data(self, old_transaction: Transaction | TransactionSchema, new_transaction: TransactionEdit) -> Transaction:
         """
         Update an existing transaction object with new data.
 
@@ -128,8 +134,8 @@ class TransactionService:
         
         return old_transaction
     
-    @staticmethod
-    def schema_to_model(schema: TransactionSchema) -> Transaction:
+    
+    def schema_to_model(self, schema: TransactionSchema) -> Transaction:
         """
         Convert a SQLAlchemy TransactionSchema object to a Pydantic Transaction model.
 
@@ -141,8 +147,8 @@ class TransactionService:
         """
         return Transaction.model_validate(schema)
     
-    @staticmethod
-    def model_to_schema(model: Transaction) -> TransactionSchema:
+    
+    def model_to_schema(self, model: Transaction) -> TransactionSchema:
         """
         Convert a Pydantic Transaction model to a SQLAlchemy TransactionSchema object.
 
@@ -154,8 +160,8 @@ class TransactionService:
         """
         return TransactionSchema(**model.model_dump())
 
-    @staticmethod
-    def calculate_total_amount_of_transactions(db: Session) -> dict[str, float]:
+    
+    def calculate_total_amount_of_transactions(self, db: Session) -> dict[str, float]:
         # Get transactions from the db
         transaction: list[Transaction] = db.query(TransactionSchema).all()
 

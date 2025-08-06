@@ -7,13 +7,18 @@ from sqlalchemy.orm import Session
 from .transaction_service import TransactionService
 from models.transaction import TransactionEdit, TransactionTypes
 from models.counterpart import Counterpart
-from database.schemas import CounterpartSchema
-
+from models.category import Category
+from database.schemas import CounterpartSchema, CategorySchema
+from .category_service import CategoryService
+from .counterpart_service import CounterpartService
 logger = setup_loggers()
 
 class CSV_handler():
     def __init__(self, file: UploadFile):
         self.file = file
+        self.category_service = CategoryService()
+        self.counterpart_service = CounterpartService()
+        self.transaction_service = TransactionService()
 
     def read_file(self):
         try:
@@ -64,12 +69,6 @@ class CSV_handler():
                 return TransactionTypes.SAVINGS
             else:
                 return TransactionTypes.NONE
-            
-    
-    def get_transaction_category(self, counterpart_name: str) -> str:
-        counterpart_name = counterpart_name.lower()
-
-        
     
     def convert_to_ISO_format(self, date_str: str) -> str:
         """
@@ -139,6 +138,7 @@ class CSV_handler():
 
         # Convert DataFrame to transactions
         transactions: list[TransactionEdit] = self.convert_df_to_transactions(df)
-        TransactionService.add_transactions(transactions, db)
+        transactions: list[TransactionEdit] = self.category_service.init_transaction_category(transactions, db)
+        self.transaction_service.add_transactions(transactions, db)
         
         logger.info("CSV file processed and transactions added successfully.")

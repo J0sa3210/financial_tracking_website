@@ -24,11 +24,8 @@ async def get_all_transactions(db : Session = Depends(get_db)):
 
 @transaction_controller.put("/", response_model=Transaction)
 async def add_transactions(transactions: list[TransactionEdit], db : Session = Depends(get_db)):
-    transactions_added: int = 0
-    
-    for transaction in transactions:
-        added_transaction: Transaction = transaction_service.add_transaction(new_transaction=transaction, db=db)
-        transactions_added += 1   
+    added_transaction: Transaction = transaction_service.add_transactions(new_transaction=transactions, db=db)
+       
     return added_transaction
 
 @transaction_controller.get("/total/", response_model=dict[str, float])
