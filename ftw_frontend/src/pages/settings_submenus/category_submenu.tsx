@@ -4,23 +4,33 @@ import { Button } from "@/components/ui/button";
 import Select from "react-select";
 import CreateCategoryDialog from "@/components/upload_data_handler/create_category_dialog";
 import { FaTrash } from "react-icons/fa";
+import { Counterpart } from "@/assets/types/Counterpart";
 
 export default function CategorySubmenu() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [counterparts, setCounterparts] = useState<{ [key: number]: { value: string; label: string }[] }>({});
   const [counterpartOptions, setCounterpartOptions] = useState<{ value: string; label: string }[]>([]);
+  const [counterpartMap, setCounterpartMap] = useState<{ [name: string]: Counterpart }>({});
 
   // Define the options for the multiselect component
   useEffect(() => {
     async function fetchCounterpartOptions() {
-      const resp = await fetch("http://localhost:8000/counterparts/names/");
+      const resp = await fetch("http://localhost:8000/counterparts/");
       const data = await resp.json();
 
-      const options = data.map((name: string) => ({
-        value: name,
-        label: name,
+      const options = data.map((cp: Counterpart) => ({
+        value: cp.name,
+        label: cp.name,
       }));
       setCounterpartOptions(options);
+
+      // Build the mapping
+      const map: { [name: string]: Counterpart } = {};
+      data.forEach((cp: any) => {
+        map[cp.name] = cp;
+      });
+      setCounterpartMap(map);
+      console.log("Map: ", map);
     }
     fetchCounterpartOptions();
   }, [categories]); // Fetch options only once when categories are loaded or counterparts change
@@ -34,9 +44,9 @@ export default function CategorySubmenu() {
     // Initialize counterparts state
     const initialCounterparts = loadedCategories.reduce(
       (acc: { [key: number]: { value: string; label: string }[] }, category: Category) => {
-        acc[category.id] = category.counterparts.map((counterpart: string) => ({
-          value: counterpart,
-          label: counterpart,
+        acc[category.id] = category.counterparts.map((counterpart: Counterpart) => ({
+          value: counterpart.name,
+          label: counterpart.name,
         }));
         return acc;
       },
@@ -73,8 +83,10 @@ export default function CategorySubmenu() {
 
   const handleSave = async (category: Category) => {
     if (counterparts[category.id]) {
-      category.counterparts = counterparts[category.id].map((option) => option.value);
+      category.counterparts = counterparts[category.id].map((option) => counterpartMap[option.value]);
     }
+
+    console.log("Category to update: ", category);
 
     try {
       await fetch("http://localhost:8000/categories/" + category.id + "/", {
@@ -99,6 +111,7 @@ export default function CategorySubmenu() {
         <span className='flex gap-1'>
           <CreateCategoryDialog
             counterpartOptions={counterpartOptions}
+            counterpartMap={counterpartMap}
             onCreate={get_categories}
           />
         </span>

@@ -6,10 +6,11 @@ from models.category import CategoryView, CategoryCreate, CategoryEdit
 from database import get_db
 from services import CategoryService
 from utils.logging import setup_loggers
-from logging import Logger
+from logging import Logger, DEBUG
 from fastapi import HTTPException
 
 logger: Logger = setup_loggers()
+logger.setLevel(DEBUG)
 
 categorie_controller = APIRouter(
     prefix="/categories",
@@ -31,6 +32,7 @@ def create_category(category: CategoryCreate, db: Session = Depends(get_db)):
 # Update an existing category
 @categorie_controller.put("/{category_id}/", response_model=CategoryView)
 def update_category(category_id: int, category: CategoryEdit, db: Session = Depends(get_db)):
+    logger.debug(f"Category to update: {category}")
     updated_category = categoryService.update_category(category_id=category_id, updated_category=category, db=db)
     return updated_category
 

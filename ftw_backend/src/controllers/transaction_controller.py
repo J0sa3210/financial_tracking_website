@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import Annotated
 from database.schemas import TransactionSchema
-from models.transaction import Transaction, TransactionEdit
+from models.transaction import Transaction, TransactionView, TransactionEdit
 from database import get_db
 from services import TransactionService, CSV_handler
 from exceptions.exceptions import FileTypeExpection
@@ -17,14 +17,14 @@ transaction_controller = APIRouter(
 
 transaction_service: TransactionService = TransactionService()
 
-@transaction_controller.get("/", )
+@transaction_controller.get("/", response_model=list[TransactionView])
 async def get_all_transactions(db : Session = Depends(get_db)):
-    results = db.query(TransactionSchema).all()
+    results = transaction_service.get_all_transactions(db)
     return results
 
 @transaction_controller.put("/", response_model=Transaction)
 async def add_transactions(transactions: list[TransactionEdit], db : Session = Depends(get_db)):
-    added_transaction: Transaction = transaction_service.add_transactions(new_transaction=transactions, db=db)
+    added_transaction: Transaction = transaction_service.add_transactions(transactions, db=db)
        
     return added_transaction
 
@@ -54,6 +54,5 @@ async def upload_csv(file: UploadFile = File(...), db: Session = Depends(get_db)
         raise FileTypeExpection(file_type=file.filename.split('.')[-1])
     
     file_handler: CSV_handler = CSV_handler(file=file)
-
     file_handler.process_file(db=db)
     

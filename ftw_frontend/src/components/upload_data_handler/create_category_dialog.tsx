@@ -5,19 +5,23 @@ import { FaPlus } from "react-icons/fa";
 import { Card, CardAction, CardContent } from "@/components/ui/card";
 import { Input } from "../ui/input";
 import Select from "react-select";
+import { Counterpart } from "@/assets/types/Counterpart";
 
 type CounterpartOptions = { value: string; label: string }[];
+type CounterpartMap = { [name: string]: Counterpart };
 
 export default function CreateCategoryDialog({
   counterpartOptions,
+  counterpartMap,
   onCreate,
 }: {
   counterpartOptions: CounterpartOptions;
+  counterpartMap: CounterpartMap;
   onCreate?: () => void;
 }) {
   const [categoryName, setCategoryName] = useState("");
   const [description, setDescription] = useState("");
-  const [counterparts, setCounterparts] = useState<string[]>([]);
+  const [counterparts, setCounterparts] = useState<Counterpart[]>([]);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const handleCreateCategory = async () => {
@@ -93,7 +97,9 @@ export default function CreateCategoryDialog({
             <Select
               isMulti
               options={counterpartOptions}
-              onChange={(selectedOptions) => setCounterparts(selectedOptions.map((option) => option.value))}
+              onChange={(selectedOptions) =>
+                setCounterparts(selectedOptions.map((option) => counterpartMap[option.value]))
+              }
               className='mt-2'
             />
 

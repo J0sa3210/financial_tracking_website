@@ -5,13 +5,15 @@ from io import BytesIO
 from database import get_db
 from sqlalchemy.orm import Session
 from .transaction_service import TransactionService
-from models.transaction import TransactionEdit, TransactionTypes
+from models.transaction import TransactionCreate, TransactionTypes
 from models.counterpart import Counterpart
 from models.category import Category
-from database.schemas import CounterpartSchema, CategorySchema
+from database.schemas import CounterpartSchema, CategorySchema, TransactionSchema
 from .category_service import CategoryService
 from .counterpart_service import CounterpartService
+import logging
 logger = setup_loggers()
+logger.setLevel(logging.DEBUG)
 
 class CSV_handler():
     def __init__(self, file: UploadFile):
@@ -48,18 +50,18 @@ class CSV_handler():
         "Mededelingen"
         ]
 
-        df = df[useful_columns]
+        df = df[useful_columns].copy()
         
         df["Rekening tegenpartij"] = df["Rekening tegenpartij"].fillna("")
         df["Mededelingen"] = df["Mededelingen"].fillna("")
         df["Naam tegenpartij bevat"] = df["Naam tegenpartij bevat"].fillna("")
-
         df["Naam tegenpartij bevat"] = df["Naam tegenpartij bevat"].str.lower()
         
         
         return df
     
     def get_transaction_type(self, amount: float, counterpart_account: str) -> TransactionTypes:
+        logger.debug(f"Amount: {amount}")
         if amount < 0:
             return TransactionTypes.EXPENSES
         elif amount > 0:
@@ -83,22 +85,21 @@ class CSV_handler():
             raise e
 
     def convert_df_to_transactions(self, df: DataFrame):
-        transactions: list[TransactionEdit] = []
+        transactions: list[TransactionCreate] = []
 
         for _, row in df.iterrows():
 
             transaction_type: TransactionTypes = self.get_transaction_type(row["Bedrag"], row["Rekening tegenpartij"])
-            transaction_date: str = self.convert_to_ISO_format(row["Valutadatum"])
+            date: str = self.convert_to_ISO_format(row["Valutadatum"])
 
-            transaction: TransactionEdit = TransactionEdit(
+            transaction: TransactionCreate = TransactionCreate(
                 transaction_type = transaction_type,
-                transaction_category = "",
 
-                transaction_owner_account_number = row["Rekening"],
-                transaction_counterpart_name = row["Naam tegenpartij bevat"],
-                transaction_counterpart_account_number = row["Rekening tegenpartij"],
+                owner_account_number = row["Rekening"],
+                counterpart_name = row["Naam tegenpartij bevat"],
+                counterpart_account_number = row["Rekening tegenpartij"],
                 value = float(row["Bedrag"]/ 100),  # The value is in cents
-                date_executed = transaction_date,  # Convert to YYYY-MM-DD format
+                date_executed = date,  # Convert to YYYY-MM-DD format
                 description = row["Mededelingen"]
             )
 
@@ -137,8 +138,11 @@ class CSV_handler():
         self.export_counterparts(df["Naam tegenpartij bevat"].unique(), db)
 
         # Convert DataFrame to transactions
-        transactions: list[TransactionEdit] = self.convert_df_to_transactions(df)
-        transactions: list[TransactionEdit] = self.category_service.init_transaction_category(transactions, db)
+        transactions: list[TransactionCreate] = self.convert_df_to_transactions(df)
         self.transaction_service.add_transactions(transactions, db)
+
+        transactions: list[TransactionSchema] = self.transaction_service.get_all_transaction_schemas(db)
+        self.category_service.update_transaction_category(transactions, db)
+        db.commit()
         
         logger.info("CSV file processed and transactions added successfully.")

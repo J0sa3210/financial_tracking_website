@@ -31,10 +31,11 @@ export default function TransactionsPage() {
               t.description,
               t.date_executed,
               t.transaction_type,
-              t.transaction_category,
-              t.transaction_owner_account_number,
-              t.transaction_counterpart_name,
-              t.transaction_counterpart_account_number
+              t.category_id,
+              t.category_name,
+              t.owner_account_number,
+              t.counterpart_name,
+              t.counterpart_account_number
             )
         )
       );

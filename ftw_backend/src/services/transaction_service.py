@@ -1,21 +1,26 @@
-from sqlalchemy.orm import Session
-from models.transaction import Transaction, TransactionEdit
+from sqlalchemy.orm import Session, joinedload
+from models.transaction import Transaction, TransactionCreate, TransactionEdit
 from database.schemas import TransactionSchema
 from fastapi import HTTPException
 from sqlalchemy.exc import NoResultFound
 from datetime import date, time
 from exceptions.exceptions import FormattingException
 
+
 class TransactionService:
     def get_all_transactions(self, db: Session) -> list[Transaction]:
-        transaction_schemas = db.query(TransactionSchema).all()
-        
-        return [Transaction.model_validate(schema) for schema in transaction_schemas]
+        transactions = (
+        db.query(TransactionSchema)
+        .options(joinedload(TransactionSchema.category))
+        .all()
+        )
+
+        return [Transaction.model_validate(transaction) for transaction in transactions]
 
     def get_all_transaction_schemas(self, db: Session) -> list[TransactionSchema]:
         return db.query(TransactionSchema).all()
 
-    def add_transactions(self, new_transactions: list[TransactionEdit], db: Session) -> Transaction:
+    def add_transactions(self, new_transactions: list[TransactionCreate], db: Session):
         """
         Add a new transaction to the database.
 
@@ -32,9 +37,7 @@ class TransactionService:
 
         db.commit()
         db.refresh(new_transaction_schema)
-
-        return self.schema_to_model(new_transaction_schema)
-    
+  
     def delete_transaction(self, transaction_id: int, db: Session) -> Transaction | None:
         """
         Delete a transaction by its ID.
@@ -124,11 +127,7 @@ class TransactionService:
         """
         for field, value in new_transaction.model_dump(exclude_none=True).items():
             # Convert values into right types
-            try:
-                if field == "date_executed":
-                    value = date.fromisoformat(value)
-            except:
-                raise FormattingException(field=field, value=value)
+            
 
             setattr(old_transaction, field, value)
         

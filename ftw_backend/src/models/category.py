@@ -1,11 +1,13 @@
 from pydantic import BaseModel
-from .counterpart import CounterpartView
+from .counterpart import CounterpartView, CounterpartEdit
+from .transaction import TransactionView
 
 class Category(BaseModel):
     id: int = None
     name: str = ""
     description: str = ""
-    counterparts: list[str] = []
+    counterparts: list[CounterpartView] = []
+    transactions: list[TransactionView] = []
 
     # Ensures we can easily convert from schema to model
     model_config = {'from_attributes': True}
@@ -13,7 +15,7 @@ class Category(BaseModel):
 class CategoryCreate(BaseModel):
     name: str
     description: str = ""
-    counterparts: list[str] = []
+    counterparts: list[CounterpartEdit] = []
 
     # Ensures we can easily convert from schema to model
     model_config = {'from_attributes': True}
@@ -23,14 +25,16 @@ class CategoryView(BaseModel):
     name: str
     description: str = ""
     counterparts: list[CounterpartView] = []
+    transactions: list[TransactionView] = []
 
     # Ensures we can easily convert from schema to model
     model_config = {'from_attributes': True}
 
 class CategoryEdit(BaseModel):
-    name: str = None
+    id: int
+    name: str
     description: str = None
-    counterparts: list[str] = None
+    counterparts: list[CounterpartEdit] = []
 
     # Ensures we can easily convert from schema to model
     model_config = {'from_attributes': True}

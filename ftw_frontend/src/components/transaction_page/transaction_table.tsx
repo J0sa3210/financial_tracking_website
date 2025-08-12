@@ -81,7 +81,7 @@ const getColumns = (): ColumnDef<Transaction>[] => [
     enableColumnFilter: true,
   },
   {
-    accessorKey: "transaction_category",
+    accessorKey: "category_name",
     header: "Category",
     cell: (info) => info.getValue(),
   },
@@ -108,7 +108,7 @@ const getColumns = (): ColumnDef<Transaction>[] => [
     },
   },
   {
-    accessorKey: "transaction_counterpart_name",
+    accessorKey: "counterpart_name",
     header: "Counterpart",
     cell: (info) => info.getValue(),
   },
@@ -159,6 +159,7 @@ export default function TransactionTable({ transactions }: TransactionListProps)
     },
   });
 
+  console.log(transactions);
   return (
     <div>
       <span className='flex justify-between items-center my-2'>
