@@ -43,3 +43,10 @@ class CounterpartSchema(Base):
 
     category_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
     category = relationship("CategorySchema", back_populates="counterparts")
+
+class AccountSchema(Base):
+    __tablename__ = "accounts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, index=True)
+    bank_account = Column(String, index=True)

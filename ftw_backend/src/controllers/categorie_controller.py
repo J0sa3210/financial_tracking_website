@@ -10,7 +10,7 @@ from logging import Logger, DEBUG
 from fastapi import HTTPException
 
 logger: Logger = setup_loggers()
-logger.setLevel(DEBUG)
+# logger.setLevel(DEBUG)
 
 categorie_controller = APIRouter(
     prefix="/categories",
