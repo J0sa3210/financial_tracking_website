@@ -6,17 +6,17 @@ import {
   NavigationMenuList,
 } from "@radix-ui/react-navigation-menu";
 import CategorySettings from "./settings_submenus/category_submenu"; // Import the category settings component
+import AccountSettings from "./settings_submenus/account_submenu";
 
 // Define the components for each submenu
-const ProfileSettings = () => <div className='p-4'>Profile Settings Content</div>;
 const SecuritySettings = () => <div className='p-4'>Security Settings Content</div>;
 const NotificationSettings = () => <div className='p-4'>Notification Settings Content</div>;
 
 // Define the submenus
 const submenus = [
   {
-    name: "Profile",
-    component: <ProfileSettings />,
+    name: "Account",
+    component: <AccountSettings />,
   },
   {
     name: "Categories",

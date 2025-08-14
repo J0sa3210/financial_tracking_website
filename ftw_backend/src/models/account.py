@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-
+from typing import Optional
 class Account(BaseModel):
     id: int
     name: str

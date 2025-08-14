@@ -159,7 +159,6 @@ export default function TransactionTable({ transactions }: TransactionListProps)
     },
   });
 
-  console.log(transactions);
   return (
     <div>
       <span className='flex justify-between items-center my-2'>

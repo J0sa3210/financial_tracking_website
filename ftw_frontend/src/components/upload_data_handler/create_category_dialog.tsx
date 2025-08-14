@@ -23,6 +23,7 @@ export default function CreateCategoryDialog({
   const [description, setDescription] = useState("");
   const [counterparts, setCounterparts] = useState<Counterpart[]>([]);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [open, setOpen] = useState<boolean>(false);
 
   const handleCreateCategory = async () => {
     if (!categoryName) {
@@ -60,6 +61,8 @@ export default function CreateCategoryDialog({
 
       // Reload categories
       if (onCreate) onCreate();
+
+      setOpen(false);
     } catch (error) {
       console.error(error);
       setErrorMsg("An error occurred while creating the category.");
@@ -67,7 +70,9 @@ export default function CreateCategoryDialog({
   };
 
   return (
-    <Dialog>
+    <Dialog
+      open={open}
+      onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button className='w-30 text-lg hover:bg-background hover:text-primary hover:border hover:border-primary'>
           <FaPlus className='mt-0.5 -mr-1' />

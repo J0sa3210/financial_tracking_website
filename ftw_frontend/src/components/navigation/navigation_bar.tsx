@@ -1,9 +1,9 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "../ui/button";
-import { Avatar, AvatarFallback } from "../ui/avatar";
 import NavBarButton from "./navigation_bar_link";
 import { Sun, Moon } from "lucide-react";
 import { useState } from "react";
+import AccountSelector from "./account_selector";
 
 export default function NavBar() {
   const titles = ["Transactions", "Settings"];
@@ -33,6 +33,7 @@ export default function NavBar() {
           ))}
         </div>
         <div className='flex-1 flex items-center justify-end pr-5 gap-5'>
+          <AccountSelector />
           <Button
             className='text-foreground rounded-full'
             variant='outline'
@@ -41,10 +42,6 @@ export default function NavBar() {
             aria-label='Toggle theme'>
             {isDarkMode ? <Sun className='w-5 h-5 m-2' /> : <Moon className='w-5 h-5 m-2' />}
           </Button>
-          <span className='font-semibold'>Joeri Winckelmans</span>
-          <Avatar className='bg-secondary text-secondary-foreground rounded-full'>
-            <AvatarFallback className='bg-secondary w-5 h-5 m-2'>JW</AvatarFallback>
-          </Avatar>
         </div>
       </div>
     </nav>

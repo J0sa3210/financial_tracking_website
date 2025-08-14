@@ -5,7 +5,7 @@ from database.schemas import AccountSchema
 from models.account import AccountView, AccountCreate, AccountEdit
 from database import get_db
 from services import AccountService
-
+from exceptions.exceptions import AccountNotFoundException
 account_controller = APIRouter(
     prefix="/accounts",
 )
@@ -13,8 +13,15 @@ account_controller = APIRouter(
 accountService: AccountService = AccountService()
 
 @account_controller.get("/", )
-async def get_all_categories(db: Session = Depends(get_db)):
+async def get_all_accounts(db: Session = Depends(get_db)):
     result = accountService.get_all_accounts(db)
+    return result
+
+@account_controller.get("/{account_id}/", response_model=AccountView)
+async def get_account(account_id: int, db: Session = Depends(get_db)):
+    result = accountService.get_account(account_id, db)
+    if result == None:
+        raise AccountNotFoundException(account_id)
     return result
 
 @account_controller.post("/", response_model=AccountView)

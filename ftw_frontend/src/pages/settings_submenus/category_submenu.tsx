@@ -30,7 +30,6 @@ export default function CategorySubmenu() {
         map[cp.name] = cp;
       });
       setCounterpartMap(map);
-      console.log("Map: ", map);
     }
     fetchCounterpartOptions();
   }, [categories]); // Fetch options only once when categories are loaded or counterparts change

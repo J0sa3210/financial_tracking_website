@@ -1,7 +1,7 @@
 from fastapi import Request, FastAPI
 from sqlalchemy.exc import NoResultFound
 from fastapi.exceptions import HTTPException, RequestValidationError
-from .exceptions import FormattingException, FileTypeExpection
+from .exceptions import FormattingException, FileTypeExpection, AccountNotFoundException, ObjectNotFoundException
 import logging
 
 logger: logging.Logger = logging.getLogger(__name__) 
@@ -27,5 +27,13 @@ def register_global_exception_handlers(app: FastAPI):
         logger.error(exc.msg)
         raise HTTPException(
             status_code=415,
+            detail=exc.msg
+        )
+
+    @app.exception_handler(ObjectNotFoundException)
+    async def func(request: Request, exc: ObjectNotFoundException):
+        logger.error(exc.msg)
+        raise HTTPException(
+            status_code=404,
             detail=exc.msg
         )
