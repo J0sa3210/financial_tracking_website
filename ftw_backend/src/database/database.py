@@ -23,5 +23,11 @@ def get_db():
         db.close()
 
 
+# Drop all schemas
 # Base.metadata.drop_all(bind=engine)
+
+# To drop all tables for a specific schema
+# from .schemas import AccountSchema
+# AccountSchema.metadata.drop_all(bind=engine)
+
 Base.metadata.create_all(bind=engine)

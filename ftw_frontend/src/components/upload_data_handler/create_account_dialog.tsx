@@ -21,7 +21,7 @@ export default function CreateAccountDialog({ onCreate }: { onCreate?: () => voi
     try {
       console.log("Creating account with data:", {
         name: accountName,
-        bank_account: bankAccount,
+        iban: bankAccount,
       });
       const response = await fetch("http://localhost:8000/accounts/", {
         method: "POST",
@@ -30,7 +30,7 @@ export default function CreateAccountDialog({ onCreate }: { onCreate?: () => voi
         },
         body: JSON.stringify({
           name: accountName,
-          bank_account: bankAccount,
+          iban: bankAccount,
         }),
       });
 

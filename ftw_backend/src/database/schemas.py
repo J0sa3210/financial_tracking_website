@@ -49,4 +49,4 @@ class AccountSchema(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True)
-    bank_account = Column(String, index=True)
+    iban = Column(String, index=True)

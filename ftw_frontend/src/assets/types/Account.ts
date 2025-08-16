@@ -1,11 +1,11 @@
 export class Account {
   id: number;
   name: string;
-  bank_account: string;
+  iban: string;
 
-  constructor(id: number, name: string, bank_account: string) {
+  constructor(id: number, name: string, iban: string) {
     this.id = id;
     this.name = name;
-    this.bank_account = bank_account;
+    this.iban = iban;
   }
 }
