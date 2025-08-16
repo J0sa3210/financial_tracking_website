@@ -8,12 +8,10 @@ import { Input } from "../ui/input";
 export default function CreateAccountDialog({ onCreate }: { onCreate?: () => void }) {
   const [accountName, setAccountName] = useState("");
   const [bankAccount, setBankAccount] = useState("");
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [open, setOpen] = useState(false); // Add this line
 
   const handleCreateAccount = async () => {
     if (!accountName) {
-      setErrorMsg("Account name is required.");
       return;
     }
 
@@ -40,7 +38,6 @@ export default function CreateAccountDialog({ onCreate }: { onCreate?: () => voi
       // Reset form fields
       setAccountName("");
       setBankAccount("");
-      setErrorMsg(null);
 
       // Reload categories
       if (onCreate) onCreate();
@@ -48,7 +45,6 @@ export default function CreateAccountDialog({ onCreate }: { onCreate?: () => voi
       setOpen(false); // Close the dialog
     } catch (error) {
       console.error(error);
-      setErrorMsg("An error occurred while creating the account.");
     }
   };
 

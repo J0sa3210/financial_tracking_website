@@ -9,7 +9,7 @@ import { FaTrash } from "react-icons/fa";
 export default function AccountSubmenu() {
   const [accounts, setAccounts] = useState<Account[]>([]);
 
-  const { activeAccount, selectAccount, defaultAccount, selectDefaultAccount } = useAccount();
+  const { defaultAccount, selectDefaultAccount } = useAccount();
   // There is no built-in Intl formatter for IBAN numbers.
   // You can format IBANs by grouping them for readability.
   function formatIBAN(iban: string): string {
