@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger } from "@radix-ui/reac
 import { Account } from "@/assets/types/Account";
 
 export default function AccountSelector() {
-  const { activeAccount, selectAccount } = useAccount();
+  const { activeAccount, selectAccount, defaultAccount } = useAccount();
 
   const [accounts, setAccounts] = useState<Account[]>([]);
 
@@ -35,6 +35,7 @@ export default function AccountSelector() {
               key={account.id}
               value={account.id.toString()}>
               {account.name}
+              {defaultAccount && account.id == defaultAccount.id ? "*" : ""}
             </SelectItem>
           ))}
         </SelectContent>

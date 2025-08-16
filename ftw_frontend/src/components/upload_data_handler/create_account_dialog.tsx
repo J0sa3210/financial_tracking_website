@@ -4,7 +4,6 @@ import { Button } from "../ui/button";
 import { FaPlus } from "react-icons/fa";
 import { Card, CardAction, CardContent } from "@/components/ui/card";
 import { Input } from "../ui/input";
-import Select from "react-select";
 
 export default function CreateAccountDialog({ onCreate }: { onCreate?: () => void }) {
   const [accountName, setAccountName] = useState("");

@@ -1,4 +1,5 @@
 import { Account } from "@/assets/types/Account";
+import { useAccount } from "@/components/context/AccountContext";
 import { Button } from "@/components/ui/button";
 
 import CreateAccountDialog from "@/components/upload_data_handler/create_account_dialog";
@@ -8,6 +9,7 @@ import { FaTrash } from "react-icons/fa";
 export default function AccountSubmenu() {
   const [accounts, setAccounts] = useState<Account[]>([]);
 
+  const { activeAccount, selectAccount, defaultAccount, selectDefaultAccount } = useAccount();
   // There is no built-in Intl formatter for IBAN numbers.
   // You can format IBANs by grouping them for readability.
   function formatIBAN(iban: string): string {
@@ -64,6 +66,14 @@ export default function AccountSubmenu() {
             <b>Account number: </b>
             {formatIBAN(account.iban)}
           </p>
+          <Button
+            size='sm'
+            className='text-lg'
+            variant='outline'
+            disabled={account.id === defaultAccount?.id}
+            onClick={() => selectDefaultAccount(account.id.toString())}>
+            Set default
+          </Button>
         </div>
       ))}
     </div>
