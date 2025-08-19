@@ -6,12 +6,12 @@ import type { ReactNode } from "react";
 const AccountContext = createContext<{
   activeAccount: Account | null;
   defaultAccount: Account | null;
-  selectAccount: (account_id: string) => Promise<void>;
+  selectActiveAccount: (account_id: string) => Promise<void>;
   selectDefaultAccount: (account_id: string) => Promise<void>;
 }>({
   activeAccount: null,
   defaultAccount: null,
-  selectAccount: async () => {},
+  selectActiveAccount: async () => {},
   selectDefaultAccount: async () => {},
 });
 
@@ -19,12 +19,28 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   const [defaultAccount, setDefaultAccount] = useState<Account | null>(null);
   const [activeAccount, setActiveAccount] = useState<Account | null>(null);
 
-  useEffect(() => {
+  async function retrieveDefaultAccount() {
     const stored = localStorage.getItem("defaultAccount");
     if (stored) {
-      const account = JSON.parse(stored);
-      setDefaultAccount(account);
-      setActiveAccount(account);
+      try {
+        const account = JSON.parse(stored);
+        const resp = await fetch("http://localhost:8000/accounts/" + account.id + "/");
+        const data = await resp.json();
+
+        setDefaultAccount(data);
+        setActiveAccount(data);
+        console.log("Default and Active account set to", data);
+      } catch (error: any) {
+        console.log(error.detail);
+        setDefaultAccount(null);
+        setActiveAccount(null);
+      }
+    }
+  }
+
+  useEffect(() => {
+    if (!activeAccount) {
+      retrieveDefaultAccount();
     }
   }, []);
 
@@ -41,7 +57,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  async function selectAccount(account_id: string) {
+  async function selectActiveAccount(account_id: string) {
     try {
       // Get the account
       const resp = await fetch("http://localhost:8000/accounts/" + account_id + "/");
@@ -49,6 +65,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
 
       // Set it as new active account
       setActiveAccount(data);
+      console.log("Active accoutn set to", data);
     } catch (error: any) {
       console.error(error.detail);
       setActiveAccount(defaultAccount);
@@ -56,7 +73,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AccountContext.Provider value={{ activeAccount, defaultAccount, selectAccount, selectDefaultAccount }}>
+    <AccountContext.Provider value={{ activeAccount, defaultAccount, selectActiveAccount, selectDefaultAccount }}>
       {children}
     </AccountContext.Provider>
   );

@@ -1,25 +1,60 @@
 from sqlalchemy.orm import Session, joinedload
 from models.transaction import Transaction, TransactionCreate, TransactionEdit
 from database.schemas import TransactionSchema
-from fastapi import HTTPException
-from sqlalchemy.exc import NoResultFound
-from datetime import date, time
-from exceptions.exceptions import FormattingException
 
 
 class TransactionService:
-    def get_all_transactions(self, db: Session) -> list[Transaction]:
-        transactions = (
-        db.query(TransactionSchema)
-        .options(joinedload(TransactionSchema.category))
-        .all()
-        )
+    def get_all_transactions(self, db: Session, filter: str = "", as_schema: bool = False) -> list[Transaction]:
+        if filter is "":
+            transactions = (
+            db.query(TransactionSchema)
+            .options(joinedload(TransactionSchema.category))
+            .all()
+            )
+        else:
+            transactions = (
+            db.query(TransactionSchema)
+            .filter(TransactionSchema.owner_account_number == filter)
+            .options(joinedload(TransactionSchema.category))
+            .all()
+            )
 
-        return [Transaction.model_validate(transaction) for transaction in transactions]
+        if as_schema:
+            return transactions
+        else:
+            return [Transaction.model_validate(transaction) for transaction in transactions]
 
-    def get_all_transaction_schemas(self, db: Session) -> list[TransactionSchema]:
-        return db.query(TransactionSchema).all()
+    def get_transaction(self, transaction_id: int, db: Session, filter: str = "", as_schema: bool = False) -> Transaction:
+        """
+        Retrieve a transaction as a Pydantic model by its ID.
 
+        Args:
+            transaction_id (int): The ID of the transaction.
+            db (Session): The SQLAlchemy database session.
+
+        Returns:
+            Transaction: The transaction as a Pydantic model.
+        """
+        if filter is "":
+            transaction_schema = (
+            db.query(TransactionSchema)
+            .filter(TransactionSchema.id == transaction_id)
+            .options(joinedload(TransactionSchema.category))
+            .first())
+        else:
+            transaction_schema = (
+            db.query(TransactionSchema)
+            .filter(TransactionSchema.owner_account_number == filter)
+            .filter(TransactionSchema.id == transaction_id)
+            .options(joinedload(TransactionSchema.category))
+            .first()
+            )
+
+        if as_schema:
+            return transaction_schema
+        else:
+            return self.transaction_service.schema_to_model(transaction_schema)
+    
     def add_transactions(self, new_transactions: list[TransactionCreate], db: Session):
         """
         Add a new transaction to the database.
@@ -38,7 +73,7 @@ class TransactionService:
         db.commit()
         db.refresh(new_transaction_schema)
   
-    def delete_transaction(self, transaction_id: int, db: Session) -> Transaction | None:
+    def delete_transaction(self, transaction_id: int, db: Session, filter: str = "") -> Transaction | None:
         """
         Delete a transaction by its ID.
 
@@ -49,48 +84,13 @@ class TransactionService:
         Returns:
             Transaction | None: The deleted transaction as a Pydantic model, or None if not found.
         """
-        transaction_schema: TransactionSchema = self.get_transaction_schema(transaction_id=transaction_id, db=db)
+        transaction_schema: TransactionSchema = self.get_transaction(transaction_id=transaction_id, db=db, filter=filter, as_schema=True)
         deleted_transaction = self.schema_to_model(transaction_schema)
         db.delete(transaction_schema)
         db.commit()
         return deleted_transaction
-
-    
-    def get_transaction_schema(self, transaction_id: int, db: Session) -> TransactionSchema:
-        """
-        Retrieve a transaction schema object by its ID.
-
-        Args:
-            transaction_id (int): The ID of the transaction.
-            db (Session): The SQLAlchemy database session.
-
-        Raises:
-            NoResultFound: If the transaction is not found.
-
-        Returns:
-            TransactionSchema: The SQLAlchemy transaction schema object.
-        """
-        transaction_schema = db.query(TransactionSchema).filter(TransactionSchema.id == transaction_id).first()
-
-        if transaction_schema == None:
-            raise NoResultFound()
-        return transaction_schema
         
     
-    def get_transaction(self, transaction_id: int, db: Session) -> Transaction:
-        """
-        Retrieve a transaction as a Pydantic model by its ID.
-
-        Args:
-            transaction_id (int): The ID of the transaction.
-            db (Session): The SQLAlchemy database session.
-
-        Returns:
-            Transaction: The transaction as a Pydantic model.
-        """
-        transaction_schema: TransactionSchema = self.get_transaction_schema(transaction_id=transaction_id, db=db)
-        
-        return self.transaction_service.schema_to_model(transaction_schema)
     
     
     def edit_transaction(self, transaction_id: int, new_transaction: TransactionEdit, db: Session) -> Transaction:
@@ -160,9 +160,9 @@ class TransactionService:
         return TransactionSchema(**model.model_dump())
 
     
-    def calculate_total_amount_of_transactions(self, db: Session) -> dict[str, float]:
+    def calculate_total_amount_of_transactions(self, db: Session, filter: str = "") -> dict[str, float]:
         # Get transactions from the db
-        transaction: list[Transaction] = db.query(TransactionSchema).all()
+        transaction: list[Transaction] = self.get_all_transactions(db=db, filter=filter, as_schema=True)
 
         total_savings: float = 0
         total_income: float = 0
@@ -181,7 +181,6 @@ class TransactionService:
             "total_savings": total_savings
         }
 
-        # print(f"Total amount of transactions: {response}")
         return response
 
              

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Transaction } from "@/assets/types/Transaction";
 import TransactionTable from "@/components/transaction_page/transaction_table";
 import TransactionInfoTiles from "@/components/transaction_page/transaction_info_tiles";
+import { useAccount } from "@/components/context/AccountContext";
 interface totalsType {
   total_income: number;
   total_expenses: number;
@@ -17,10 +18,17 @@ const defaultTotals: totalsType = {
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [totals, setTotals] = useState<totalsType>(defaultTotals);
+  const { activeAccount } = useAccount();
 
   useEffect(() => {
+    if (!activeAccount) return; // Wait until activeAccount is set
     async function get_transactions() {
-      const resp = await fetch("http://localhost:8000/transaction/");
+      const resp = await fetch("http://localhost:8000/transaction/", {
+        headers: {
+          "Content-Type": "application/json",
+          "account-iban": activeAccount?.iban ?? "",
+        },
+      });
       const data = await resp.json();
       setTransactions(
         data.map(
@@ -41,16 +49,22 @@ export default function TransactionsPage() {
       );
     }
     get_transactions();
-  }, []);
+  }, [activeAccount]);
 
   useEffect(() => {
     async function get_totals() {
-      const resp = await fetch("http://localhost:8000/transaction/total/");
+      if (!activeAccount) return; // Wait until activeAccount is set
+      const resp = await fetch("http://localhost:8000/transaction/total/", {
+        headers: {
+          "Content-Type": "application/json",
+          "account-iban": activeAccount?.iban ?? "",
+        },
+      });
       const data = await resp.json();
       setTotals(data);
     }
     get_totals();
-  }, []);
+  }, [activeAccount]);
 
   return (
     <div className='mx-auto max-w-7xl p-4'>

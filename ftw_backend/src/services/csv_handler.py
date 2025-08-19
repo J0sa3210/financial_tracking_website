@@ -141,7 +141,7 @@ class CSV_handler():
         transactions: list[TransactionCreate] = self.convert_df_to_transactions(df)
         self.transaction_service.add_transactions(transactions, db)
 
-        transactions: list[TransactionSchema] = self.transaction_service.get_all_transaction_schemas(db)
+        transactions: list[TransactionSchema] = self.transaction_service.get_all_transactions(db, as_schema=True)
         self.category_service.update_transaction_category(transactions, db)
         db.commit()
         

@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger } from "@radix-ui/reac
 import { Account } from "@/assets/types/Account";
 
 export default function AccountSelector() {
-  const { activeAccount, selectAccount, defaultAccount } = useAccount();
+  const { activeAccount, selectActiveAccount, defaultAccount } = useAccount();
 
   const [accounts, setAccounts] = useState<Account[]>([]);
 
@@ -22,7 +22,7 @@ export default function AccountSelector() {
 
   return (
     <div>
-      <Select onValueChange={selectAccount}>
+      <Select onValueChange={selectActiveAccount}>
         <SelectTrigger className='flex gap-3 items-center'>
           <span className='font-semibold'>{activeAccount?.name}</span>
           <Avatar className='bg-secondary text-secondary-foreground rounded-full items-center justify-center'>

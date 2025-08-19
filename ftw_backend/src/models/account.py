@@ -30,6 +30,11 @@ def is_IBAN(iban: str) -> str:
     
     return iban
 
+def format_IBAN(iban: str) -> str:
+    # Formats IBAN by adding a space every 4 characters
+    iban = iban.replace(" ", "")
+    return " ".join(iban[i:i+4] for i in range(0, len(iban), 4))
+
 class Account(BaseModel):
     id: int
     name: str

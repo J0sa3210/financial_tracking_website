@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, UploadFile, File
+from fastapi import APIRouter, Depends, UploadFile, File, Header
 from sqlalchemy.orm import Session
 from typing import Annotated
 from database.schemas import TransactionSchema
 from models.transaction import Transaction, TransactionView, TransactionEdit
+from models.account import is_IBAN, format_IBAN
 from database import get_db
 from services import TransactionService, CSV_handler
 from exceptions.exceptions import FileTypeExpection
@@ -18,8 +19,13 @@ transaction_controller = APIRouter(
 transaction_service: TransactionService = TransactionService()
 
 @transaction_controller.get("/", response_model=list[TransactionView])
-async def get_all_transactions(db : Session = Depends(get_db)):
-    results = transaction_service.get_all_transactions(db)
+async def get_all_transactions(account_iban: Annotated[str, Header()], db : Session = Depends(get_db)):
+    if not is_IBAN(account_iban):
+        logger.error(f"IBAN is wrong!")
+    account_iban: str = format_IBAN(account_iban)
+    
+    logger.info(f"Getting transactions for IBAN: {account_iban}" )
+    results = transaction_service.get_all_transactions(db, filter=account_iban)
     return results
 
 @transaction_controller.put("/", response_model=Transaction)
@@ -29,18 +35,23 @@ async def add_transactions(transactions: list[TransactionEdit], db : Session = D
     return added_transaction
 
 @transaction_controller.get("/total/", response_model=dict[str, float])
-async def calculate_total_amount(db: Session = Depends(get_db)):
-    total_amount: dict[str, float] = transaction_service.calculate_total_amount_of_transactions(db=db)
+async def calculate_total_amount(account_iban: Annotated[str, Header()], db: Session = Depends(get_db)):
+    if not is_IBAN(account_iban):
+        logger.error(f"IBAN is wrong!")
+    account_iban: str = format_IBAN(account_iban)
+    
+    logger.info(f"Calculating totals for IBAN: {account_iban}" )
+    total_amount: dict[str, float] = transaction_service.calculate_total_amount_of_transactions(db=db, filter=account_iban)
     return total_amount
 
 @transaction_controller.delete("/{transaction_id}", response_model=Transaction)
-async def delete_transaction(transaction_id: int, db: Session = Depends(get_db)):
-    removed_transaction: Transaction = transaction_service.delete_transaction(transaction_id=transaction_id, db=db)
+async def delete_transaction(account_iban: Annotated[str, Header()], transaction_id: int, db: Session = Depends(get_db)):
+    removed_transaction: Transaction = transaction_service.delete_transaction(transaction_id=transaction_id, db=db, filter=account_iban)
     return removed_transaction
 
 @transaction_controller.get("/{transaction_id}", response_model=Transaction)
-async def get_transaction(transaction_id: int, db: Session = Depends(get_db)):
-    selected_transaction: Transaction = transaction_service.get_transaction(transaction_id=transaction_id, db=db)
+async def get_transaction(account_iban: Annotated[str, Header()], transaction_id: int, db: Session = Depends(get_db)):
+    selected_transaction: Transaction = transaction_service.get_transaction(transaction_id=transaction_id, db=db, filter=account_iban)
     return selected_transaction
 
 @transaction_controller.post("/{transaction_id}", response_model=Transaction)

@@ -30,4 +30,8 @@ def get_db():
 # from .schemas import AccountSchema
 # AccountSchema.metadata.drop_all(bind=engine)
 
+# from .schemas import TransactionSchema
+# TransactionSchema.metadata.drop_all(bind=engine)
+
+
 Base.metadata.create_all(bind=engine)
