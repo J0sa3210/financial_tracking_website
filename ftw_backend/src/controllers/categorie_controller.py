@@ -18,32 +18,32 @@ categorie_controller = APIRouter(
 
 categoryService: CategoryService = CategoryService()
 
-@categorie_controller.get("/", )
+@categorie_controller.get("", )
 async def get_all_categories(db: Session = Depends(get_db)):
     result = categoryService.get_all_categories(db=db)
     return result
 
 # Create a new category
-@categorie_controller.post("/", response_model=CategoryView)
+@categorie_controller.post("", response_model=CategoryView)
 def create_category(category: CategoryCreate, db: Session = Depends(get_db)):
     category = categoryService.add_category(new_category=category, db=db)
     return category
 
 # Update an existing category
-@categorie_controller.put("/{category_id}/", response_model=CategoryView)
+@categorie_controller.put("/{category_id}", response_model=CategoryView)
 def update_category(category_id: int, category: CategoryEdit, db: Session = Depends(get_db)):
     logger.debug(f"Category to update: {category}")
     updated_category = categoryService.update_category(category_id=category_id, updated_category=category, db=db)
     return updated_category
 
-@categorie_controller.delete("/{category_id}/", response_model=CategoryView)
+@categorie_controller.delete("/{category_id}", response_model=CategoryView)
 def delete_category(category_id: int, db: Session = Depends(get_db)):
     deleted_category = categoryService.delete_category(category_id=category_id, db=db)
     
     return deleted_category
 
 # Get all names for a category
-@categorie_controller.get("/{category_id}/counterparts/", response_model=list[str])
+@categorie_controller.get("/{category_id}/counterparts", response_model=list[str])
 def read_names(category_id: int, db: Session = Depends(get_db)):
     category = db.query(CategorySchema).filter(CategorySchema.id == category_id).first()
     if not category:

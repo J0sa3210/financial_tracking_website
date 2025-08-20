@@ -15,7 +15,7 @@ export default function CategorySubmenu() {
   // Define the options for the multiselect component
   useEffect(() => {
     async function fetchCounterpartOptions() {
-      const resp = await fetch("http://localhost:8000/counterparts/");
+      const resp = await fetch("http://localhost:8000/counterparts");
       const data = await resp.json();
 
       const options = data.map((cp: Counterpart) => ({
@@ -35,7 +35,7 @@ export default function CategorySubmenu() {
   }, [categories]); // Fetch options only once when categories are loaded or counterparts change
 
   async function get_categories() {
-    const resp = await fetch("http://localhost:8000/categories/");
+    const resp = await fetch("http://localhost:8000/categories");
     const data = await resp.json();
     const loadedCategories = data.map((c: any) => new Category(c.id, c.name, c.description, c.counterparts));
     setCategories(loadedCategories);
@@ -69,7 +69,7 @@ export default function CategorySubmenu() {
 
   const deleteCategory = async (categoryId: number) => {
     try {
-      await fetch("http://localhost:8000/categories/" + categoryId + "/", {
+      await fetch("http://localhost:8000/categories/" + categoryId, {
         method: "DELETE",
       });
     } catch (error) {
@@ -88,7 +88,7 @@ export default function CategorySubmenu() {
     console.log("Category to update: ", category);
 
     try {
-      await fetch("http://localhost:8000/categories/" + category.id + "/", {
+      await fetch("http://localhost:8000/categories/" + category.id, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

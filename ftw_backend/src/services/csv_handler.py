@@ -78,7 +78,7 @@ class CSV_handler():
         """
         # Convert DD/MM/YYYY to YYYY-MM-DD
         try:
-            split_date: str = date_str.split("/")[::-1]
+            split_date: str = date_str.split("")[::-1]
             return "-".join(split_date)  
         except Exception as e:
             logger.error(f"Error converting date to ISO format: {e}")

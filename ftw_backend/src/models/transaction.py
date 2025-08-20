@@ -46,13 +46,8 @@ class TransactionEdit(BaseModel):
     transaction_type: TransactionTypes = TransactionTypes.NONE
     category_id: Optional[int] = None 
 
-    owner_account_number: str
-    counterpart_name: str
-    counterpart_account_number: str
-
-    value: float
-    date_executed: date
-    description: Optional[str] = ""
+    date_executed: Optional[date] = None
+    description: Optional[str] = None
 
     model_config = {'from_attributes': True}
 

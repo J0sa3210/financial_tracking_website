@@ -37,7 +37,7 @@ export default function CreateCategoryDialog({
         description,
         counterparts,
       });
-      const response = await fetch("http://localhost:8000/categories/", {
+      const response = await fetch("http://localhost:8000/categories", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

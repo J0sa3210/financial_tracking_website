@@ -11,7 +11,7 @@ export default function AccountSelector() {
   const [accounts, setAccounts] = useState<Account[]>([]);
 
   async function fetchAccounts() {
-    const resp = await fetch("http://localhost:8000/accounts/");
+    const resp = await fetch("http://localhost:8000/account");
     const data = await resp.json();
 
     setAccounts(data);
@@ -19,6 +19,8 @@ export default function AccountSelector() {
   useEffect(() => {
     fetchAccounts();
   }, []); // Fetch options only once when accounts are loaded or counterparts change
+
+  if (!accounts) return null;
 
   return (
     <div>

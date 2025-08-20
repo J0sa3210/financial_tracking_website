@@ -7,11 +7,11 @@ import SettingsPage from "./pages/settings.tsx";
 
 const router = createBrowserRouter([
   {
-    path: "/",
+    path: "",
     element: React.createElement(Layout),
     children: [
       {
-        path: "/",
+        path: "",
         element: React.createElement(Home),
       },
       {

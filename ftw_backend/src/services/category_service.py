@@ -16,13 +16,12 @@ class CategoryService():
         self.counterpart_service: CounterpartService = CounterpartService()
         self.transaction_service: TransactionService = TransactionService()
 
-    def get_all_categories(self, db: Session) -> list[Category]:
+    def get_all_categories(self, db: Session, as_schema: bool = False) -> list[Category]:
         categories = db.query(CategorySchema).options(joinedload(CategorySchema.transactions)).all()
-
-        return [Category.model_validate(category) for category in categories]
-        
-    def get_all_category_schemas(self, db: Session) -> list[CategorySchema]:
-        return db.query(CategorySchema).all()
+        if as_schema:
+            return categories
+        else:
+            return [Category.model_validate(category) for category in categories]
 
     def add_category(self, new_category: CategoryCreate, db: Session) -> CategorySchema:
         """
@@ -35,7 +34,7 @@ class CategoryService():
         db.refresh(category_instance)
         
         # Update all transaction categories
-        transaction_schemas: list[Transaction] = self.transaction_service.get_all_transaction_schemas(db)
+        transaction_schemas: list[Transaction] = self.transaction_service.get_all_transactions(db, as_schema=True)
         self.update_transaction_category(transaction_schemas, db)
         db.commit()
 
@@ -51,13 +50,12 @@ class CategoryService():
         db.refresh(updated_category)
 
         # Update all transaction categories
-        transactions: list[TransactionSchema] = self.transaction_service.get_all_transaction_schemas(db)
+        transactions: list[TransactionSchema] = self.transaction_service.get_all_transactions(db, as_schema=True)
         self.update_transaction_category(transactions, db)
         db.commit()
 
         return updated_category
 
-    @staticmethod
     def convert_category_data(category_instance: CategorySchema, new_category: CategoryCreate, db: Session) -> CategorySchema:
         """
         Update an existing category object with new data.
@@ -82,7 +80,7 @@ class CategoryService():
         db.delete(existing_category)
         db.commit()
 
-        transactions: list[TransactionSchema] = self.transaction_service.get_all_transaction_schemas(db)
+        transactions: list[TransactionSchema] = self.transaction_service.get_all_transactions(db, as_schema=True)
         self.update_transaction_category(transactions, db)
         db.commit()
 
@@ -90,7 +88,7 @@ class CategoryService():
     
     def update_transaction_category(self, transactions: list[TransactionSchema], db: Session):
         # Create mapping between category and id
-        categories: list[Category] = self.get_all_category_schemas(db)
+        categories: list[Category] = self.get_all_categories(db, as_schema=True)
         category_map: dict[int, Category] = {category.id: category for category in categories}
 
         # Create a mapping between counterpart name and category id

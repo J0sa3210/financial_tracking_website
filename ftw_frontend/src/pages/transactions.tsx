@@ -3,6 +3,8 @@ import { Transaction } from "@/assets/types/Transaction";
 import TransactionTable from "@/components/transaction_page/transaction_table";
 import TransactionInfoTiles from "@/components/transaction_page/transaction_info_tiles";
 import { useAccount } from "@/components/context/AccountContext";
+import TransactionEditDialog from "@/components/transaction_page/transaction_edit_dialog";
+
 interface totalsType {
   total_income: number;
   total_expenses: number;
@@ -18,43 +20,45 @@ const defaultTotals: totalsType = {
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [totals, setTotals] = useState<totalsType>(defaultTotals);
+  const [editTransactionId, setEditTransactionId] = useState<number | null>(null);
   const { activeAccount } = useAccount();
+
+  async function get_transactions() {
+    const resp = await fetch("http://localhost:8000/transaction", {
+      headers: {
+        "Content-Type": "application/json",
+        "account-iban": activeAccount?.iban ?? "",
+      },
+    });
+    const data = await resp.json();
+    setTransactions(
+      data.map(
+        (t: any) =>
+          new Transaction(
+            t.id,
+            t.value,
+            t.description,
+            t.date_executed,
+            t.transaction_type,
+            t.category_id,
+            t.category_name,
+            t.owner_account_number,
+            t.counterpart_name,
+            t.counterpart_account_number
+          )
+      )
+    );
+  }
 
   useEffect(() => {
     if (!activeAccount) return; // Wait until activeAccount is set
-    async function get_transactions() {
-      const resp = await fetch("http://localhost:8000/transaction/", {
-        headers: {
-          "Content-Type": "application/json",
-          "account-iban": activeAccount?.iban ?? "",
-        },
-      });
-      const data = await resp.json();
-      setTransactions(
-        data.map(
-          (t: any) =>
-            new Transaction(
-              t.id,
-              t.value,
-              t.description,
-              t.date_executed,
-              t.transaction_type,
-              t.category_id,
-              t.category_name,
-              t.owner_account_number,
-              t.counterpart_name,
-              t.counterpart_account_number
-            )
-        )
-      );
-    }
     get_transactions();
   }, [activeAccount]);
 
   useEffect(() => {
     async function get_totals() {
       if (!activeAccount) return; // Wait until activeAccount is set
-      const resp = await fetch("http://localhost:8000/transaction/total/", {
+      const resp = await fetch("http://localhost:8000/transaction/total", {
         headers: {
           "Content-Type": "application/json",
           "account-iban": activeAccount?.iban ?? "",
@@ -66,13 +70,31 @@ export default function TransactionsPage() {
     get_totals();
   }, [activeAccount]);
 
+  async function resetTable() {
+    get_transactions();
+    setEditTransactionId(null);
+  }
+
   return (
     <div className='mx-auto max-w-7xl p-4'>
       <TransactionInfoTiles
         transactions={transactions}
         totals={totals}
       />
-      <TransactionTable transactions={transactions} />
+
+      <TransactionTable
+        transactions={transactions}
+        onEditTransaction={setEditTransactionId}
+      />
+
+      <TransactionEditDialog
+        transaction={
+          transactions.filter((t: Transaction) => {
+            return t.id == editTransactionId;
+          })[0]
+        }
+        onSaveEdit={resetTable}
+      />
     </div>
   );
 }

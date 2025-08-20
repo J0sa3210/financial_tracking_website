@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, UploadFile, File, Header
 from sqlalchemy.orm import Session
 from typing import Annotated
 from database.schemas import TransactionSchema
-from models.transaction import Transaction, TransactionView, TransactionEdit
+from models.transaction import Transaction, TransactionView, TransactionCreate, TransactionEdit
 from models.account import is_IBAN, format_IBAN
 from database import get_db
 from services import TransactionService, CSV_handler
@@ -18,23 +18,24 @@ transaction_controller = APIRouter(
 
 transaction_service: TransactionService = TransactionService()
 
-@transaction_controller.get("/", response_model=list[TransactionView])
+@transaction_controller.get("", response_model=list[TransactionView])
 async def get_all_transactions(account_iban: Annotated[str, Header()], db : Session = Depends(get_db)):
+    logger.info(f"Getting transactions for IBAN: {account_iban}" )
+
     if not is_IBAN(account_iban):
         logger.error(f"IBAN is wrong!")
     account_iban: str = format_IBAN(account_iban)
     
-    logger.info(f"Getting transactions for IBAN: {account_iban}" )
     results = transaction_service.get_all_transactions(db, filter=account_iban)
     return results
 
-@transaction_controller.put("/", response_model=Transaction)
-async def add_transactions(transactions: list[TransactionEdit], db : Session = Depends(get_db)):
+@transaction_controller.put("", response_model=TransactionView)
+async def add_transactions(transactions: list[TransactionCreate], db : Session = Depends(get_db)):
     added_transaction: Transaction = transaction_service.add_transactions(transactions, db=db)
        
     return added_transaction
 
-@transaction_controller.get("/total/", response_model=dict[str, float])
+@transaction_controller.get("/total", response_model=dict[str, float])
 async def calculate_total_amount(account_iban: Annotated[str, Header()], db: Session = Depends(get_db)):
     if not is_IBAN(account_iban):
         logger.error(f"IBAN is wrong!")
@@ -59,7 +60,7 @@ async def edit_transaction(transaction_id: int, new_transaction: TransactionEdit
     changed_transaction: Transaction = transaction_service.edit_transaction(transaction_id, new_transaction, db)
     return changed_transaction
 
-@transaction_controller.post("/upload_csv/")
+@transaction_controller.post("/upload_csv")
 async def upload_csv(file: UploadFile = File(...), db: Session = Depends(get_db)):
     if not file.filename.endswith('.csv'):
         raise FileTypeExpection(file_type=file.filename.split('.')[-1])

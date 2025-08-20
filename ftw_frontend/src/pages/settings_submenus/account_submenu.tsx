@@ -17,7 +17,7 @@ export default function AccountSubmenu() {
   }
 
   async function fetchAccounts() {
-    const resp = await fetch("http://localhost:8000/accounts/");
+    const resp = await fetch("http://localhost:8000/account");
     const data = await resp.json();
 
     setAccounts(data);
@@ -28,7 +28,7 @@ export default function AccountSubmenu() {
 
   const deleteAccount = async (account_id: number) => {
     try {
-      await fetch("http://localhost:8000/accounts/" + account_id, {
+      await fetch("http://localhost:8000/account/" + account_id, {
         method: "DELETE",
       });
     } catch (error) {

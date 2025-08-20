@@ -32,6 +32,7 @@ import { Drawer, DrawerContent, DrawerTrigger } from "../ui/drawer";
 
 interface TransactionListProps {
   transactions: Transaction[];
+  onEditTransaction: (id: number) => void; // new
 }
 
 const currencyFormatter = new Intl.NumberFormat("nl-BE", {
@@ -123,7 +124,7 @@ const getColumns = (): ColumnDef<Transaction>[] => [
 // Component
 // --------------------- //
 
-export default function TransactionTable({ transactions }: TransactionListProps) {
+export default function TransactionTable({ transactions, onEditTransaction }: TransactionListProps) {
   const [rowSelection, setRowSelection] = React.useState({});
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
@@ -216,7 +217,9 @@ export default function TransactionTable({ transactions }: TransactionListProps)
                 className={`hover:bg-accent cursor-pointer ${
                   idx % 2 === 0 ? "bg-background-table-1" : "bg-background-table-2"
                 }`}
-                data-state={row.getIsSelected() && "selected"}>
+                data-state={row.getIsSelected() && "selected"}
+                onClick={() => onEditTransaction(row.original.id)} // now delegates up
+              >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
                 ))}

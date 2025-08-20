@@ -18,3 +18,7 @@ class ObjectNotFoundException(Exception):
 class AccountNotFoundException(ObjectNotFoundException):
     def __init__(self, object_identifier):
         super().__init__("Account", object_identifier)
+
+class CategoryNotFoundException(ObjectNotFoundException):
+    def __init__(self, object_identifier):
+        super().__init__("Category", object_identifier)

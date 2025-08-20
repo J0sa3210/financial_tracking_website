@@ -12,7 +12,7 @@ counterpart_controller = APIRouter(
     prefix="/counterparts",
 )
 
-@counterpart_controller.get("/")
+@counterpart_controller.get("")
 def get_all_counterparts(db: Session = Depends(get_db)):
     """
     Get all counterparts.
@@ -20,7 +20,7 @@ def get_all_counterparts(db: Session = Depends(get_db)):
     counterparts = db.query(CounterpartSchema).all()
     return counterparts
 
-@counterpart_controller.get("/names/")
+@counterpart_controller.get("/names")
 def get_counterpart_names(db: Session = Depends(get_db)):
     """
     Get all counterpart names.
@@ -29,7 +29,7 @@ def get_counterpart_names(db: Session = Depends(get_db)):
     return [counterpart.name for counterpart in counterparts]
 
 # Create a new counterpart for a category
-@counterpart_controller.post("/")
+@counterpart_controller.post("")
 def create_counterpart(counterpart: CounterpartCreate, db: Session = Depends(get_db)):
     db_counterpart = CounterpartSchema(name=counterpart.name, category_id=counterpart.category_id)
     db.add(db_counterpart)

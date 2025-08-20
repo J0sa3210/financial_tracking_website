@@ -20,7 +20,7 @@ export default function CreateAccountDialog({ onCreate }: { onCreate?: () => voi
         name: accountName,
         iban: bankAccount,
       });
-      const response = await fetch("http://localhost:8000/accounts/", {
+      const response = await fetch("http://localhost:8000/accounts", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

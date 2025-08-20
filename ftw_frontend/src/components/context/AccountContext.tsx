@@ -24,7 +24,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     if (stored) {
       try {
         const account = JSON.parse(stored);
-        const resp = await fetch("http://localhost:8000/accounts/" + account.id + "/");
+        const resp = await fetch("http://localhost:8000/account/" + account.id);
         const data = await resp.json();
 
         setDefaultAccount(data);
@@ -46,7 +46,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
 
   async function selectDefaultAccount(account_id: string) {
     try {
-      const resp = await fetch("http://localhost:8000/accounts/" + account_id + "/");
+      const resp = await fetch("http://localhost:8000/account/" + account_id);
       const data = await resp.json();
       setDefaultAccount(data);
       localStorage.setItem("defaultAccount", JSON.stringify(data));
@@ -60,7 +60,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   async function selectActiveAccount(account_id: string) {
     try {
       // Get the account
-      const resp = await fetch("http://localhost:8000/accounts/" + account_id + "/");
+      const resp = await fetch("http://localhost:8000/account/" + account_id);
       const data = await resp.json();
 
       // Set it as new active account

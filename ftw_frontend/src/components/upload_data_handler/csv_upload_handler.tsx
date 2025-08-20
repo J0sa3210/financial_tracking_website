@@ -29,22 +29,20 @@ export default function CsvUploadHandler() {
     formData.append("file", file);
 
     const options: AxiosRequestConfig = {
-      url: "http://localhost:8000/transaction/upload_csv/",
+      url: "http://localhost:8000/transaction/upload_csv",
       data: formData,
       method: "POST",
       headers: {
         "Content-Type": "multipart/form-data",
       },
       onUploadProgress: (progressEvent: AxiosProgressEvent) => {
-        const progress = progressEvent.total
-          ? Math.round((progressEvent.loaded * 100) / progressEvent.total)
-          : 0;
+        const progress = progressEvent.total ? Math.round((progressEvent.loaded * 100) / progressEvent.total) : 0;
         setUploadProgress(progress);
       },
     };
 
     await axios
-      .post("http://localhost:8000/transaction/upload_csv/", formData, options)
+      .post("http://localhost:8000/transaction/upload_csv", formData, options)
       .then(() => {
         setStatus("success");
         setUploadProgress(100);
@@ -53,10 +51,7 @@ export default function CsvUploadHandler() {
       .catch((error) => {
         setStatus("error");
         console.error(error);
-        setErrorMsg(
-          error.response?.data?.detail ||
-            "An error occurred while uploading the file."
-        );
+        setErrorMsg(error.response?.data?.detail || "An error occurred while uploading the file.");
         setUploadProgress(0);
       });
   }
@@ -66,14 +61,21 @@ export default function CsvUploadHandler() {
       <DialogHeader className='px-2'>
         <DialogTitle className='pb-2'>Add transactions</DialogTitle>
       </DialogHeader>
-      <Input type='file' accept='.csv' id='file' onChange={handeFileChange} />
+      <Input
+        type='file'
+        accept='.csv'
+        id='file'
+        onChange={handeFileChange}
+      />
       {file && status === "idle" && (
         <div className=' pt-4 flex justify-between items-center'>
           <span className='flex gap-2'>
             <p className='font-semibold'>File size:</p>
             <p> {(file.size / 1024).toFixed(2)} Kb</p>
           </span>
-          <Button size='sm' onClick={handleFileUpload}>
+          <Button
+            size='sm'
+            onClick={handleFileUpload}>
             Upload
           </Button>
         </div>
@@ -81,18 +83,17 @@ export default function CsvUploadHandler() {
       {status === "uploading" && (
         <div>
           <div className='pl-2 pt-1 text-yellow-400'>Uploading file...</div>
-          <Progress value={uploadProgress} className='mt-2' />
+          <Progress
+            value={uploadProgress}
+            className='mt-2'
+          />
         </div>
       )}
       {status === "error" && (
-        <div className='pl-2 pt-1 text-red-600'>
-          {errorMsg || "An error occurred while uploading the file."}
-        </div>
+        <div className='pl-2 pt-1 text-red-600'>{errorMsg || "An error occurred while uploading the file."}</div>
       )}
       {status === "success" && (
-        <div className='pl-2 pt-1 text-green-600 font-semibold'>
-          Succesfully uploaded file...
-        </div>
+        <div className='pl-2 pt-1 text-green-600 font-semibold'>Succesfully uploaded file...</div>
       )}
     </div>
   );

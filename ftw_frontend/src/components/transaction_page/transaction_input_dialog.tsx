@@ -16,9 +16,9 @@ export default function InputDialog() {
         open={showDialog}
         onOpenChange={setShowDialog}>
         <DialogTrigger asChild>
-          <Button className='bg-primary text-primary-foreground hover:bg-primary/90'>
-            <FaPlus className='mr-2' />
-            Add Transactions
+          <Button className='bg-primary text-primary-foreground text-lg hover:bg-primary/90'>
+            <FaPlus />
+            Transactions
           </Button>
         </DialogTrigger>
         <DialogContent>
