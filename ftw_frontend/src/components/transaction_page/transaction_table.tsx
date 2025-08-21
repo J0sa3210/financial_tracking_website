@@ -52,18 +52,20 @@ const dateTimeFormatter = new Intl.DateTimeFormat("nl-BE", {
 const getColumns = (): ColumnDef<Transaction>[] => [
   {
     id: "select",
-    header: ({ table }: { table: ReactTable<Transaction> }) => (
+    header: ({ table }) => (
       <Checkbox
         checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
         onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
         aria-label='Select all'
+        onClick={(e) => e.stopPropagation()} // prevent row click
       />
     ),
-    cell: ({ row }: { row: Row<Transaction> }) => (
+    cell: ({ row }) => (
       <Checkbox
         checked={row.getIsSelected()}
         onCheckedChange={(value) => row.toggleSelected(!!value)}
         aria-label='Select row'
+        onClick={(e) => e.stopPropagation()} // prevent row click
       />
     ),
     enableSorting: false,
