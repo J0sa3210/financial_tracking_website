@@ -7,7 +7,11 @@ import { Progress } from "../ui/progress";
 
 type uploadStatus = "idle" | "uploading" | "success" | "error";
 
-export default function CsvUploadHandler() {
+interface CsvUploadHandlerProps {
+  onSuccesfullUpload?: () => void;
+}
+
+export default function CsvUploadHandler(props: CsvUploadHandlerProps) {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState<uploadStatus>("idle");
@@ -47,10 +51,13 @@ export default function CsvUploadHandler() {
         setStatus("success");
         setUploadProgress(100);
         setFile(null);
+        if (props.onSuccesfullUpload) {
+          props.onSuccesfullUpload();
+        }
       })
       .catch((error) => {
         setStatus("error");
-        console.error(error);
+        console.log(error);
         setErrorMsg(error.response?.data?.detail || "An error occurred while uploading the file.");
         setUploadProgress(0);
       });

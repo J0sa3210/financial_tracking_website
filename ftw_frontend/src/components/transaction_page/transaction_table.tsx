@@ -12,14 +12,7 @@ import {
 
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { IoFilter } from "react-icons/io5";
-import type {
-  ColumnDef,
-  Row,
-  Table as ReactTable,
-  VisibilityState,
-  SortingState,
-  ColumnFiltersState,
-} from "@tanstack/react-table";
+import type { ColumnDef, VisibilityState, SortingState, ColumnFiltersState } from "@tanstack/react-table";
 
 import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -29,10 +22,13 @@ import TransactionInput from "@/components/transaction_page/transaction_input_di
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { Drawer, DrawerContent, DrawerTrigger } from "../ui/drawer";
+import type { RowSelectionState } from "@tanstack/react-table";
+import { FaTrash } from "react-icons/fa";
 
 interface TransactionListProps {
   transactions: Transaction[];
   onEditTransaction: (id: number) => void; // new
+  refreshTransactions: () => void;
 }
 
 const currencyFormatter = new Intl.NumberFormat("nl-BE", {
@@ -72,9 +68,9 @@ const getColumns = (): ColumnDef<Transaction>[] => [
     enableHiding: false,
   },
   {
-    accessorKey: "id",
+    id: "id",
     header: "ID",
-    cell: (info) => info.getValue(),
+    cell: ({ row }) => row.index + 1, // display index + 1
   },
   {
     accessorKey: "transaction_type",
@@ -126,8 +122,13 @@ const getColumns = (): ColumnDef<Transaction>[] => [
 // Component
 // --------------------- //
 
-export default function TransactionTable({ transactions, onEditTransaction }: TransactionListProps) {
-  const [rowSelection, setRowSelection] = React.useState({});
+export default function TransactionTable({
+  transactions,
+  onEditTransaction,
+  refreshTransactions,
+}: TransactionListProps) {
+  const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
+  const [selectedTransactions, setSelectedTransactions] = React.useState<Transaction[]>([]);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
@@ -162,6 +163,36 @@ export default function TransactionTable({ transactions, onEditTransaction }: Tr
     },
   });
 
+  async function deleteTransaction(transaction_id: number) {
+    try {
+      await fetch("http://localhost:8000/transaction/" + transaction_id, {
+        method: "DELETE",
+      });
+      setRowSelection({});
+    } catch (error) {
+      console.error("Error deleting transaction:", error);
+      alert("An error occurred while deleting the account");
+    }
+  }
+
+  async function deleteSelectedTransactions() {
+    selectedTransactions.map(async (t: Transaction) => {
+      await deleteTransaction(t.id);
+    });
+    refreshTransactions();
+  }
+
+  async function deleteAllTransactions() {
+    transactions.map(async (t: Transaction) => {
+      await deleteTransaction(t.id);
+    });
+    refreshTransactions();
+  }
+
+  React.useEffect(() => {
+    setSelectedTransactions(table.getSelectedRowModel().rows.map((row) => row.original));
+  }, [rowSelection]);
+
   return (
     <div>
       <span className='flex justify-between items-center my-2'>
@@ -187,7 +218,28 @@ export default function TransactionTable({ transactions, onEditTransaction }: Tr
             </Drawer>
           </div>
         </span>
-        <TransactionInput />
+        <span className='flex gap-1 items-center'>
+          {selectedTransactions.length > 0 ? (
+            <Button
+              type='button'
+              variant='destructive'
+              className='text-lg'
+              onClick={deleteSelectedTransactions}>
+              <FaTrash />
+              Delete selected
+            </Button>
+          ) : (
+            <Button
+              type='button'
+              variant='destructive'
+              className='text-lg'
+              onClick={deleteAllTransactions}>
+              <FaTrash />
+              Delete All
+            </Button>
+          )}
+          <TransactionInput />
+        </span>
       </span>
       <div className='overflow-x-auto rounded-lg shadow border my-2'>
         <Table>

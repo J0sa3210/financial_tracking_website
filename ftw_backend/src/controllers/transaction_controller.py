@@ -45,20 +45,15 @@ async def calculate_total_amount(account_iban: Annotated[str, Header()], db: Ses
     total_amount: dict[str, float] = transaction_service.calculate_total_amount_of_transactions(db=db, filter=account_iban)
     return total_amount
 
-@transaction_controller.delete("/{transaction_id}", response_model=Transaction)
-async def delete_transaction(account_iban: Annotated[str, Header()], transaction_id: int, db: Session = Depends(get_db)):
-    removed_transaction: Transaction = transaction_service.delete_transaction(transaction_id=transaction_id, db=db, filter=account_iban)
+@transaction_controller.delete("/{transaction_id}", response_model=TransactionView)
+async def delete_transaction( transaction_id: int, db: Session = Depends(get_db)):
+    removed_transaction: Transaction = transaction_service.delete_transaction(transaction_id=transaction_id, db=db)
     return removed_transaction
 
-@transaction_controller.get("/{transaction_id}", response_model=Transaction)
+@transaction_controller.get("/{transaction_id}", response_model=TransactionView)
 async def get_transaction(account_iban: Annotated[str, Header()], transaction_id: int, db: Session = Depends(get_db)):
     selected_transaction: Transaction = transaction_service.get_transaction(transaction_id=transaction_id, db=db, filter=account_iban)
     return selected_transaction
-
-@transaction_controller.post("/{transaction_id}", response_model=Transaction)
-async def edit_transaction(transaction_id: int, new_transaction: TransactionEdit, db: Session = Depends(get_db)):
-    changed_transaction: Transaction = transaction_service.edit_transaction(transaction_id, new_transaction, db)
-    return changed_transaction
 
 @transaction_controller.post("/upload_csv")
 async def upload_csv(file: UploadFile = File(...), db: Session = Depends(get_db)):
@@ -67,4 +62,10 @@ async def upload_csv(file: UploadFile = File(...), db: Session = Depends(get_db)
     
     file_handler: CSV_handler = CSV_handler(file=file)
     file_handler.process_file(db=db)
+    
+@transaction_controller.post("/{transaction_id}", response_model=TransactionView)
+async def edit_transaction(transaction_id: int, new_transaction: TransactionEdit, db: Session = Depends(get_db)):
+    changed_transaction: Transaction = transaction_service.edit_transaction(transaction_id, new_transaction, db)
+    return changed_transaction
+
     

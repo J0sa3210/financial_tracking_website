@@ -85,6 +85,7 @@ export default function TransactionsPage() {
       <TransactionTable
         transactions={transactions}
         onEditTransaction={setEditTransactionId}
+        refreshTransactions={get_transactions}
       />
 
       <TransactionEditDialog

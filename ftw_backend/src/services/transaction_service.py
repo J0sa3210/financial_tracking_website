@@ -73,7 +73,7 @@ class TransactionService:
         db.commit()
         db.refresh(new_transaction_schema)
   
-    def delete_transaction(self, transaction_id: int, db: Session, filter: str = "") -> Transaction | None:
+    def delete_transaction(self, transaction_id: int, db: Session) -> Transaction | None:
         """
         Delete a transaction by its ID.
 
@@ -84,7 +84,7 @@ class TransactionService:
         Returns:
             Transaction | None: The deleted transaction as a Pydantic model, or None if not found.
         """
-        transaction_schema: TransactionSchema = self.get_transaction(transaction_id=transaction_id, db=db, filter=filter, as_schema=True)
+        transaction_schema: TransactionSchema = self.get_transaction(transaction_id=transaction_id, db=db, as_schema=True)
         deleted_transaction = self.schema_to_model(transaction_schema)
         db.delete(transaction_schema)
         db.commit()

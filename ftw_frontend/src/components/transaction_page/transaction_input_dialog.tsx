@@ -10,6 +10,11 @@ import { DialogDescription } from "@radix-ui/react-dialog";
 export default function InputDialog() {
   const [showDialog, setShowDialog] = useState(false);
 
+  async function finishUpload() {
+    setShowDialog(false);
+    window.location.reload();
+  }
+
   return (
     <div className='flex py-2 justify-end'>
       <Dialog
@@ -31,7 +36,7 @@ export default function InputDialog() {
             <TabsContent
               value='csv'
               className='pt-4'>
-              <CsvUploadHandler />
+              <CsvUploadHandler onSuccesfullUpload={finishUpload} />
             </TabsContent>
           </Tabs>
         </DialogContent>

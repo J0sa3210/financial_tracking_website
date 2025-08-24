@@ -42,7 +42,7 @@ class CSV_handler():
     def clean_df(self, df: DataFrame) -> DataFrame:
         useful_columns =  [
         "Rekening",
-        "Valutadatum",
+        "Boekingsdatum",
         "Rekening tegenpartij",
         "Naam tegenpartij bevat",
         "Transactie",
@@ -78,7 +78,7 @@ class CSV_handler():
         """
         # Convert DD/MM/YYYY to YYYY-MM-DD
         try:
-            split_date: str = date_str.split("")[::-1]
+            split_date: str = date_str.split("/")[::-1]
             return "-".join(split_date)  
         except Exception as e:
             logger.error(f"Error converting date to ISO format: {e}")
@@ -90,7 +90,7 @@ class CSV_handler():
         for _, row in df.iterrows():
 
             transaction_type: TransactionTypes = self.get_transaction_type(row["Bedrag"], row["Rekening tegenpartij"])
-            date: str = self.convert_to_ISO_format(row["Valutadatum"])
+            date: str = self.convert_to_ISO_format(row["Boekingsdatum"])
 
             transaction: TransactionCreate = TransactionCreate(
                 transaction_type = transaction_type,
