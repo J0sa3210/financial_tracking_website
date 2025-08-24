@@ -90,6 +90,21 @@ class TransactionService:
         db.commit()
         return deleted_transaction
     
+    def delete_multiple_transactions(self, transaction_ids: list[int], db: Session) -> None:
+        """
+        Delete multiple transactions by their IDs.
+
+        Args:
+            transaction_ids (list[int]): The IDs of the transactions to delete.
+            db (Session): The SQLAlchemy database session.
+
+        Returns:
+            None
+        """
+        db.query(TransactionSchema).filter(TransactionSchema.id.in_(transaction_ids)).delete(synchronize_session=False)
+        db.commit()
+        return None
+    
     def edit_transaction(self, transaction_id: int, new_transaction: TransactionEdit, db: Session) -> Transaction:
         """
         Edit an existing transaction.

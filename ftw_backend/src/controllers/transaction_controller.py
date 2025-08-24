@@ -5,11 +5,10 @@ from database.schemas import TransactionSchema
 from models.transaction import Transaction, TransactionView, TransactionCreate, TransactionEdit
 from models.account import is_IBAN, format_IBAN
 from database import get_db
-from services import TransactionService, CSV_handler
+from services import TransactionService, CSV_handler, AccountService
 from exceptions.exceptions import FileTypeExpection
 from utils.logging import setup_loggers
 from logging import Logger
-
 logger: Logger = setup_loggers()
 
 transaction_controller = APIRouter(
@@ -17,9 +16,13 @@ transaction_controller = APIRouter(
 )
 
 transaction_service: TransactionService = TransactionService()
+account_service: AccountService = AccountService()
 
 @transaction_controller.get("", response_model=list[TransactionView])
-async def get_all_transactions(account_iban: Annotated[str, Header()], db : Session = Depends(get_db)):
+async def get_all_transactions(active_account_id: Annotated[str, Header()], db : Session = Depends(get_db)):
+    active_account = account_service.get_account(db=db, account_id=int(active_account_id))    
+    account_iban: str = active_account.iban
+
     logger.info(f"Getting transactions for IBAN: {account_iban}" )
 
     if not is_IBAN(account_iban):
@@ -35,8 +38,17 @@ async def add_transactions(transactions: list[TransactionCreate], db : Session =
        
     return added_transaction
 
+@transaction_controller.delete("", response_model=dict[str, str])
+async def delete_multiple_transactions(transaction_ids: list[int], db: Session = Depends(get_db)):
+    transaction_service.delete_multiple_transactions(transaction_ids=transaction_ids, db=db)
+    return {"detail": f"Transactions with ids {transaction_ids} have been deleted."}
+
 @transaction_controller.get("/total", response_model=dict[str, float])
-async def calculate_total_amount(account_iban: Annotated[str, Header()], db: Session = Depends(get_db)):
+async def calculate_total_amount(active_account_id: Annotated[str, Header()], db: Session = Depends(get_db)):
+    active_account = account_service.get_account(db=db, account_id=int(active_account_id))    
+    account_iban: str = active_account.iban
+    
+    
     if not is_IBAN(account_iban):
         logger.error(f"IBAN is wrong!")
     account_iban: str = format_IBAN(account_iban)
@@ -51,7 +63,10 @@ async def delete_transaction( transaction_id: int, db: Session = Depends(get_db)
     return removed_transaction
 
 @transaction_controller.get("/{transaction_id}", response_model=TransactionView)
-async def get_transaction(account_iban: Annotated[str, Header()], transaction_id: int, db: Session = Depends(get_db)):
+async def get_transaction(active_account_id: Annotated[str, Header()], transaction_id: int, db: Session = Depends(get_db)):
+    active_account = account_service.get_account(db=db, account_id=int(active_account_id))    
+    account_iban: str = active_account.iban
+    
     selected_transaction: Transaction = transaction_service.get_transaction(transaction_id=transaction_id, db=db, filter=account_iban)
     return selected_transaction
 

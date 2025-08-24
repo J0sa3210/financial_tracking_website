@@ -24,6 +24,7 @@ import { Button } from "../ui/button";
 import { Drawer, DrawerContent, DrawerTrigger } from "../ui/drawer";
 import type { RowSelectionState } from "@tanstack/react-table";
 import { FaTrash } from "react-icons/fa";
+import { set } from "date-fns";
 
 interface TransactionListProps {
   transactions: Transaction[];
@@ -128,7 +129,7 @@ export default function TransactionTable({
   refreshTransactions,
 }: TransactionListProps) {
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
-  const [selectedTransactions, setSelectedTransactions] = React.useState<Transaction[]>([]);
+  const [selectedTransactions, setSelectedTransactions] = React.useState<number[]>([]);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
@@ -163,34 +164,34 @@ export default function TransactionTable({
     },
   });
 
-  async function deleteTransaction(transaction_id: number) {
-    try {
-      await fetch("http://localhost:8000/transaction/" + transaction_id, {
-        method: "DELETE",
-      });
-      setRowSelection({});
-    } catch (error) {
-      console.error("Error deleting transaction:", error);
-      alert("An error occurred while deleting the account");
-    }
+  async function deleteTransactions(ids: number[]) {
+    await fetch("http://localhost:8000/transaction", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(ids),
+    });
   }
 
   async function deleteSelectedTransactions() {
-    selectedTransactions.map(async (t: Transaction) => {
-      await deleteTransaction(t.id);
-    });
+    await deleteTransactions(selectedTransactions);
+    setSelectedTransactions([]);
+    setRowSelection({}); // clear selection
     refreshTransactions();
   }
 
   async function deleteAllTransactions() {
-    transactions.map(async (t: Transaction) => {
-      await deleteTransaction(t.id);
+    const transaction_ids: number[] = [];
+    transactions.map((t: Transaction) => {
+      transaction_ids.push(t.id);
     });
+    deleteTransactions(transaction_ids);
     refreshTransactions();
   }
 
   React.useEffect(() => {
-    setSelectedTransactions(table.getSelectedRowModel().rows.map((row) => row.original));
+    setSelectedTransactions(table.getSelectedRowModel().rows.map((row) => row.original.id));
   }, [rowSelection]);
 
   return (

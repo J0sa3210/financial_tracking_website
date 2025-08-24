@@ -27,7 +27,7 @@ export default function TransactionsPage() {
     const resp = await fetch("http://localhost:8000/transaction", {
       headers: {
         "Content-Type": "application/json",
-        "account-iban": activeAccount?.iban ?? "",
+        "active-account-id": activeAccount?.id.toString() ?? "",
       },
     });
     const data = await resp.json();
@@ -50,28 +50,30 @@ export default function TransactionsPage() {
     );
   }
 
+  async function get_totals() {
+    if (!activeAccount) return; // Wait until activeAccount is set
+    const resp = await fetch("http://localhost:8000/transaction/total", {
+      headers: {
+        "Content-Type": "application/json",
+        "active-account-id": activeAccount?.id.toString() ?? "",
+      },
+    });
+    const data = await resp.json();
+    setTotals(data);
+  }
+
   useEffect(() => {
     if (!activeAccount) return; // Wait until activeAccount is set
     get_transactions();
   }, [activeAccount]);
 
   useEffect(() => {
-    async function get_totals() {
-      if (!activeAccount) return; // Wait until activeAccount is set
-      const resp = await fetch("http://localhost:8000/transaction/total", {
-        headers: {
-          "Content-Type": "application/json",
-          "account-iban": activeAccount?.iban ?? "",
-        },
-      });
-      const data = await resp.json();
-      setTotals(data);
-    }
     get_totals();
   }, [activeAccount]);
 
   async function resetTable() {
     get_transactions();
+    get_totals();
     setEditTransactionId(null);
   }
 
@@ -85,7 +87,7 @@ export default function TransactionsPage() {
       <TransactionTable
         transactions={transactions}
         onEditTransaction={setEditTransactionId}
-        refreshTransactions={get_transactions}
+        refreshTransactions={resetTable}
       />
 
       <TransactionEditDialog
