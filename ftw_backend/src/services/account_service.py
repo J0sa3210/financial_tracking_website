@@ -1,6 +1,14 @@
 from sqlalchemy.orm import Session
 from models.account import Account, AccountCreate, AccountView, AccountEdit
 from database.schemas import AccountSchema
+from utils.logging import setup_loggers
+import logging
+from exceptions.exceptions import AccountNotFoundException
+
+logger = setup_loggers()
+logger.setLevel(logging.DEBUG)
+
+
 class AccountService:
     def __init__(self):
         pass
@@ -16,6 +24,20 @@ class AccountService:
             return Account.model_validate(account)
         except:
             return None
+        
+    def get_account_by_iban(self, iban: str, db: Session) -> Account | None:
+        logger.debug(f"Searching for account with IBAN: {iban}")
+        accounts= db.query(AccountSchema).all()
+        logger.debug(f"Available accounts in DB: {[account.iban for account in accounts]}")
+        try:
+            account = db.query(AccountSchema).filter(AccountSchema.iban == iban).first()
+            if account is None:
+                logger.error(f"Account with IBAN {iban} not found.")
+                raise AccountNotFoundException(iban)
+            return Account.model_validate(account)
+        except Exception as e:
+            logger.error(f"Error retrieving account with IBAN {iban}: {e}")
+            raise AccountNotFoundException(iban)
 
     def create_account(self, new_account: AccountCreate, db: Session) -> Account:
         created_account: AccountSchema = self.convert_account_information(AccountSchema(), new_account)

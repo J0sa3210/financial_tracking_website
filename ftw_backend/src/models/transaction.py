@@ -15,9 +15,9 @@ class Transaction(BaseModel):
     category_id: Optional[int]
     category_name: Optional[str] = None
 
-    owner_account_number: str = ""
+    owner_iban: str = ""
     counterpart_name: str = ""
-    counterpart_account_number: str = ""
+    counterpart_iban: str = ""
 
     value: float
     date_executed: date
@@ -32,9 +32,9 @@ class TransactionCreate(BaseModel):
     category_id: Optional[int] = None
     category_name: Optional[str] = None
 
-    owner_account_number: str
+    owner_iban: str
     counterpart_name: str
-    counterpart_account_number: str
+    counterpart_iban: str
 
     value: float
     date_executed: date
@@ -57,9 +57,9 @@ class TransactionView(BaseModel):
     category_id: Optional[int]
     category_name: Optional[str]
 
-    owner_account_number: str
+    owner_iban: str
     counterpart_name: str
-    counterpart_account_number: str
+    counterpart_iban: str
 
     value: float
     date_executed: date

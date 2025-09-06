@@ -6,9 +6,9 @@ export class Transaction {
   transaction_type: string;
   category_id: number;
   category_name: string;
-  owner_account_number: string;
+  owner_iban: string;
   counterpart_name: string;
-  counterpart_account_number: string;
+  counterpart_iban: string;
 
   constructor(
     id: number,
@@ -18,9 +18,9 @@ export class Transaction {
     transaction_type: string,
     category_id: number,
     category_name: string,
-    owner_account_number: string,
+    owner_iban: string,
     counterpart_name: string,
-    counterpart_account_number: string
+    counterpart_iban: string
   ) {
     this.id = id;
     this.value = value;
@@ -29,8 +29,8 @@ export class Transaction {
     this.transaction_type = transaction_type;
     this.category_id = category_id;
     this.category_name = category_name;
-    this.owner_account_number = owner_account_number;
+    this.owner_iban = owner_iban;
     this.counterpart_name = counterpart_name;
-    this.counterpart_account_number = counterpart_account_number;
+    this.counterpart_iban = counterpart_iban;
   }
 }

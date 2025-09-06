@@ -14,9 +14,9 @@ class TransactionSchema(Base):
     category_name = Column(String)
     category = relationship("CategorySchema", back_populates="transactions", foreign_keys=[category_id])
 
-    owner_account_number = Column(String, index=True)
+    owner_iban = Column(String, index=True)
     counterpart_name = Column(String, index=True)
-    counterpart_account_number = Column(String, index=True)
+    counterpart_iban = Column(String, index=True)
 
     value = Column(Float, index=True)
     description = Column(String)
@@ -31,6 +31,7 @@ class CategorySchema(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True)
     description = Column(String, nullable=True)
+    owner_id = Column(Integer, index=True)
 
     transactions = relationship("TransactionSchema", back_populates="category")
     counterparts = relationship("CounterpartSchema", back_populates="category")

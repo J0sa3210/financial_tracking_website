@@ -29,7 +29,7 @@ async def get_all_transactions(active_account_id: Annotated[str, Header()], db :
         logger.error(f"IBAN is wrong!")
     account_iban: str = format_IBAN(account_iban)
     
-    results = transaction_service.get_all_transactions(db, filter=account_iban)
+    results = transaction_service.get_all_transactions(db, iban=account_iban)
     return results
 
 @transaction_controller.put("", response_model=TransactionView)
@@ -54,7 +54,7 @@ async def calculate_total_amount(active_account_id: Annotated[str, Header()], db
     account_iban: str = format_IBAN(account_iban)
     
     logger.info(f"Calculating totals for IBAN: {account_iban}" )
-    total_amount: dict[str, float] = transaction_service.calculate_total_amount_of_transactions(db=db, filter=account_iban)
+    total_amount: dict[str, float] = transaction_service.calculate_total_amount_of_transactions(db=db, iban=account_iban)
     return total_amount
 
 @transaction_controller.delete("/{transaction_id}", response_model=TransactionView)
@@ -67,7 +67,7 @@ async def get_transaction(active_account_id: Annotated[str, Header()], transacti
     active_account = account_service.get_account(db=db, account_id=int(active_account_id))    
     account_iban: str = active_account.iban
     
-    selected_transaction: Transaction = transaction_service.get_transaction(transaction_id=transaction_id, db=db, filter=account_iban)
+    selected_transaction: Transaction = transaction_service.get_transaction(transaction_id=transaction_id, db=db, iban=account_iban)
     return selected_transaction
 
 @transaction_controller.post("/upload_csv")

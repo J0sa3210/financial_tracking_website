@@ -7,37 +7,43 @@ import { Account } from "@/assets/types/Account";
 
 export default function AccountSelector() {
   const { activeAccount, selectActiveAccount, defaultAccount } = useAccount();
-
   const [accounts, setAccounts] = useState<Account[]>([]);
 
-  async function fetchAccounts() {
-    const resp = await fetch("http://localhost:8000/account");
-    const data = await resp.json();
-
-    setAccounts(data);
-  }
   useEffect(() => {
+    async function fetchAccounts() {
+      const resp = await fetch("http://localhost:8000/account");
+      const data = await resp.json();
+      setAccounts(data);
+      console.log("Fetched accounts:", data);
+    }
     fetchAccounts();
-  }, []); // Fetch options only once when accounts are loaded or counterparts change
+  }, []);
 
-  if (!accounts) return null;
+  if (!accounts.length) return null;
 
   return (
-    <div>
-      <Select onValueChange={selectActiveAccount}>
-        <SelectTrigger className='flex gap-3 items-center'>
-          <span className='font-semibold'>{activeAccount?.name}</span>
-          <Avatar className='bg-secondary text-secondary-foreground rounded-full items-center justify-center'>
+    <div className=''>
+      <Select
+        onValueChange={selectActiveAccount}
+        value={activeAccount?.id?.toString()}>
+        <SelectTrigger className='flex gap-3 items-center px-3 py-2 rounded-lg border shadow-sm'>
+          <Avatar className='bg-secondary text-secondary-foreground rounded-full flex items-center justify-center w-8 h-8'>
             <FaAsterisk />
           </Avatar>
+          <span className='font-semibold text-lg truncate'>{activeAccount?.name || "Select account"}</span>
         </SelectTrigger>
-        <SelectContent className='bg-white text-2xl text-foreground'>
+        <SelectContent className='bg-white text-base text-foreground rounded-lg shadow-lg mt-2'>
           {accounts.map((account) => (
             <SelectItem
               key={account.id}
-              value={account.id.toString()}>
-              {account.name}
-              {defaultAccount && account.id == defaultAccount.id ? "*" : ""}
+              value={account.id.toString()}
+              className={`flex items-center px-3 py-2 cursor-pointer ${
+                activeAccount && account.id === activeAccount.id ? "font-bold text-primary" : "text-primary"
+              }`}>
+              <span className='truncate'>{account.name}</span>
+              {defaultAccount && account.id === defaultAccount.id && (
+                <span className='ml-2 text-md text-primary'>*</span>
+              )}
             </SelectItem>
           ))}
         </SelectContent>

@@ -24,7 +24,6 @@ import { Button } from "../ui/button";
 import { Drawer, DrawerContent, DrawerTrigger } from "../ui/drawer";
 import type { RowSelectionState } from "@tanstack/react-table";
 import { FaTrash } from "react-icons/fa";
-import { set } from "date-fns";
 
 interface TransactionListProps {
   transactions: Transaction[];

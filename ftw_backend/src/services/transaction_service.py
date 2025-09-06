@@ -4,8 +4,8 @@ from database.schemas import TransactionSchema, CategorySchema
 from exceptions.exceptions import CategoryNotFoundException
 
 class TransactionService:
-    def get_all_transactions(self, db: Session, filter: str = "", as_schema: bool = False) -> list[Transaction]:
-        if filter is "":
+    def get_all_transactions(self, db: Session, iban: str = "", as_schema: bool = False) -> list[Transaction]:
+        if iban is "":
             transactions = (
             db.query(TransactionSchema)
             .options(joinedload(TransactionSchema.category))
@@ -14,7 +14,7 @@ class TransactionService:
         else:
             transactions = (
             db.query(TransactionSchema)
-            .filter(TransactionSchema.owner_account_number == filter)
+            .filter(TransactionSchema.owner_iban == iban)
             .options(joinedload(TransactionSchema.category))
             .all()
             )
@@ -24,7 +24,7 @@ class TransactionService:
         else:
             return [Transaction.model_validate(transaction) for transaction in transactions]
 
-    def get_transaction(self, transaction_id: int, db: Session, filter: str = "", as_schema: bool = False) -> Transaction:
+    def get_transaction(self, transaction_id: int, db: Session, iban: str = "", as_schema: bool = False) -> Transaction:
         """
         Retrieve a transaction as a Pydantic model by its ID.
 
@@ -35,7 +35,7 @@ class TransactionService:
         Returns:
             Transaction: The transaction as a Pydantic model.
         """
-        if filter is "":
+        if iban is "":
             transaction_schema = (
             db.query(TransactionSchema)
             .filter(TransactionSchema.id == transaction_id)
@@ -44,7 +44,7 @@ class TransactionService:
         else:
             transaction_schema = (
             db.query(TransactionSchema)
-            .filter(TransactionSchema.owner_account_number == filter)
+            .filter(TransactionSchema.owner_iban == iban)
             .filter(TransactionSchema.id == transaction_id)
             .options(joinedload(TransactionSchema.category))
             .first()
@@ -193,9 +193,9 @@ class TransactionService:
         return TransactionSchema(**model.model_dump())
 
     
-    def calculate_total_amount_of_transactions(self, db: Session, filter: str = "") -> dict[str, float]:
+    def calculate_total_amount_of_transactions(self, db: Session, iban: str = "") -> dict[str, float]:
         # Get transactions from the db
-        transaction: list[Transaction] = self.get_all_transactions(db=db, filter=filter, as_schema=True)
+        transaction: list[Transaction] = self.get_all_transactions(db=db, iban=iban, as_schema=True)
 
         total_savings: float = 0
         total_income: float = 0

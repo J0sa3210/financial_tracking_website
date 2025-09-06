@@ -8,9 +8,13 @@ from .transaction_service import TransactionService
 from models.transaction import TransactionCreate, TransactionTypes
 from models.counterpart import Counterpart
 from models.category import Category
+from models.account import Account
 from database.schemas import CounterpartSchema, CategorySchema, TransactionSchema
 from .category_service import CategoryService
+from .account_service import AccountService
 from .counterpart_service import CounterpartService
+from exceptions.exceptions import AccountNotFoundException
+
 import logging
 logger = setup_loggers()
 logger.setLevel(logging.DEBUG)
@@ -21,6 +25,7 @@ class CSV_handler():
         self.category_service = CategoryService()
         self.counterpart_service = CounterpartService()
         self.transaction_service = TransactionService()
+        self.account_service = AccountService()
 
     def read_file(self):
         try:
@@ -61,7 +66,6 @@ class CSV_handler():
         return df
     
     def get_transaction_type(self, amount: float, counterpart_account: str) -> TransactionTypes:
-        logger.debug(f"Amount: {amount}")
         if amount < 0:
             return TransactionTypes.EXPENSES
         elif amount > 0:
@@ -95,9 +99,9 @@ class CSV_handler():
             transaction: TransactionCreate = TransactionCreate(
                 transaction_type = transaction_type,
 
-                owner_account_number = row["Rekening"],
+                owner_iban = row["Rekening"],
                 counterpart_name = row["Naam tegenpartij bevat"],
-                counterpart_account_number = row["Rekening tegenpartij"],
+                counterpart_iban = row["Rekening tegenpartij"],
                 value = float(row["Bedrag"]/ 100),  # The value is in cents
                 date_executed = date,  # Convert to YYYY-MM-DD format
                 description = row["Mededelingen"]
@@ -136,13 +140,29 @@ class CSV_handler():
 
         # Export all counterparts
         self.export_counterparts(df["Naam tegenpartij bevat"].unique(), db)
-
-        # Convert DataFrame to transactions
-        transactions: list[TransactionCreate] = self.convert_df_to_transactions(df)
-        self.transaction_service.add_transactions(transactions, db)
-
-        transactions: list[TransactionSchema] = self.transaction_service.get_all_transactions(db, as_schema=True)
-        self.category_service.update_transaction_category(transactions, db)
-        db.commit()
         
-        logger.info("CSV file processed and transactions added successfully.")
+        # Export all different owner account numbers
+        owner_ibans: list[str] = df["Rekening"].unique().tolist()
+        logger.debug(f"Owner IBANs found in CSV: {owner_ibans}")
+
+
+        for owner_iban in owner_ibans:
+            logger.debug(f"Processing transactions for account number: {owner_iban}")
+            try:
+                owner_account : Account = self.account_service.get_account_by_iban(db=db, iban=owner_iban)
+                logger.debug(f"Found owner account: {owner_account}")
+                
+                transactions: list[TransactionSchema] = self.transaction_service.get_all_transactions(db, iban=owner_iban, as_schema=True)
+
+                self.category_service.update_transaction_category(transactions, db, owner_id=owner_account.id)
+       
+                # Convert DataFrame to transactions
+                transactions: list[TransactionCreate] = self.convert_df_to_transactions(df)
+                self.transaction_service.add_transactions(transactions, db)
+
+                db.commit()
+                logger.info("CSV file processed and transactions added successfully.")
+            
+            except AccountNotFoundException as e:
+                logger.error(f"Error processing transactions for account number {owner_iban}: {e.msg}")
+                continue

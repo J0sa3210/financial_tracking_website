@@ -5,12 +5,14 @@ import Select from "react-select";
 import CreateCategoryDialog from "@/components/upload_data_handler/create_category_dialog";
 import { FaTrash } from "react-icons/fa";
 import { Counterpart } from "@/assets/types/Counterpart";
+import { useAccount } from "@/components/context/AccountContext";
 
 export default function CategorySubmenu() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [counterparts, setCounterparts] = useState<{ [key: number]: { value: string; label: string }[] }>({});
   const [counterpartOptions, setCounterpartOptions] = useState<{ value: string; label: string }[]>([]);
   const [counterpartMap, setCounterpartMap] = useState<{ [name: string]: Counterpart }>({});
+  const { activeAccount } = useAccount();
 
   // Define the options for the multiselect component
   useEffect(() => {
@@ -35,7 +37,12 @@ export default function CategorySubmenu() {
   }, [categories]); // Fetch options only once when categories are loaded or counterparts change
 
   async function get_categories() {
-    const resp = await fetch("http://localhost:8000/categories");
+    const resp = await fetch("http://localhost:8000/categories", {
+      headers: {
+        "active-account-id": activeAccount ? activeAccount.id.toString() : "",
+      },
+    });
+
     const data = await resp.json();
     const loadedCategories = data.map((c: any) => new Category(c.id, c.name, c.description, c.counterparts));
     setCategories(loadedCategories);
@@ -56,7 +63,7 @@ export default function CategorySubmenu() {
 
   useEffect(() => {
     get_categories();
-  }, []);
+  }, [activeAccount]);
 
   const handleCounterpartChange = (categoryId: number, selectedOptions: { value: string; label: string }[] | null) => {
     if (selectedOptions) {
@@ -92,6 +99,7 @@ export default function CategorySubmenu() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
+          "active-account-id": activeAccount ? activeAccount.id.toString() : "",
         },
         body: JSON.stringify(category),
       });

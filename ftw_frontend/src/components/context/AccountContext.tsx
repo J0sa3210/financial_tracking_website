@@ -27,6 +27,10 @@ export function AccountProvider({ children }: { children: ReactNode }) {
         const resp = await fetch("http://localhost:8000/account/" + account.id);
         const data = await resp.json();
 
+        if (data === null) {
+          setDefaultAccount(null);
+          setActiveAccount(null);
+        }
         setDefaultAccount(data);
         setActiveAccount(data);
         console.log("Default and Active account set to", data);

@@ -5,6 +5,7 @@ from models.transaction import TransactionCreate, Transaction, TransactionEdit
 from models.counterpart import Counterpart
 from .counterpart_service import CounterpartService
 from .transaction_service import TransactionService
+from .account_service import AccountService
 from fastapi import HTTPException
 from logging import Logger
 from utils.logging import setup_loggers
@@ -15,19 +16,39 @@ class CategoryService():
     def __init__(self):
         self.counterpart_service: CounterpartService = CounterpartService()
         self.transaction_service: TransactionService = TransactionService()
+        self.account_service : AccountService = AccountService()
 
-    def get_all_categories(self, db: Session, as_schema: bool = False) -> list[Category]:
-        categories = db.query(CategorySchema).options(joinedload(CategorySchema.transactions)).all()
+    def get_all_categories(self, db: Session, as_schema: bool = False, owner_id: int = None) -> list[Category]:
+        if owner_id is not None:
+            categories = db.query(CategorySchema).options(joinedload(CategorySchema.transactions)).filter(CategorySchema.owner_id==owner_id).all()
+        else:
+            categories = db.query(CategorySchema).options(joinedload(CategorySchema.transactions)).all()
+        
+
         if as_schema:
             return categories
         else:
             return [Category.model_validate(category) for category in categories]
+        
+        
+    def get_category(self, db: Session, category_id: int, as_schema: bool = False, owner_id: int = None) -> list[Category]:
+        if owner_id is not None:
+            category = db.query(CategorySchema).options(joinedload(CategorySchema.transactions)).filter(CategorySchema.owner_id==owner_id).filter(CategorySchema.id==category_id).first()
+        else:
+            category = db.query(CategorySchema).options(joinedload(CategorySchema.transactions)).filter(CategorySchema.id==category_id).first()
+        
 
-    def add_category(self, new_category: CategoryCreate, db: Session) -> CategorySchema:
+        if as_schema:
+            return category
+        else:
+            return Category.model_validate(category)
+
+    def add_category(self, new_category: CategoryCreate, db: Session, owner_id: int) -> CategorySchema:
         """
         Add a new category to the database.
         """
         category_instance = self.convert_category_data(CategorySchema(), new_category, db)
+        category_instance.owner_id = owner_id
         db.add(category_instance)
         
         db.commit()
@@ -35,7 +56,7 @@ class CategoryService():
         
         # Update all transaction categories
         transaction_schemas: list[Transaction] = self.transaction_service.get_all_transactions(db, as_schema=True)
-        self.update_transaction_category(transaction_schemas, db)
+        self.update_transaction_category(transaction_schemas, db, owner_id)
         db.commit()
 
         return category_instance
@@ -51,12 +72,12 @@ class CategoryService():
 
         # Update all transaction categories
         transactions: list[TransactionSchema] = self.transaction_service.get_all_transactions(db, as_schema=True)
-        self.update_transaction_category(transactions, db)
+        self.update_transaction_category(transactions, db, existing_category.owner_id)
         db.commit()
 
         return updated_category
 
-    def convert_category_data(category_instance: CategorySchema, new_category: CategoryCreate, db: Session) -> CategorySchema:
+    def convert_category_data(self, category_instance: CategorySchema, new_category: CategoryCreate, db: Session) -> CategorySchema:
         """
         Update an existing category object with new data.
         """
@@ -70,8 +91,11 @@ class CategoryService():
 
         return category_instance
     
-    def delete_category(self, category_id: int, db: Session) -> CategorySchema:
-        existing_category = db.query(CategorySchema).filter(CategorySchema.id == category_id).first()
+    def delete_category(self, category_id: int, db: Session, owner_id: int) -> CategorySchema:
+        # Get the owner account
+        owner_account = self.account_service.get_account(db, account_id=owner_id)
+
+        existing_category = self.get_category(db, category_id=category_id, as_schema=True, owner_id=owner_id)
 
         if not existing_category:
             raise HTTPException(status_code=404, detail="Category not found")
@@ -80,15 +104,15 @@ class CategoryService():
         db.delete(existing_category)
         db.commit()
 
-        transactions: list[TransactionSchema] = self.transaction_service.get_all_transactions(db, as_schema=True)
-        self.update_transaction_category(transactions, db)
+        transactions: list[TransactionSchema] = self.transaction_service.get_all_transactions(db, as_schema=True, iban=owner_account.iban)
+        self.update_transaction_category(transactions, db, owner_id=owner_id)
         db.commit()
 
         return existing_category
     
-    def update_transaction_category(self, transactions: list[TransactionSchema], db: Session):
+    def update_transaction_category(self, transactions: list[TransactionSchema], db: Session, owner_id: int):
         # Create mapping between category and id
-        categories: list[Category] = self.get_all_categories(db, as_schema=True)
+        categories: list[Category] = self.get_all_categories(db, as_schema=True, owner_id=owner_id)
         category_map: dict[int, Category] = {category.id: category for category in categories}
 
         # Create a mapping between counterpart name and category id

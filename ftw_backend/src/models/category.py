@@ -4,6 +4,7 @@ from .transaction import TransactionView
 
 class Category(BaseModel):
     id: int = None
+    owner_id: int = None
     name: str = ""
     description: str = ""
     counterparts: list[CounterpartView] = []
@@ -14,6 +15,7 @@ class Category(BaseModel):
 
 class CategoryCreate(BaseModel):
     name: str
+    owner_id: int = None
     description: str = ""
     counterparts: list[CounterpartEdit] = []
 

@@ -4,6 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useAccount } from "../context/AccountContext";
 
 interface TransactionInfo {
   transaction: Transaction | null;
@@ -16,11 +17,16 @@ export default function TransactionEditDialog(transactionInfo: TransactionInfo) 
   const transaction: Transaction | null = transactionInfo.transaction;
   const [categories, setCategories] = useState<Category[]>([]);
   const transactionTypes: transactionType[] = ["Expenses", "Income", "Savings"];
+  const { activeAccount } = useAccount();
 
   useEffect(() => {
     if (!transaction) return; // only fetch categories when we have a transaction
     async function get_categories() {
-      const resp = await fetch("http://localhost:8000/categories");
+      const resp = await fetch("http://localhost:8000/categories", {
+        headers: {
+          "active-account-id": activeAccount ? activeAccount.id.toString() : "",
+        },
+      });
       const data = await resp.json();
       const loadedCategories = data.map((c: any) => new Category(c.id, c.name, c.description, c.counterparts));
       setCategories(loadedCategories);
@@ -32,7 +38,7 @@ export default function TransactionEditDialog(transactionInfo: TransactionInfo) 
     console.log("Editing transaction", transaction);
 
     try {
-      await fetch("http://localhost:8000/transaction" + transaction.id, {
+      await fetch("http://localhost:8000/transaction/" + transaction.id, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
