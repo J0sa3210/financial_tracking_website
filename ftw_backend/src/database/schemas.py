@@ -40,6 +40,7 @@ class CounterpartSchema(Base):
     __tablename__ = "counterparts"
 
     id = Column(Integer, primary_key=True, index=True)
+    owner_id = Column(Integer, index=True)
     name = Column(String, index=True)
 
     category_id = Column(Integer, ForeignKey("categories.id"), nullable=True)

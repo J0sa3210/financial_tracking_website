@@ -17,7 +17,11 @@ export default function CategorySubmenu() {
   // Define the options for the multiselect component
   useEffect(() => {
     async function fetchCounterpartOptions() {
-      const resp = await fetch("http://localhost:8000/counterparts");
+      const resp = await fetch("http://localhost:8000/counterparts", {
+        headers: {
+          "active-account-id": activeAccount ? activeAccount.id.toString() : "",
+        },
+      });
       const data = await resp.json();
 
       const options = data.map((cp: Counterpart) => ({
@@ -78,6 +82,9 @@ export default function CategorySubmenu() {
     try {
       await fetch("http://localhost:8000/categories/" + categoryId, {
         method: "DELETE",
+        headers: {
+          "active-account-id": activeAccount ? activeAccount.id.toString() : "",
+        },
       });
     } catch (error) {
       console.error("Error deleting category:", error);

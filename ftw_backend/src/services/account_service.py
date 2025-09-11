@@ -26,6 +26,7 @@ class AccountService:
             return None
         
     def get_account_by_iban(self, iban: str, db: Session) -> Account | None:
+        iban = iban.replace(" ", "").upper()
         logger.debug(f"Searching for account with IBAN: {iban}")
         accounts= db.query(AccountSchema).all()
         logger.debug(f"Available accounts in DB: {[account.iban for account in accounts]}")

@@ -50,8 +50,11 @@ def update_category(category_id: int, category: CategoryEdit, db: Session = Depe
     return updated_category
 
 @categorie_controller.delete("/{category_id}", response_model=CategoryView)
-def delete_category(category_id: int, db: Session = Depends(get_db)):
-    deleted_category = category_service.delete_category(category_id=category_id, db=db)
+def delete_category(active_account_id: Annotated[str, Header()], category_id: int, db: Session = Depends(get_db)):
+    active_account = account_service.get_account(db=db, account_id=int(active_account_id))
+    owner_id: int = active_account.id
+
+    deleted_category = category_service.delete_category(category_id=category_id, db=db, owner_id=owner_id)
     
     return deleted_category
 

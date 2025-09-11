@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { act, useState } from "react";
 import { Dialog, DialogHeader, DialogContent, DialogTrigger, DialogTitle } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { FaPlus } from "react-icons/fa";
@@ -6,6 +6,7 @@ import { Card, CardAction, CardContent } from "@/components/ui/card";
 import { Input } from "../ui/input";
 import Select from "react-select";
 import { Counterpart } from "@/assets/types/Counterpart";
+import { useAccount } from "@/components/context/AccountContext";
 
 type CounterpartOptions = { value: string; label: string }[];
 type CounterpartMap = { [name: string]: Counterpart };
@@ -24,6 +25,7 @@ export default function CreateCategoryDialog({
   const [counterparts, setCounterparts] = useState<Counterpart[]>([]);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [open, setOpen] = useState<boolean>(false);
+  const { activeAccount } = useAccount();
 
   const handleCreateCategory = async () => {
     if (!categoryName) {
@@ -41,6 +43,7 @@ export default function CreateCategoryDialog({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "active-account-id": activeAccount ? activeAccount.id.toString() : "",
         },
         body: JSON.stringify({
           name: categoryName,

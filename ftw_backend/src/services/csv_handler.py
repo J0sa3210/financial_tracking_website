@@ -111,18 +111,18 @@ class CSV_handler():
 
         return transactions
 
-    def export_counterparts(self, counterparts: list[str], db: Session):
+    def export_counterparts(self, counterparts: list[str], db: Session, owner_id: int):
         """
         Export all counterparts to the database.
         """
         # Get all previous counterparts
-        counterparts_from_db = db.query(CounterpartSchema).all()
+        counterparts_from_db = db.query(CounterpartSchema).filter(CounterpartSchema.id == owner_id).all()
 
         # Convert them to set of Counterpart names
         existing_counterparts: set[str] = {counterpart.name.lower() for counterpart in counterparts_from_db}
 
         # Filter out counterparts that already exist
-        new_counterparts = [CounterpartSchema(name=name) for name in counterparts if name.lower() not in existing_counterparts]
+        new_counterparts = [CounterpartSchema(name=name, owner_id=owner_id) for name in counterparts if name.lower() not in existing_counterparts]
 
         # Add new counterparts to the database
         if new_counterparts:
@@ -138,8 +138,6 @@ class CSV_handler():
         df: DataFrame = self.convert_to_df()
         df: DataFrame = self.clean_df(df)
 
-        # Export all counterparts
-        self.export_counterparts(df["Naam tegenpartij bevat"].unique(), db)
         
         # Export all different owner account numbers
         owner_ibans: list[str] = df["Rekening"].unique().tolist()
@@ -151,6 +149,9 @@ class CSV_handler():
             try:
                 owner_account : Account = self.account_service.get_account_by_iban(db=db, iban=owner_iban)
                 logger.debug(f"Found owner account: {owner_account}")
+                
+                # Export all counterparts
+                self.export_counterparts(df["Naam tegenpartij bevat"].unique(), db, owner_id=owner_account.id)
                 
                 transactions: list[TransactionSchema] = self.transaction_service.get_all_transactions(db, iban=owner_iban, as_schema=True)
 

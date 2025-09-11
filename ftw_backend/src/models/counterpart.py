@@ -4,6 +4,7 @@ from typing import Optional
 class Counterpart(BaseModel):
     id: int = None
     name: str = ""
+    owner_id: int = None
     category_id: Optional[int] = None
 
     # Ensures we can easily convert from schema to model
@@ -11,6 +12,7 @@ class Counterpart(BaseModel):
 
 class CounterpartCreate(BaseModel):
     name: str
+    owner_id: int
     category_id: int = None
 
 class CounterpartEdit(BaseModel):
