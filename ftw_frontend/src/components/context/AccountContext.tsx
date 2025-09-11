@@ -43,8 +43,20 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
-    if (!activeAccount) {
-      retrieveDefaultAccount();
+    if (activeAccount) {
+      localStorage.setItem("activeAccountId", activeAccount.id.toString());
+    }
+  }, [activeAccount]);
+
+  useEffect(() => {
+    const storedId = localStorage.getItem("activeAccountId");
+    if (storedId) {
+      // Fetch account by ID and set as active
+      fetch(`http://localhost:8000/account/${storedId}`)
+        .then((resp) => resp.json())
+        .then((account) => setActiveAccount(account));
+    } else if (defaultAccount) {
+      setActiveAccount(defaultAccount);
     }
   }, []);
 
