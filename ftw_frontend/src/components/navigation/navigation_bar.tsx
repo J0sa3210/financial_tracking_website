@@ -6,8 +6,8 @@ import { useState } from "react";
 import AccountSelector from "./account_selector";
 
 export default function NavBar() {
-  const titles = ["Transactions", "Settings"];
-  const links = ["/transactions", "/settings"];
+  const titles = ["Dashboard", "Transactions", "Settings"];
+  const links = ["/dashboard", "/transactions", "/settings"];
   const current_path = useLocation().pathname;
   const [isDarkMode, setIsDarkMode] = useState(document.documentElement.classList.contains("dark"));
 

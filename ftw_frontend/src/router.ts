@@ -22,6 +22,10 @@ const router = createBrowserRouter([
         path: "/settings",
         element: React.createElement(SettingsPage),
       },
+      {
+        path: "/dashboard",
+        element: React.createElement(React.lazy(() => import("./pages/dashboard.tsx"))),
+      },
     ],
   },
 ]);
