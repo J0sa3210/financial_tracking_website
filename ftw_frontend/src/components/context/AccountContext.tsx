@@ -2,94 +2,99 @@
 import { Account } from "@/assets/types/Account";
 import { createContext, useContext, useState, useEffect } from "react";
 import type { ReactNode } from "react";
+import AccountSelector from "../navigation/account_selector";
+import { set } from "date-fns";
 
 const AccountContext = createContext<{
   activeAccount: Account | null;
-  defaultAccount: Account | null;
+  defaultAccountId: number | null;
   selectActiveAccount: (account_id: string) => Promise<void>;
-  selectDefaultAccount: (account_id: string) => Promise<void>;
+  setDefaultAccount: (account_id: string) => Promise<void>;
 }>({
   activeAccount: null,
-  defaultAccount: null,
+  defaultAccountId: null,
   selectActiveAccount: async () => {},
-  selectDefaultAccount: async () => {},
+  setDefaultAccount: async () => {},
 });
 
 export function AccountProvider({ children }: { children: ReactNode }) {
-  const [defaultAccount, setDefaultAccount] = useState<Account | null>(null);
+  const [defaultAccountId, setDefaultAccountId] = useState<number | null>(null);
   const [activeAccount, setActiveAccount] = useState<Account | null>(null);
 
-  async function retrieveDefaultAccount() {
-    const stored = localStorage.getItem("defaultAccount");
-    if (stored) {
-      try {
-        const account = JSON.parse(stored);
-        const resp = await fetch("http://localhost:8000/account/" + account.id);
-        const data = await resp.json();
+  useEffect(() => {
+    // Check for an active account in local storage
+    try {
+      const storedActiveAccountId = localStorage.getItem("activeAccountId");
+      if (storedActiveAccountId) {
+        // Fetch account by ID and set as active
+        loadAccount(storedActiveAccountId);
+      } else {
+        // If no active account, retrieve the default account
+        retrieveDefaultAccount();
+      }
+    } catch (error) {
+      console.error("Error retrieving active account from local storage:", error);
+      // If the account does not exist anymore, remove it and use default account
+      retrieveDefaultAccount();
+    }
+  }, []);
 
-        if (data === null) {
-          setDefaultAccount(null);
-          setActiveAccount(null);
-        }
-        setDefaultAccount(data);
-        setActiveAccount(data);
-        console.log("Default and Active account set to", data);
-      } catch (error: any) {
-        console.log(error.detail);
-        setDefaultAccount(null);
-        setActiveAccount(null);
+  async function loadAccount(account_id: string) {
+    const resp = await fetch("http://localhost:8000/account/" + account_id);
+    const data = await resp.json();
+    setActiveAccount(data);
+    localStorage.setItem("activeAccountId", data.id.toString());
+    console.log("Active account set to", data);
+  }
+
+  async function retrieveDefaultAccount() {
+    const storedDefaultAccountId = localStorage.getItem("defaultAccountId");
+    if (storedDefaultAccountId) {
+      try {
+        loadAccount(storedDefaultAccountId);
+        setDefaultAccountId(parseInt(storedDefaultAccountId));
+      } catch (error) {
+        console.error("Could not retrieve default account.");
+        getAllAccounts().then((accounts) => {
+          if (accounts.length > 0) {
+            setActiveAccount(accounts[0]);
+            setDefaultAccountId(accounts[0].id);
+            localStorage.setItem("defaultAccountId", accounts[0].id.toString());
+            localStorage.setItem("activeAccountId", accounts[0].id.toString());
+          }
+        });
       }
     }
   }
 
-  useEffect(() => {
-    if (activeAccount) {
-      localStorage.setItem("activeAccountId", activeAccount.id.toString());
-    }
-  }, [activeAccount]);
-
-  useEffect(() => {
-    const storedId = localStorage.getItem("activeAccountId");
-    if (storedId) {
-      // Fetch account by ID and set as active
-      fetch(`http://localhost:8000/account/${storedId}`)
-        .then((resp) => resp.json())
-        .then((account) => setActiveAccount(account));
-    } else if (defaultAccount) {
-      setActiveAccount(defaultAccount);
-    }
-  }, []);
-
-  async function selectDefaultAccount(account_id: string) {
+  async function setDefaultAccount(account_id: string) {
     try {
       const resp = await fetch("http://localhost:8000/account/" + account_id);
       const data = await resp.json();
-      setDefaultAccount(data);
-      localStorage.setItem("defaultAccount", JSON.stringify(data));
+      setDefaultAccountId(data.id);
+      localStorage.setItem("defaultAccountId", JSON.stringify(data));
     } catch (error: any) {
       console.error(error.detail);
-      setDefaultAccount(null);
-      localStorage.removeItem("defaultAccount");
     }
   }
 
   async function selectActiveAccount(account_id: string) {
-    try {
-      // Get the account
-      const resp = await fetch("http://localhost:8000/account/" + account_id);
-      const data = await resp.json();
+    loadAccount(account_id);
+  }
 
-      // Set it as new active account
-      setActiveAccount(data);
-      console.log("Active accoutn set to", data);
+  async function getAllAccounts(): Promise<Account[]> {
+    try {
+      const resp = await fetch("http://localhost:8000/account/");
+      const data = await resp.json();
+      return data;
     } catch (error: any) {
       console.error(error.detail);
-      setActiveAccount(defaultAccount);
+      return Promise.resolve([]);
     }
   }
 
   return (
-    <AccountContext.Provider value={{ activeAccount, defaultAccount, selectActiveAccount, selectDefaultAccount }}>
+    <AccountContext.Provider value={{ activeAccount, defaultAccountId, selectActiveAccount, setDefaultAccount }}>
       {children}
     </AccountContext.Provider>
   );
