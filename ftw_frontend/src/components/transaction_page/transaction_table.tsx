@@ -102,7 +102,7 @@ const getColumns = (): ColumnDef<Transaction>[] => [
       const value = row.original.value;
       const type = row.original.transaction_type;
       const formatted = currencyFormatter.format(value);
-      const color = type === "Expenses" ? "text-red-600" : "text-green-600";
+      const color = value < 0 ? "text-red-600" : "text-green-600";
       return <span className={`font-semibold ${color}`}>{formatted}</span>;
     },
   },

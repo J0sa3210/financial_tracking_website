@@ -29,9 +29,11 @@ class CategorySchema(Base):
     __tablename__ = "categories"
 
     id = Column(Integer, primary_key=True, index=True)
+    owner_id = Column(Integer, index=True)
+
     name = Column(String, unique=True, index=True)
     description = Column(String, nullable=True)
-    owner_id = Column(Integer, index=True)
+    category_type = Column(String, default="None")
 
     transactions = relationship("TransactionSchema", back_populates="category")
     counterparts = relationship("CounterpartSchema", back_populates="category")

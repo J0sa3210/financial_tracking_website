@@ -8,6 +8,8 @@ from services import CategoryService, AccountService
 from utils.logging import setup_loggers
 from logging import Logger, DEBUG
 from fastapi import HTTPException
+from datetime import datetime
+
 
 # TODO: filter get categories by owner_id
 
@@ -51,7 +53,7 @@ def update_category(category_id: int, category: CategoryEdit, db: Session = Depe
 
 @categorie_controller.delete("/{category_id}", response_model=CategoryView)
 def delete_category(active_account_id: Annotated[str, Header()], category_id: int, db: Session = Depends(get_db)):
-    active_account = account_service.get_account(db=db, account_id=int(active_account_id))
+    active_account = account_service.get_account(account_id=int(active_account_id), db=db)
     owner_id: int = active_account.id
 
     deleted_category = category_service.delete_category(category_id=category_id, db=db, owner_id=owner_id)
@@ -71,3 +73,27 @@ def read_names(active_account_id: Annotated[str, Header()], category_id: int, db
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
     return [counterpart.name for counterpart in category.counterparts]
+
+
+@categorie_controller.get("/total_expenses", response_model=dict[str, float])
+def get_total_expenses(active_account_id: Annotated[str, Header()], db: Session = Depends(get_db), year: int = None, month: int = None):
+
+    # Check if the account exists
+    active_account = account_service.get_account(db=db, account_id=int(active_account_id))
+
+    # Filter correct year and month
+    if year is None:
+        year = datetime.now().year
+
+    # Get all categories for the active account
+    categories = category_service.get_all_categories(db=db, owner_id=int(active_account.id))
+
+    # Filter transactions by date
+    filtered_categories = categories.copy()
+    for category in filtered_categories:
+        category.transactions = category_service.filter_transactions_by_date(category.transactions, year=year, month=month)
+
+    # For each of the categories, calculate the sum of all transactions in it.
+    total_expenses = category_service.calculate_total_expenses(categories=filtered_categories)
+
+    return total_expenses

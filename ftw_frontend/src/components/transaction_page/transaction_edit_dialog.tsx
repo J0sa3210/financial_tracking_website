@@ -28,7 +28,9 @@ export default function TransactionEditDialog(transactionInfo: TransactionInfo) 
         },
       });
       const data = await resp.json();
-      const loadedCategories = data.map((c: any) => new Category(c.id, c.name, c.description, c.counterparts));
+      const loadedCategories = data.map(
+        (c: any) => new Category(c.id, c.name, c.description, c.category_type, c.counterparts)
+      );
       setCategories(loadedCategories);
     }
     get_categories();

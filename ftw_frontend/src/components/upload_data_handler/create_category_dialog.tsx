@@ -21,6 +21,7 @@ export default function CreateCategoryDialog({
   onCreate?: () => void;
 }) {
   const [categoryName, setCategoryName] = useState("");
+  const [categoryType, setCategoryType] = useState("None");
   const [description, setDescription] = useState("");
   const [counterparts, setCounterparts] = useState<Counterpart[]>([]);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -48,6 +49,7 @@ export default function CreateCategoryDialog({
         body: JSON.stringify({
           name: categoryName,
           description,
+          category_type: categoryType,
           counterparts,
         }),
       });
@@ -59,6 +61,7 @@ export default function CreateCategoryDialog({
       // Reset form fields
       setCategoryName("");
       setDescription("");
+      setCategoryType("None");
       setCounterparts([]);
       setErrorMsg(null);
 
@@ -103,7 +106,17 @@ export default function CreateCategoryDialog({
               onChange={(e) => setDescription(e.target.value)}
             />
             <Select
+              placeholder='Select Category Type'
+              options={["None", "Income", "Expenses", "Saving"].map((type) => ({ value: type, label: type }))}
+              onChange={(e) => {
+                console.log("Selected category type:", e);
+                setCategoryType(e ? e.value : "None");
+              }}
+            />
+
+            <Select
               isMulti
+              placeholder='Select Counterparts'
               options={counterpartOptions}
               onChange={(selectedOptions) =>
                 setCounterparts(selectedOptions.map((option) => counterpartMap[option.value]))

@@ -1,12 +1,15 @@
 from pydantic import BaseModel
 from .counterpart import CounterpartView, CounterpartEdit
-from .transaction import TransactionView
+from .transaction import TransactionView, TransactionTypes
 
 class Category(BaseModel):
     id: int = None
     owner_id: int = None
+
     name: str = ""
     description: str = ""
+    category_type: TransactionTypes = TransactionTypes.NONE 
+    
     counterparts: list[CounterpartView] = []
     transactions: list[TransactionView] = []
 
@@ -14,9 +17,12 @@ class Category(BaseModel):
     model_config = {'from_attributes': True}
 
 class CategoryCreate(BaseModel):
-    name: str
     owner_id: int = None
+
+    name: str
     description: str = ""
+    category_type: TransactionTypes = TransactionTypes.NONE
+
     counterparts: list[CounterpartEdit] = []
 
     # Ensures we can easily convert from schema to model
@@ -24,8 +30,11 @@ class CategoryCreate(BaseModel):
 
 class CategoryView(BaseModel):
     id: int
+    
     name: str
     description: str = ""
+    category_type: TransactionTypes = TransactionTypes.NONE
+    
     counterparts: list[CounterpartView] = []
     transactions: list[TransactionView] = []
 
@@ -34,8 +43,11 @@ class CategoryView(BaseModel):
 
 class CategoryEdit(BaseModel):
     id: int
+
     name: str
     description: str = None
+    category_type: TransactionTypes = None
+    
     counterparts: list[CounterpartEdit] = []
 
     # Ensures we can easily convert from schema to model

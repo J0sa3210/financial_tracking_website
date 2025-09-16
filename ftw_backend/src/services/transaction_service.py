@@ -144,6 +144,7 @@ class TransactionService:
         # Link transaction to category
         transaction_schema.category = category_schema
         transaction_schema.category_name = category_schema.name
+        transaction_schema.transaction_type = category_schema.category_type
 
 
     def convert_transaction_data(self, old_transaction: Transaction | TransactionSchema, new_transaction: TransactionEdit) -> Transaction:

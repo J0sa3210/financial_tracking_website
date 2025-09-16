@@ -1,7 +1,8 @@
 from models.category import Category, CategoryCreate
 from database.schemas import CategorySchema, CounterpartSchema, TransactionSchema
 from sqlalchemy.orm import Session, joinedload
-from models.transaction import TransactionCreate, Transaction, TransactionEdit
+from models.transaction import TransactionCreate, Transaction, TransactionEdit, TransactionTypes
+from typing import Optional
 from models.counterpart import Counterpart
 from .counterpart_service import CounterpartService
 from .transaction_service import TransactionService
@@ -9,6 +10,7 @@ from .account_service import AccountService
 from fastapi import HTTPException
 from logging import Logger
 from utils.logging import setup_loggers
+from models.account import Account
 
 logger: Logger = setup_loggers()
 
@@ -93,9 +95,9 @@ class CategoryService():
     
     def delete_category(self, category_id: int, db: Session, owner_id: int) -> CategorySchema:
         # Get the owner account
-        owner_account = self.account_service.get_account(db, account_id=owner_id)
+        owner_account = self.account_service.get_account(db=db, account_id=owner_id)
 
-        existing_category = self.get_category(db, category_id=category_id, as_schema=True, owner_id=owner_id)
+        existing_category = self.get_category(db, category_id=category_id, as_schema=True, owner_id=owner_account.id)
 
         if not existing_category:
             raise HTTPException(status_code=404, detail="Category not found")
@@ -125,8 +127,34 @@ class CategoryService():
                 category = category_map[counterpart_map[transaction_schema.counterpart_name]]
                 transaction_schema.category = category
                 transaction_schema.category_name = category.name
+                transaction_schema.transaction_type = category.category_type
                 logger.info(f"Added transaction {transaction_schema.description} at {transaction_schema.date_executed} to category {category}.")
             except KeyError:
                 transaction_schema.category = None
                 transaction_schema.category_id = None
                 transaction_schema.category_name = None
+                transaction_schema.transaction_type = TransactionTypes.NONE
+
+    def filter_transactions_by_date(self, transactions: list[TransactionSchema], year: int, month: Optional[int] = None) -> list[Transaction]:
+        if month is not None:
+            filtered_transactions = [transaction for transaction in transactions if transaction.date_executed.year == year and transaction.date_executed.month == month]
+        else:
+            filtered_transactions = [transaction for transaction in transactions if transaction.date_executed.year == year]
+        return filtered_transactions
+
+
+    def calculate_totals(self, categories: list[Category], db: Session, active_account: Account) -> dict[str, dict[str, float]]:
+        pass
+        
+        # totals: dict[str, dict[str, float]] = {}
+
+        # total_amounts = self.transaction_service.calculate_total_amount_of_transactions(db=db, iban=active_account.iban)
+        # for t_type in TransactionTypes:
+        #     # Get total of all transactions
+
+
+
+        # for category in categories:
+        #     total = sum(transaction.value for transaction in category.transactions)
+        #     total_expenses[category.name] = total
+        # return total_expenses

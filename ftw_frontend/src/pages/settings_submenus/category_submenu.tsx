@@ -6,6 +6,7 @@ import CreateCategoryDialog from "@/components/upload_data_handler/create_catego
 import { FaTrash } from "react-icons/fa";
 import { Counterpart } from "@/assets/types/Counterpart";
 import { useAccount } from "@/components/context/AccountContext";
+import type { SingleValue } from "react-select";
 
 export default function CategorySubmenu() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -48,7 +49,9 @@ export default function CategorySubmenu() {
     });
 
     const data = await resp.json();
-    const loadedCategories = data.map((c: any) => new Category(c.id, c.name, c.description, c.counterparts));
+    const loadedCategories = data.map(
+      (c: any) => new Category(c.id, c.name, c.description, c.category_type, c.counterparts)
+    );
     setCategories(loadedCategories);
 
     // Initialize counterparts state
@@ -75,6 +78,16 @@ export default function CategorySubmenu() {
         ...counterparts,
         [categoryId]: selectedOptions,
       });
+    }
+  };
+
+  const handleTypeChange = (categoryId: number, selectedType: SingleValue<{ value: string; label: string }>) => {
+    if (selectedType) {
+      setCategories((prevCategories) =>
+        prevCategories.map((category) =>
+          category.id === categoryId ? { ...category, category_type: selectedType.value } : category
+        )
+      );
     }
   };
 
@@ -151,18 +164,34 @@ export default function CategorySubmenu() {
           </span>
 
           <p>{category.description}</p>
-          <Select
-            isMulti
-            options={counterpartOptions}
-            value={counterparts[category.id] || []}
-            onChange={(selectedOptions) =>
-              handleCounterpartChange(
-                category.id,
-                selectedOptions.map((option) => ({ value: option.value, label: option.label }))
-              )
-            }
-            className='mt-2'
-          />
+          <span className='flex gap-2 items-center'>
+            <label className='font-medium'>Type:</label>
+            <Select
+              options={["None", "Income", "Expenses", "Savings"].map((type) => ({ value: type, label: type }))}
+              value={{ value: category.category_type, label: category.category_type }}
+              onChange={(selectedOption) => {
+                console.log("Selected type:", selectedOption);
+                handleTypeChange(category.id, selectedOption);
+              }}
+              className='mt-2 mb-2 w-50'
+            />
+          </span>
+
+          <span className='flex gap-2 items-center'>
+            <label className='font-medium'>Counterparts:</label>
+            <Select
+              isMulti
+              options={counterpartOptions}
+              value={counterparts[category.id] || []}
+              onChange={(selectedOptions) =>
+                handleCounterpartChange(
+                  category.id,
+                  selectedOptions.map((option) => ({ value: option.value, label: option.label }))
+                )
+              }
+              className='mt-2 w-full'
+            />
+          </span>
         </div>
       ))}
     </div>

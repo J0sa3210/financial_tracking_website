@@ -93,7 +93,7 @@ class CSV_handler():
 
         for _, row in df.iterrows():
 
-            transaction_type: TransactionTypes = self.get_transaction_type(row["Bedrag"], row["Rekening tegenpartij"])
+            transaction_type: TransactionTypes = TransactionTypes.NONE
             date: str = self.convert_to_ISO_format(row["Boekingsdatum"])
 
             transaction: TransactionCreate = TransactionCreate(
