@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger } from "@radix-ui/reac
 import { Account } from "@/assets/types/Account";
 
 export default function AccountSelector() {
-  const { activeAccount, selectActiveAccount, defaultAccount } = useAccount();
+  const { activeAccount, selectActiveAccount, defaultAccountId } = useAccount();
   const [accounts, setAccounts] = useState<Account[]>([]);
 
   useEffect(() => {
@@ -41,9 +41,7 @@ export default function AccountSelector() {
                 activeAccount && account.id === activeAccount.id ? "font-bold text-primary" : "text-primary"
               }`}>
               <span className='truncate'>{account.name}</span>
-              {defaultAccount && account.id === defaultAccount.id && (
-                <span className='ml-2 text-md text-primary'>*</span>
-              )}
+              {account.id === defaultAccountId && <span className='ml-2 text-md text-primary'>*</span>}
             </SelectItem>
           ))}
         </SelectContent>

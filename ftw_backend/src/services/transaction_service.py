@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session, joinedload
-from models.transaction import Transaction, TransactionCreate, TransactionEdit
+from models.transaction import Transaction, TransactionCreate,TransactionTypes, TransactionEdit
 from database.schemas import TransactionSchema, CategorySchema
 from exceptions.exceptions import CategoryNotFoundException
 
@@ -133,6 +133,7 @@ class TransactionService:
         if category_id is None:
             transaction_schema.category = None
             transaction_schema.category_name = None
+            transaction_schema.transaction_type = TransactionTypes.NONE
             return
         
         # Get category
@@ -201,18 +202,22 @@ class TransactionService:
         total_savings: float = 0
         total_income: float = 0
         total_expenses: float = 0
+        total_unaccounted: float = 0
         for transaction in transaction:
             match transaction.transaction_type:
-                case "Expenses":
+                case TransactionTypes.EXPENSES:
                     total_expenses += transaction.value
-                case "Savings":
+                case TransactionTypes.SAVINGS:
                     total_savings += transaction.value
-                case "Income":
+                case TransactionTypes.INCOME:
                     total_income += transaction.value
+                case TransactionTypes.NONE:
+                    total_unaccounted += abs(transaction.value)
         response: dict[str, float] = {
             "total_income": total_income,
             "total_expenses": total_expenses,
-            "total_savings": total_savings
+            "total_savings": total_savings,
+            "total_unaccounted": total_unaccounted
         }
 
         return response

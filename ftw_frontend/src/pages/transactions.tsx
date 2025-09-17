@@ -9,12 +9,14 @@ interface totalsType {
   total_income: number;
   total_expenses: number;
   total_savings: number;
+  total_unaccounted: number;
 }
 
 const defaultTotals: totalsType = {
   total_income: 0,
   total_expenses: 0,
   total_savings: 0,
+  total_unaccounted: 0,
 };
 
 export default function TransactionsPage() {
@@ -79,7 +81,7 @@ export default function TransactionsPage() {
   }
 
   return (
-    <div className='mx-auto max-w-7xl p-4'>
+    <div className='mx-auto px-20 py-4'>
       <TransactionInfoTiles
         transactions={transactions}
         totals={totals}
