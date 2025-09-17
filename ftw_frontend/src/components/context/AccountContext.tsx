@@ -2,8 +2,6 @@
 import { Account } from "@/assets/types/Account";
 import { createContext, useContext, useState, useEffect } from "react";
 import type { ReactNode } from "react";
-import AccountSelector from "../navigation/account_selector";
-import { set } from "date-fns";
 
 const AccountContext = createContext<{
   activeAccount: Account | null;

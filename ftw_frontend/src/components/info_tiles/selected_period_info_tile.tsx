@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useState } from "react";
+import { useTime } from "../context/TimeContext";
 
 export default function SelectedPeriodInfoTile() {
   const MONTHS = [
@@ -22,8 +22,7 @@ export default function SelectedPeriodInfoTile() {
   const CURRENT_YEAR = new Date().getFullYear();
   const YEARS = Array.from({ length: CURRENT_YEAR - START_YEAR + 1 }, (_, i) => (START_YEAR + i).toString());
 
-  const [selectedMonth, setSelectedMonth] = useState(MONTHS[0].value);
-  const [selectedYear, setSelectedYear] = useState(YEARS[YEARS.length - 1]);
+  const { activeYear, activeMonth, setActiveYear, setActiveMonth } = useTime();
   return (
     <Card className='flex-1 px-2 '>
       <CardHeader>
@@ -33,8 +32,8 @@ export default function SelectedPeriodInfoTile() {
         <div className='flex gap-3'>
           <div className='flex flex-col items-center text-xl'>
             <select
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(Number(e.target.value))}
+              value={activeMonth}
+              onChange={(e) => setActiveMonth(Number(e.target.value))}
               className='rounded-full px-4 py-2 font-semibold border-2 border-gray-600'>
               {MONTHS.map((month) => (
                 <option
@@ -47,8 +46,8 @@ export default function SelectedPeriodInfoTile() {
           </div>
           <div className='flex flex-col items-center text-xl'>
             <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(e.target.value)}
+              value={activeYear}
+              onChange={(e) => setActiveYear(Number(e.target.value))}
               className='rounded-full px-4 py-2 font-semibold border-2 border-gray-600 w-full'>
               {YEARS.map((year) => (
                 <option
