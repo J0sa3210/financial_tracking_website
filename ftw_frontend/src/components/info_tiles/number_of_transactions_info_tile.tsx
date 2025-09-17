@@ -12,9 +12,13 @@ function get_n_transactions_this_year(transactions: Transaction[]) {
 }
 
 function get_unprocessed_transactions(transactions: Transaction[]) {
-  console.log("Transactions:", transactions);
   const unprocessed_transactions = transactions.filter((t) => t.category_id == null);
-  console.log("Unprocessed Transactions:", unprocessed_transactions);
+  console.log(
+    "N° total transactions:",
+    transactions.length,
+    "\nN° unprocessed transactions:",
+    unprocessed_transactions.length
+  );
   return unprocessed_transactions;
 }
 

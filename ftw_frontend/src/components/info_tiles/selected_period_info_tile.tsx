@@ -22,18 +22,18 @@ export default function SelectedPeriodInfoTile() {
   const CURRENT_YEAR = new Date().getFullYear();
   const YEARS = Array.from({ length: CURRENT_YEAR - START_YEAR + 1 }, (_, i) => (START_YEAR + i).toString());
 
-  const { activeYear, activeMonth, setActiveYear, setActiveMonth } = useTime();
+  const { activeYear, activeMonth, setNewActiveYear, setNewActiveMonth } = useTime();
   return (
     <Card className='flex-1 px-2 '>
       <CardHeader>
-        <CardTitle className='text-2xl font-bold'>Selected Year & Period</CardTitle>
+        <CardTitle className='text-2xl font-bold'>Selected Period & Year</CardTitle>
       </CardHeader>
       <CardContent className='-mt-4 text-2xl font-semibold'>
         <div className='flex gap-3'>
           <div className='flex flex-col items-center text-xl'>
             <select
               value={activeMonth}
-              onChange={(e) => setActiveMonth(Number(e.target.value))}
+              onChange={(e) => setNewActiveMonth(Number(e.target.value))}
               className='rounded-full px-4 py-2 font-semibold border-2 border-gray-600'>
               {MONTHS.map((month) => (
                 <option
@@ -47,7 +47,7 @@ export default function SelectedPeriodInfoTile() {
           <div className='flex flex-col items-center text-xl'>
             <select
               value={activeYear}
-              onChange={(e) => setActiveYear(Number(e.target.value))}
+              onChange={(e) => setNewActiveYear(Number(e.target.value))}
               className='rounded-full px-4 py-2 font-semibold border-2 border-gray-600 w-full'>
               {YEARS.map((year) => (
                 <option

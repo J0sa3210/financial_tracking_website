@@ -170,7 +170,6 @@ export default function CategorySubmenu() {
               options={["None", "Income", "Expenses", "Savings"].map((type) => ({ value: type, label: type }))}
               value={{ value: category.category_type, label: category.category_type }}
               onChange={(selectedOption) => {
-                console.log("Selected type:", selectedOption);
                 handleTypeChange(category.id, selectedOption);
               }}
               className='mt-2 mb-2 w-50'

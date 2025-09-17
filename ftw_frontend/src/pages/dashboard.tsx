@@ -3,8 +3,9 @@ import { Transaction } from "@/assets/types/Transaction";
 import { useAccount } from "@/components/context/AccountContext";
 import TotalTrackingBalanceInfoTile from "@/components/info_tiles/total_tracking_balance_info_tile";
 import NTransactionsInfoTile from "@/components/info_tiles/number_of_transactions_info_tile";
-import DateLastTransactionInfoTile from "@/components/info_tiles/date_last_transaction_info_tile";
 import SelectedPeriodInfoTile from "@/components/info_tiles/selected_period_info_tile";
+import TransactionTable from "@/components/transaction_page/transaction_table";
+import { useTime } from "@/components/context/TimeContext";
 
 interface totalsType {
   total_income: number;
@@ -23,17 +24,26 @@ const defaultTotals: totalsType = {
 export default function DashboardPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [totals, setTotals] = useState<totalsType>(defaultTotals);
-  const [editTransactionId, setEditTransactionId] = useState<number | null>(null);
   const { activeAccount } = useAccount();
+  const { activeYear, activeMonth } = useTime();
 
-  async function get_transactions() {
-    console.log("Fetching transactions for account:", activeAccount);
-    const resp = await fetch("http://localhost:8000/transaction", {
-      headers: {
-        "Content-Type": "application/json",
-        "active-account-id": activeAccount?.id.toString() ?? "",
-      },
-    });
+  async function get_transactions(year: number | null = null, month: number | null = null) {
+    let resp;
+    if (year && month) {
+      resp = await fetch(`http://localhost:8000/transaction/?year=${year}&month=${month}`, {
+        headers: {
+          "Content-Type": "application/json",
+          "active-account-id": activeAccount?.id.toString() ?? "",
+        },
+      });
+    } else {
+      resp = await fetch("http://localhost:8000/transaction", {
+        headers: {
+          "Content-Type": "application/json",
+          "active-account-id": activeAccount?.id.toString() ?? "",
+        },
+      });
+    }
     const data = await resp.json();
     setTransactions(
       data.map(
@@ -68,10 +78,10 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (activeAccount) {
-      get_transactions();
+      get_transactions(activeYear, activeMonth);
       get_totals();
     }
-  }, [activeAccount]);
+  }, [activeAccount, activeYear, activeMonth]);
 
   return (
     <div className='mx-auto px-6 py-4'>

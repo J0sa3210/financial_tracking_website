@@ -26,7 +26,6 @@ export default function TransactionsPage() {
   const { activeAccount } = useAccount();
 
   async function get_transactions() {
-    console.log("Fetching transactions for account:", activeAccount);
     const resp = await fetch("http://localhost:8000/transaction", {
       headers: {
         "Content-Type": "application/json",

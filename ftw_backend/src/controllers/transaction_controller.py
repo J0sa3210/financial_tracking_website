@@ -19,17 +19,17 @@ transaction_service: TransactionService = TransactionService()
 account_service: AccountService = AccountService()
 
 @transaction_controller.get("", response_model=list[TransactionView])
-async def get_all_transactions(active_account_id: Annotated[str, Header()], db : Session = Depends(get_db)):
+async def get_all_transactions(active_account_id: Annotated[str, Header()], db : Session = Depends(get_db), year: int | None = None, month: int | None = None):
     active_account = account_service.get_account(db=db, account_id=int(active_account_id))    
     account_iban: str = active_account.iban
 
-    logger.info(f"Getting transactions for IBAN: {account_iban}" )
+    logger.info(f"Getting transactions for IBAN: {account_iban}, year: {year}, month: {month}" )
 
     if not is_IBAN(account_iban):
         logger.error(f"IBAN is wrong!")
     account_iban: str = format_IBAN(account_iban)
     
-    results = transaction_service.get_all_transactions(db, iban=account_iban)
+    results = transaction_service.get_all_transactions(db, iban=account_iban, year=year, month=month)
     return results
 
 @transaction_controller.put("", response_model=TransactionView)

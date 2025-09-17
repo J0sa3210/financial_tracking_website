@@ -109,7 +109,6 @@ export default function CreateCategoryDialog({
               placeholder='Select Category Type'
               options={["None", "Income", "Expenses", "Savings"].map((type) => ({ value: type, label: type }))}
               onChange={(e) => {
-                console.log("Selected category type:", e);
                 setCategoryType(e ? e.value : "None");
               }}
             />

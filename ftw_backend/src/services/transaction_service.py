@@ -2,10 +2,14 @@ from sqlalchemy.orm import Session, joinedload
 from models.transaction import Transaction, TransactionCreate,TransactionTypes, TransactionEdit
 from database.schemas import TransactionSchema, CategorySchema
 from exceptions.exceptions import CategoryNotFoundException
+from utils.logging import setup_loggers
+
+logger = setup_loggers()
+
 
 class TransactionService:
-    def get_all_transactions(self, db: Session, iban: str = "", as_schema: bool = False) -> list[Transaction]:
-        if iban is "":
+    def get_all_transactions(self, db: Session, iban: str = "", as_schema: bool = False, year: int | None = None, month: int | None = None) -> list[Transaction]:
+        if iban == "":
             transactions = (
             db.query(TransactionSchema)
             .options(joinedload(TransactionSchema.category))
@@ -18,6 +22,19 @@ class TransactionService:
             .options(joinedload(TransactionSchema.category))
             .all()
             )
+
+        logger.info(f"Found {len(transactions)} transactions for IBAN: {iban}")
+
+        if year is not None:
+            transactions = [transaction for transaction in transactions if transaction.date_executed.year == year]
+
+        logger.info(f"Found {len(transactions)} transactions in year: {year}")
+
+        if month is not None and month != 0:
+            transactions = [transaction for transaction in transactions if transaction.date_executed.month == month]
+
+        logger.info(f"Found {len(transactions)} transactions in month: {month}")
+
 
         if as_schema:
             return transactions
@@ -35,7 +52,7 @@ class TransactionService:
         Returns:
             Transaction: The transaction as a Pydantic model.
         """
-        if iban is "":
+        if iban == "":
             transaction_schema = (
             db.query(TransactionSchema)
             .filter(TransactionSchema.id == transaction_id)
