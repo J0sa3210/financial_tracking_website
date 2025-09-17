@@ -38,8 +38,8 @@ export default function NTransactionsInfoTile({ transactions }: Props) {
           </div>
         </span>
         {unprocessed_transactions.length > 0 && (
-          <div className='flex font-normal text-base items-center text-red-500'>
-            ({unprocessed_transactions.length} are unprocessed !!)
+          <div className='flex items-center text-red-500 font-semibold text-xl mt-2'>
+            {unprocessed_transactions.length} transactions are unprocessed !!
           </div>
         )}
       </CardContent>
