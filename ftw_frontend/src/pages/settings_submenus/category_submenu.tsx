@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Category } from "@/assets/types/Category";
 import { Button } from "@/components/ui/button";
 import Select from "react-select";
 import CreateCategoryDialog from "@/components/upload_data_handler/create_category_dialog";
@@ -50,7 +49,7 @@ export default function CategorySubmenu() {
 
   // load categories from backend (store raw objects)
   async function get_categories() {
-    const resp = await fetch("http://localhost:8000/categories", {
+    const resp = await fetch("http://localhost:8000/category", {
       headers: {
         "active-account-id": activeAccount ? activeAccount.id.toString() : "",
       },
@@ -111,7 +110,7 @@ export default function CategorySubmenu() {
 
   const deleteCategory = async (categoryId: number) => {
     try {
-      await fetch("http://localhost:8000/categories/" + categoryId, {
+      await fetch("http://localhost:8000/category/" + categoryId, {
         method: "DELETE",
         headers: {
           "active-account-id": activeAccount ? activeAccount.id.toString() : "",
@@ -155,7 +154,7 @@ export default function CategorySubmenu() {
     console.log("Category payload to update: ", payload);
 
     try {
-      await fetch("http://localhost:8000/categories/" + category.id, {
+      await fetch("http://localhost:8000/category/" + category.id, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

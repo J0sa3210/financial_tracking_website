@@ -1,13 +1,13 @@
 from models.category import Category, CategoryCreate
 from database.schemas import CategorySchema, CounterpartSchema, TransactionSchema
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload  # type: ignore
 from models.transaction import TransactionCreate, Transaction, TransactionEdit, TransactionTypes
 from typing import Optional
 from models.counterpart import Counterpart
 from .counterpart_service import CounterpartService
 from .transaction_service import TransactionService
 from .account_service import AccountService
-from fastapi import HTTPException
+from fastapi import HTTPException  # type: ignore
 from logging import Logger
 from utils.logging import setup_loggers
 from models.account import Account
@@ -22,9 +22,11 @@ class CategoryService():
 
     def get_all_categories(self, db: Session, as_schema: bool = False, owner_id: int = None) -> list[Category]:
         if owner_id is not None:
-            categories = db.query(CategorySchema).options(joinedload(CategorySchema.transactions)).filter(CategorySchema.owner_id==owner_id).all()
+            categories = db.query(CategorySchema).options(joinedload(CategorySchema.transactions),
+                joinedload(CategorySchema.counterparts)).filter(CategorySchema.owner_id==owner_id).all()
         else:
-            categories = db.query(CategorySchema).options(joinedload(CategorySchema.transactions)).all()
+            categories = db.query(CategorySchema).options(joinedload(CategorySchema.transactions),
+                joinedload(CategorySchema.counterparts)).all()
         
 
         if as_schema:
@@ -35,9 +37,11 @@ class CategoryService():
         
     def get_category(self, db: Session, category_id: int, as_schema: bool = False, owner_id: int = None) -> list[Category]:
         if owner_id is not None:
-            category = db.query(CategorySchema).options(joinedload(CategorySchema.transactions)).filter(CategorySchema.owner_id==owner_id).filter(CategorySchema.id==category_id).first()
+            category = db.query(CategorySchema).options(joinedload(CategorySchema.transactions),
+                joinedload(CategorySchema.counterparts)).filter(CategorySchema.owner_id==owner_id).filter(CategorySchema.id==category_id).first()
         else:
-            category = db.query(CategorySchema).options(joinedload(CategorySchema.transactions)).filter(CategorySchema.id==category_id).first()
+            category = db.query(CategorySchema).options(joinedload(CategorySchema.transactions),
+                joinedload(CategorySchema.counterparts)).filter(CategorySchema.id==category_id).first()
         
 
         if as_schema:
@@ -150,6 +154,29 @@ class CategoryService():
             filtered_transactions = [transaction for transaction in transactions if transaction.date_executed.year == year]
         return filtered_transactions
 
+    def add_counterpart_to_category(self, db: Session, owner_account: Account, category_id: int, counterpart_name: str):
+        # Check if the category exists (use values from the JSON payload)
+        category = self.get_category(db=db, category_id=category_id, as_schema=True, owner_id=owner_account.id)
+        if category is None:
+            raise HTTPException(status_code=404, detail="Category not found")
+        
+        # Get counterpart
+        counterpart = self.counterpart_service.get_counterpart_by_name(db=db, name=counterpart_name, owner_id=owner_account.id)
+        if counterpart is None:
+            raise HTTPException(status_code=404, detail="Counterpart not found")
+
+        # Add counterpart to category
+        counterpart.category_id = category.id
+        category.counterparts.append(counterpart)
+        db.commit()
+        db.refresh(category)
+        db.refresh(counterpart)
+
+        transactions: list[TransactionSchema] = self.transaction_service.get_all_transactions(db=db, iban=owner_account.iban, as_schema=True)
+        self.update_transaction_category(transactions, db, owner_id=owner_account.id)
+        db.commit()
+
+        return category
 
     def calculate_totals(self, categories: list[Category], db: Session, active_account: Account) -> dict[str, dict[str, float]]:
         pass

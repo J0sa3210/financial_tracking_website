@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload # type: ignore
 from models.transaction import Transaction, TransactionCreate,TransactionTypes, TransactionEdit
 from database.schemas import TransactionSchema, CategorySchema
 from exceptions.exceptions import CategoryNotFoundException
@@ -9,6 +9,8 @@ logger = setup_loggers()
 
 class TransactionService:
     def get_all_transactions(self, db: Session, iban: str = "", as_schema: bool = False, year: int | None = None, month: int | None = None) -> list[Transaction]:
+        iban = self.format_iban(iban)
+        
         if iban == "":
             transactions = (
             db.query(TransactionSchema)
@@ -239,4 +241,9 @@ class TransactionService:
 
         return response
 
-             
+    def unformat_iban(self, iban: str) -> str:
+        return iban.replace(" ", "").upper()
+    
+    def format_iban(self, iban: str) -> str:
+        iban = iban.replace(" ", "").upper()
+        return ' '.join(iban[i:i+4] for i in range(0, len(iban), 4))

@@ -1,5 +1,5 @@
-from fastapi import APIRouter, Depends, Header
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, Header  # type: ignore
+from sqlalchemy.orm import Session  # type: ignore
 from typing import Annotated
 from database.schemas import CategorySchema
 from models.category import CategoryView, CategoryCreate, CategoryEdit
@@ -7,8 +7,9 @@ from database import get_db
 from services import CategoryService, AccountService
 from utils.logging import setup_loggers
 from logging import Logger, DEBUG
-from fastapi import HTTPException
+from fastapi import HTTPException  # type: ignore
 from datetime import datetime
+from pydantic import BaseModel
 
 
 # TODO: filter get categories by owner_id
@@ -18,7 +19,7 @@ logger: Logger = setup_loggers()
 # logger.setLevel(DEBUG)
 
 categorie_controller = APIRouter(
-    prefix="/categories",
+    prefix="/category",
 )
 
 category_service: CategoryService = CategoryService()
@@ -111,3 +112,20 @@ def get_total_expenses(active_account_id: Annotated[str, Header()], db: Session 
     total_expenses = category_service.calculate_total_expenses(categories=filtered_categories)
 
     return total_expenses
+
+class AddCounterpartRequest(BaseModel):
+    category_id: int
+    counterpart_name: str
+
+@categorie_controller.post("/add_counterpart")
+def add_counterpart_to_category(active_account_id: Annotated[str, Header()], payload: AddCounterpartRequest, db: Session = Depends(get_db)):
+     # Check if the account exists
+     active_account = account_service.get_account(db=db, account_id=int(active_account_id))
+     if active_account is None:
+         raise HTTPException(status_code=404, detail="Account not found")
+
+     # Add the counterpart to the category
+     cp = category_service.add_counterpart_to_category(
+         db=db, owner_account=active_account, category_id=payload.category_id, counterpart_name=payload.counterpart_name
+     )
+     return {"status": "ok", "counterpart_id": getattr(cp, "id", None)}

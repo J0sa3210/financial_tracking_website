@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session # type: ignore
 from models.account import Account, AccountCreate, AccountView, AccountEdit
 from database.schemas import AccountSchema
 from utils.logging import setup_loggers
@@ -73,6 +73,16 @@ class AccountService:
 
     def convert_account_information(self, to_model: Account | AccountSchema, from_model: AccountCreate) -> Account | AccountSchema:
         for field, value in from_model.model_dump(exclude_none=True).items():
+            if field == "iban":
+                value = self.unformat_iban(value)
+
             setattr(to_model, field, value)
 
         return to_model
+    
+    def unformat_iban(self, iban: str) -> str:
+        return iban.replace(" ", "").upper()
+    
+    def format_iban(self, iban: str) -> str:
+        iban = iban.replace(" ", "").upper()
+        return ' '.join(iban[i:i+4] for i in range(0, len(iban), 4))

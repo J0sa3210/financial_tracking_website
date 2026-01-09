@@ -1,10 +1,9 @@
-import { act, use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Transaction } from "@/assets/types/Transaction";
 import { useAccount } from "@/components/context/AccountContext";
 import TotalTrackingBalanceInfoTile from "@/components/info_tiles/total_tracking_balance_info_tile";
 import NTransactionsInfoTile from "@/components/info_tiles/number_of_transactions_info_tile";
 import SelectedPeriodInfoTile from "@/components/info_tiles/selected_period_info_tile";
-import TransactionTable from "@/components/transaction_page/transaction_table";
 import { useTime } from "@/components/context/TimeContext";
 
 interface totalsType {
@@ -27,15 +26,21 @@ export default function DashboardPage() {
   const { activeAccount } = useAccount();
   const { activeYear, activeMonth } = useTime();
 
-  async function get_transactions(year: number | null = null, month: number | null = null) {
+  async function get_transactions(
+    year: number | null = null,
+    month: number | null = null
+  ) {
     let resp;
     if (year && month) {
-      resp = await fetch(`http://localhost:8000/transaction/?year=${year}&month=${month}`, {
-        headers: {
-          "Content-Type": "application/json",
-          "active-account-id": activeAccount?.id.toString() ?? "",
-        },
-      });
+      resp = await fetch(
+        `http://localhost:8000/transaction/?year=${year}&month=${month}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "active-account-id": activeAccount?.id.toString() ?? "",
+          },
+        }
+      );
     } else {
       resp = await fetch("http://localhost:8000/transaction", {
         headers: {
@@ -84,8 +89,8 @@ export default function DashboardPage() {
   }, [activeAccount, activeYear, activeMonth]);
 
   return (
-    <div className='mx-auto px-6 py-4'>
-      <div className='flex gap-4'>
+    <div className="mx-auto px-6 py-4">
+      <div className="flex gap-4">
         <SelectedPeriodInfoTile />
         <TotalTrackingBalanceInfoTile {...totals} />
         <NTransactionsInfoTile transactions={transactions} />

@@ -1,5 +1,11 @@
 import { act, useState } from "react";
-import { Dialog, DialogHeader, DialogContent, DialogTrigger, DialogTitle } from "../ui/dialog";
+import {
+  Dialog,
+  DialogHeader,
+  DialogContent,
+  DialogTrigger,
+  DialogTitle,
+} from "../ui/dialog";
 import { Button } from "../ui/button";
 import { FaPlus } from "react-icons/fa";
 import { Card, CardAction, CardContent } from "@/components/ui/card";
@@ -40,7 +46,7 @@ export default function CreateCategoryDialog({
         description,
         counterparts,
       });
-      const response = await fetch("http://localhost:8000/categories", {
+      const response = await fetch("http://localhost:8000/category", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -76,12 +82,10 @@ export default function CreateCategoryDialog({
   };
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className='w-30 text-lg hover:bg-background hover:text-primary hover:border hover:border-primary'>
-          <FaPlus className='mt-0.5 -mr-1' />
+        <Button className="w-30 text-lg hover:bg-background hover:text-primary hover:border hover:border-primary">
+          <FaPlus className="mt-0.5 -mr-1" />
           <p>Category</p>
         </Button>
       </DialogTrigger>
@@ -89,25 +93,27 @@ export default function CreateCategoryDialog({
         <DialogHeader>
           <DialogTitle>Create New Category</DialogTitle>
         </DialogHeader>
-        <Card className='bg-background shadow-none border border-none'>
+        <Card className="bg-background shadow-none border border-none">
           <CardContent>
             <Input
-              type='text'
-              placeholder='Category Name'
-              defaultValue=''
+              type="text"
+              placeholder="Category Name"
+              defaultValue=""
               value={categoryName}
               onChange={(e) => setCategoryName(e.target.value)}
             />
             <Input
-              type='text'
-              placeholder='Description'
-              defaultValue=''
+              type="text"
+              placeholder="Description"
+              defaultValue=""
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
             <Select
-              placeholder='Select Category Type'
-              options={["None", "Income", "Expenses", "Savings"].map((type) => ({ value: type, label: type }))}
+              placeholder="Select Category Type"
+              options={["None", "Income", "Expenses", "Savings"].map(
+                (type) => ({ value: type, label: type })
+              )}
               onChange={(e) => {
                 setCategoryType(e ? e.value : "None");
               }}
@@ -115,12 +121,14 @@ export default function CreateCategoryDialog({
 
             <Select
               isMulti
-              placeholder='Select Counterparts'
+              placeholder="Select Counterparts"
               options={counterpartOptions}
               onChange={(selectedOptions) =>
-                setCounterparts(selectedOptions.map((option) => counterpartMap[option.value]))
+                setCounterparts(
+                  selectedOptions.map((option) => counterpartMap[option.value])
+                )
               }
-              className='mt-2'
+              className="mt-2"
             />
 
             <CardAction>

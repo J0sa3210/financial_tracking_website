@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload  # type: ignore
 from models.counterpart import Counterpart
 from database.schemas import CounterpartSchema
 
@@ -37,6 +37,15 @@ class CounterpartService():
            counterparts = db.query(CounterpartSchema).options(joinedload(CounterpartSchema.category)).all()
         
         return [cp.name for cp in counterparts]
+
+    def get_counterpart_by_name(self, db: Session, name: str, owner_id: int = None) -> CounterpartSchema | None:
+        query = db.query(CounterpartSchema).filter(CounterpartSchema.name == name)
+        
+        if owner_id is not None:
+            query = query.filter(CounterpartSchema.owner_id == owner_id)
+
+        counterpart = query.first()
+        return counterpart
 
     def create_counterpart(self, new_counterpart: Counterpart, db: Session, owner_id: int) -> CounterpartSchema:
         cp = CounterpartSchema(
