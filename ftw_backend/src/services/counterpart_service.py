@@ -1,13 +1,50 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from models.counterpart import Counterpart
 from database.schemas import CounterpartSchema
+
 class CounterpartService():
     def __init__(self):
         pass
 
-    def get_all_counterparts(self, db: Session) -> list[Counterpart]:
-        counterparts = db.query(CounterpartSchema).all()
+    def get_all_counterparts(self, db: Session, as_schema: bool = False, owner_id: int = None) -> list[Counterpart]:
+        if owner_id is not None:
+           counterparts = db.query(CounterpartSchema).options(joinedload(CounterpartSchema.category)).filter(CounterpartSchema.owner_id==owner_id).all()
+        else:
+           counterparts = db.query(CounterpartSchema).options(joinedload(CounterpartSchema.category)).all()
+        
 
-        response = [Counterpart(id=counterpart.id, name=counterpart.name, category_id=counterpart.category_id) for counterpart in counterparts if counterpart.category_id is not None]
+        if as_schema:
+            return counterparts
+        else:
+            return [Counterpart.model_validate(counterpart) for counterpart in counterparts]
+        
+    def get_empty_counterparts(self, db: Session, as_schema: bool = False, owner_id: int = None) -> list[Counterpart]:
+        if owner_id is not None:
+           counterparts = db.query(CounterpartSchema).options(joinedload(CounterpartSchema.category)).filter(CounterpartSchema.owner_id==owner_id, CounterpartSchema.category_id == None).all()
+        else:
+           counterparts = db.query(CounterpartSchema).options(joinedload(CounterpartSchema.category)).filter(CounterpartSchema.category_id == None).all()
+        
 
-        return response
+        if as_schema:
+            return counterparts
+        else:
+            return [Counterpart.model_validate(counterpart) for counterpart in counterparts]
+    
+    def get_counterpart_names(self, db: Session, owner_id: int = None) -> list[str]:
+        if owner_id is not None:
+           counterparts = db.query(CounterpartSchema).options(joinedload(CounterpartSchema.category)).filter(CounterpartSchema.owner_id==owner_id).all()
+        else:
+           counterparts = db.query(CounterpartSchema).options(joinedload(CounterpartSchema.category)).all()
+        
+        return [cp.name for cp in counterparts]
+
+    def create_counterpart(self, new_counterpart: Counterpart, db: Session, owner_id: int) -> CounterpartSchema:
+        cp = CounterpartSchema(
+            name=new_counterpart.name,
+            owner_id=owner_id,
+            category_id=getattr(new_counterpart, "category_id", None)
+        )
+        db.add(cp)
+        db.commit()
+        db.refresh(cp)
+        return cp

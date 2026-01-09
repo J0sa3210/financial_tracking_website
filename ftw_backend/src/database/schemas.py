@@ -35,8 +35,15 @@ class CategorySchema(Base):
     description = Column(String, nullable=True)
     category_type = Column(String, default="None")
 
+    # ensure counterparts are removed when a Category is removed in the ORM
+    counterparts = relationship(
+        "CounterpartSchema",
+        back_populates="category",
+        cascade="all, delete-orphan",
+        foreign_keys="CounterpartSchema.category_id",
+    )
+
     transactions = relationship("TransactionSchema", back_populates="category")
-    counterparts = relationship("CounterpartSchema", back_populates="category")
 
 class CounterpartSchema(Base):
     __tablename__ = "counterparts"
@@ -45,8 +52,14 @@ class CounterpartSchema(Base):
     owner_id = Column(Integer, index=True)
     name = Column(String, index=True)
 
-    category_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
-    category = relationship("CategorySchema", back_populates="counterparts")
+    # define FK column first so relationship can reference it unambiguously
+    category_id = Column(Integer, ForeignKey("categories.id", ondelete="SET NULL"), nullable=True)
+    # relationship referencing the FK
+    category = relationship(
+        "CategorySchema",
+        back_populates="counterparts",
+        foreign_keys=[category_id],
+    )
 
 class AccountSchema(Base):
     __tablename__ = "accounts"

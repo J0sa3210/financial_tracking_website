@@ -52,10 +52,8 @@ class CategoryService():
         category_instance = self.convert_category_data(CategorySchema(), new_category, db)
         category_instance.owner_id = owner_id
         db.add(category_instance)
-        
-        db.commit()
-        db.refresh(category_instance)
-        
+        db.flush()     
+
         # Update all transaction categories
         transaction_schemas: list[Transaction] = self.transaction_service.get_all_transactions(db, as_schema=True)
         self.update_transaction_category(transaction_schemas, db, owner_id)
@@ -88,6 +86,7 @@ class CategoryService():
                 # Extract all ids from the given Counterparts and filter out the right CounterpartSchemas based on these ids
                 ids = [cp['id'] if isinstance(cp, dict) else cp.id for cp in value]
                 category_instance.counterparts = db.query(CounterpartSchema).filter(CounterpartSchema.id.in_(ids)).all()
+                logger.info(f"Updated category ({category_instance.name}) counterparts to {len(category_instance.counterparts)}.")
             else:
                 setattr(category_instance, field, value)
 
@@ -101,6 +100,15 @@ class CategoryService():
 
         if not existing_category:
             raise HTTPException(status_code=404, detail="Category not found")
+
+        # Option A: set FK to NULL for counterparts and transactions, preserving rows
+        db.query(CounterpartSchema).filter(CounterpartSchema.category_id == category_id).update(
+            {CounterpartSchema.category_id: None}, synchronize_session="fetch"
+        )
+        db.query(TransactionSchema).filter(TransactionSchema.category_id == category_id).update(
+            {TransactionSchema.category_id: None, TransactionSchema.category_name: None, TransactionSchema.transaction_type: None}, synchronize_session="fetch"
+        )
+        
 
         # Update all transaction categories
         db.delete(existing_category)

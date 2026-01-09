@@ -77,6 +77,17 @@ def read_names(active_account_id: Annotated[str, Header()], category_id: int, db
         raise HTTPException(status_code=404, detail="Category not found")
     return [counterpart.name for counterpart in category.counterparts]
 
+@categorie_controller.get("/{category_id}", response_model=CategoryView)
+def get_category(active_account_id: Annotated[str, Header()], category_id: int, db: Session = Depends(get_db)):
+    # Check if the account exists
+    active_account = account_service.get_account(db=db, account_id=int(active_account_id))
+    owner_id: int = active_account.id
+
+    category = category_service.get_category(db=db, category_id=category_id, as_schema=True, owner_id=owner_id)
+    if not category:
+        raise HTTPException(status_code=404, detail="Category not found")
+    return category
+
 
 @categorie_controller.get("/total_expenses", response_model=dict[str, float])
 def get_total_expenses(active_account_id: Annotated[str, Header()], db: Session = Depends(get_db), year: int = None, month: int = None):

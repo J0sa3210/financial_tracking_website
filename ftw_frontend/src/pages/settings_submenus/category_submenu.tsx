@@ -9,13 +9,19 @@ import { useAccount } from "@/components/context/AccountContext";
 import type { SingleValue } from "react-select";
 
 export default function CategorySubmenu() {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [counterparts, setCounterparts] = useState<{ [key: number]: { value: string; label: string }[] }>({});
-  const [counterpartOptions, setCounterpartOptions] = useState<{ value: string; label: string }[]>([]);
-  const [counterpartMap, setCounterpartMap] = useState<{ [name: string]: Counterpart }>({});
+  const [categories, setCategories] = useState<any[]>([]); // store plain objects
+  const [counterparts, setCounterparts] = useState<{
+    [key: number]: { value: string; label: string }[];
+  }>({});
+  const [counterpartOptions, setCounterpartOptions] = useState<
+    { value: string; label: string }[]
+  >([]);
+  const [counterpartMap, setCounterpartMap] = useState<{
+    [name: string]: Counterpart;
+  }>({});
   const { activeAccount } = useAccount();
 
-  // Define the options for the multiselect component
+  // fetch counterpart options (independent of categories)
   useEffect(() => {
     async function fetchCounterpartOptions() {
       const resp = await fetch("http://localhost:8000/counterparts", {
@@ -31,16 +37,18 @@ export default function CategorySubmenu() {
       }));
       setCounterpartOptions(options);
 
-      // Build the mapping
       const map: { [name: string]: Counterpart } = {};
       data.forEach((cp: any) => {
         map[cp.name] = cp;
       });
       setCounterpartMap(map);
     }
-    fetchCounterpartOptions();
-  }, [categories]); // Fetch options only once when categories are loaded or counterparts change
 
+    // run when account changes
+    if (activeAccount) fetchCounterpartOptions();
+  }, [activeAccount]);
+
+  // load categories from backend (store raw objects)
   async function get_categories() {
     const resp = await fetch("http://localhost:8000/categories", {
       headers: {
@@ -49,18 +57,22 @@ export default function CategorySubmenu() {
     });
 
     const data = await resp.json();
-    const loadedCategories = data.map(
-      (c: any) => new Category(c.id, c.name, c.description, c.category_type, c.counterparts)
-    );
-    setCategories(loadedCategories);
 
-    // Initialize counterparts state
-    const initialCounterparts = loadedCategories.reduce(
-      (acc: { [key: number]: { value: string; label: string }[] }, category: Category) => {
-        acc[category.id] = category.counterparts.map((counterpart: Counterpart) => ({
-          value: counterpart.name,
-          label: counterpart.name,
-        }));
+    // keep plain objects (do not wrap in custom class)
+    setCategories(data);
+
+    // Initialize counterparts state from server data so Select shows current selections
+    const initialCounterparts = data.reduce(
+      (
+        acc: { [key: number]: { value: string; label: string }[] },
+        category: any
+      ) => {
+        acc[category.id] = (category.counterparts || []).map(
+          (counterpart: Counterpart) => ({
+            value: counterpart.name,
+            label: counterpart.name,
+          })
+        );
         return acc;
       },
       {}
@@ -69,23 +81,29 @@ export default function CategorySubmenu() {
   }
 
   useEffect(() => {
-    get_categories();
+    if (activeAccount) get_categories();
   }, [activeAccount]);
 
-  const handleCounterpartChange = (categoryId: number, selectedOptions: { value: string; label: string }[] | null) => {
-    if (selectedOptions) {
-      setCounterparts({
-        ...counterparts,
-        [categoryId]: selectedOptions,
-      });
-    }
+  const handleCounterpartChange = (
+    categoryId: number,
+    selectedOptions: { value: string; label: string }[] | null
+  ) => {
+    setCounterparts((prev) => ({
+      ...prev,
+      [categoryId]: selectedOptions ? selectedOptions : [],
+    }));
   };
 
-  const handleTypeChange = (categoryId: number, selectedType: SingleValue<{ value: string; label: string }>) => {
+  const handleTypeChange = (
+    categoryId: number,
+    selectedType: SingleValue<{ value: string; label: string }>
+  ) => {
     if (selectedType) {
       setCategories((prevCategories) =>
         prevCategories.map((category) =>
-          category.id === categoryId ? { ...category, category_type: selectedType.value } : category
+          category.id === categoryId
+            ? { ...category, category_type: selectedType.value }
+            : category
         )
       );
     }
@@ -103,16 +121,38 @@ export default function CategorySubmenu() {
       console.error("Error deleting category:", error);
       alert("An error occurred while deleting the category");
     } finally {
-      get_categories(); // Refresh the categories after deletion}
+      get_categories();
     }
   };
 
-  const handleSave = async (category: Category) => {
-    if (counterparts[category.id]) {
-      category.counterparts = counterparts[category.id].map((option) => counterpartMap[option.value]);
-    }
+  // Build final counterpart objects for payload:
+  // - take the selected options if present, otherwise fall back to original category.counterparts
+  // - map names to existing counterpart objects via counterpartMap
+  // - if a name is not found in the map, send a minimal object { name } so backend can create it
+  const buildCounterpartsForCategory = (category: any) => {
+    const selected = counterparts[category.id];
+    const names = (
+      selected ??
+      (category.counterparts || []).map((cp: any) => ({
+        value: cp.name,
+        label: cp.name,
+      }))
+    ).map((opt: any) => opt.value);
 
-    console.log("Category to update: ", category);
+    // unique names preserve existing counterparts that weren't removed
+    const uniqueNames = Array.from(new Set(names));
+
+    return uniqueNames.map((name) => counterpartMap[name] ?? { name });
+  };
+
+  const handleSave = async (category: any) => {
+    // create a plain payload object
+    const payload = {
+      ...category,
+      counterparts: buildCounterpartsForCategory(category),
+    };
+
+    console.log("Category payload to update: ", payload);
 
     try {
       await fetch("http://localhost:8000/categories/" + category.id, {
@@ -121,21 +161,21 @@ export default function CategorySubmenu() {
           "Content-Type": "application/json",
           "active-account-id": activeAccount ? activeAccount.id.toString() : "",
         },
-        body: JSON.stringify(category),
+        body: JSON.stringify(payload),
       });
     } catch (error) {
       console.error("Error updating categories:", error);
       alert("An error occurred while updating categories");
     } finally {
-      get_categories(); // Refresh the categories after deletion}
+      get_categories();
     }
   };
 
   return (
-    <div className='p-4'>
-      <div className='flex justify-between items-center mb-4'>
-        <h2 className='text-2xl font-bold'>Category Settings</h2>
-        <span className='flex gap-1'>
+    <div className="p-4">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-2xl font-bold">Category Settings</h2>
+        <span className="flex gap-1">
           <CreateCategoryDialog
             counterpartOptions={counterpartOptions}
             counterpartMap={counterpartMap}
@@ -144,40 +184,45 @@ export default function CategorySubmenu() {
         </span>
       </div>
       {categories.map((category) => (
-        <div
-          key={category.id}
-          className='mb-4 p-2 border  rounded-lg'>
-          <span className='flex gap-1 justify-between items-center'>
-            <h3 className='text-xl font-semibold'>{category.name}</h3>
-            <span className='flex gap-1'>
+        <div key={category.id} className="mb-4 p-2 border  rounded-lg">
+          <span className="flex gap-1 justify-between items-center">
+            <h3 className="text-xl font-semibold">{category.name}</h3>
+            <span className="flex gap-1">
               <Button
-                className='w-15 text-lg hover:bg-background hover:text-primary hover:border hover:border-primary'
-                onClick={() => handleSave(category)}>
+                className="w-15 text-lg hover:bg-background hover:text-primary hover:border hover:border-primary"
+                onClick={() => handleSave(category)}
+              >
                 Save
               </Button>
               <Button
-                className='bg-red-500 text-white hover:bg-white hover:text-red-500 hover:border hover:border-red-500'
-                onClick={() => deleteCategory(category.id)}>
+                className="bg-red-500 text-white hover:bg-white hover:text-red-500 hover:border hover:border-red-500"
+                onClick={() => deleteCategory(category.id)}
+              >
                 <FaTrash />
               </Button>
             </span>
           </span>
 
           <p>{category.description}</p>
-          <span className='flex gap-2 items-center'>
-            <label className='font-medium'>Type:</label>
+          <span className="flex gap-2 items-center">
+            <label className="font-medium">Type:</label>
             <Select
-              options={["None", "Income", "Expenses", "Savings"].map((type) => ({ value: type, label: type }))}
-              value={{ value: category.category_type, label: category.category_type }}
+              options={["None", "Income", "Expenses", "Savings"].map(
+                (type) => ({ value: type, label: type })
+              )}
+              value={{
+                value: category.category_type,
+                label: category.category_type,
+              }}
               onChange={(selectedOption) => {
                 handleTypeChange(category.id, selectedOption);
               }}
-              className='mt-2 mb-2 w-50'
+              className="mt-2 mb-2 w-50"
             />
           </span>
 
-          <span className='flex gap-2 items-center'>
-            <label className='font-medium'>Counterparts:</label>
+          <span className="flex gap-2 items-center">
+            <label className="font-medium">Counterparts:</label>
             <Select
               isMulti
               options={counterpartOptions}
@@ -185,10 +230,10 @@ export default function CategorySubmenu() {
               onChange={(selectedOptions) =>
                 handleCounterpartChange(
                   category.id,
-                  selectedOptions.map((option) => ({ value: option.value, label: option.label }))
+                  selectedOptions as { value: string; label: string }[] | null
                 )
               }
-              className='mt-2 w-full'
+              className="mt-2 w-full"
             />
           </span>
         </div>
