@@ -6,7 +6,7 @@ from typing import List, Optional
 class TransactionTypes(StrEnum):
     EXPENSES: str = "Expenses"
     INCOME: str = "Income"
-    SAVINGS: str = "Savings",
+    SAVINGS: str = "Savings"
     NONE: str = "None"
 
 class Transaction(BaseModel):

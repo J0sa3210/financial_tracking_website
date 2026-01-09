@@ -26,6 +26,9 @@ account_service: AccountService = AccountService()
 
 @categorie_controller.get("", )
 async def get_all_categories(active_account_id: Annotated[str, Header()], db: Session = Depends(get_db)):
+    if active_account_id is None:
+        logger.error(active_account)
+        raise HTTPException(status_code=400, detail="Active account ID header is missing")
     # Check if the account exists
     active_account = account_service.get_account(db=db, account_id=int(active_account_id))
     owner_id: int = active_account.id

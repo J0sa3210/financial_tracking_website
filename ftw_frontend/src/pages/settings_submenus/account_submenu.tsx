@@ -9,7 +9,8 @@ import { FaTrash } from "react-icons/fa";
 export default function AccountSubmenu() {
   const [accounts, setAccounts] = useState<Account[]>([]);
 
-  const { setDefaultAccount, defaultAccountId } = useAccount();
+  const { setDefaultAccount, defaultAccountId, selectActiveAccount } =
+    useAccount();
   // There is no built-in Intl formatter for IBAN numbers.
   // You can format IBANs by grouping them for readability.
   function formatIBAN(iban: string): string {
@@ -19,6 +20,10 @@ export default function AccountSubmenu() {
   async function fetchAccounts() {
     const resp = await fetch("http://localhost:8000/account");
     const data = await resp.json();
+    if (data.length === 1) {
+      setDefaultAccount(data[0].id.toString());
+      selectActiveAccount(data[0].id.toString());
+    }
 
     setAccounts(data);
   }
@@ -40,23 +45,22 @@ export default function AccountSubmenu() {
   };
 
   return (
-    <div className='p-4'>
-      <div className='flex justify-between items-center mb-4'>
-        <h2 className='text-2xl font-bold'>Account Settings</h2>
-        <span className='flex gap-1'>
+    <div className="p-4">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-2xl font-bold">Account Settings</h2>
+        <span className="flex gap-1">
           <CreateAccountDialog onCreate={fetchAccounts}></CreateAccountDialog>
         </span>
       </div>
       {accounts.map((account) => (
-        <div
-          key={account.id}
-          className='mb-4 p-2 border  rounded-lg'>
-          <span className='flex gap-1 justify-between items-center'>
-            <h3 className='text-xl font-semibold'>{account.name}</h3>
-            <span className='flex gap-1'>
+        <div key={account.id} className="mb-4 p-2 border  rounded-lg">
+          <span className="flex gap-1 justify-between items-center">
+            <h3 className="text-xl font-semibold">{account.name}</h3>
+            <span className="flex gap-1">
               <Button
-                className='bg-red-500 text-white hover:bg-white hover:text-red-500 hover:border hover:border-red-500'
-                onClick={() => deleteAccount(account.id)}>
+                className="bg-red-500 text-white hover:bg-white hover:text-red-500 hover:border hover:border-red-500"
+                onClick={() => deleteAccount(account.id)}
+              >
                 <FaTrash />
               </Button>
             </span>
@@ -67,11 +71,12 @@ export default function AccountSubmenu() {
             {formatIBAN(account.iban)}
           </p>
           <Button
-            size='sm'
-            className='text-lg'
-            variant='outline'
+            size="sm"
+            className="text-lg"
+            variant="outline"
             disabled={account.id === defaultAccountId}
-            onClick={() => setDefaultAccount(account.id.toString())}>
+            onClick={() => setDefaultAccount(account.id.toString())}
+          >
             Set default
           </Button>
         </div>

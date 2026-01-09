@@ -2,46 +2,48 @@ import { useState, useEffect } from "react";
 import { Avatar } from "../ui/avatar";
 import { useAccount } from "../context/AccountContext";
 import { FaAsterisk } from "react-icons/fa";
-import { Select, SelectContent, SelectItem, SelectTrigger } from "@radix-ui/react-select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from "@radix-ui/react-select";
 import { Account } from "@/assets/types/Account";
 
-export default function AccountSelector() {
+export default function AccountSelector({ accounts }: { accounts: Account[] }) {
   const { activeAccount, selectActiveAccount, defaultAccountId } = useAccount();
-  const [accounts, setAccounts] = useState<Account[]>([]);
-
-  useEffect(() => {
-    async function fetchAccounts() {
-      const resp = await fetch("http://localhost:8000/account");
-      const data = await resp.json();
-      setAccounts(data);
-      console.log("Fetched accounts:", data);
-    }
-    fetchAccounts();
-  }, []);
 
   if (!accounts.length) return null;
 
   return (
-    <div className=''>
+    <div className="">
       <Select
         onValueChange={selectActiveAccount}
-        value={activeAccount?.id?.toString()}>
-        <SelectTrigger className='flex gap-3 items-center px-3 py-2 rounded-lg border shadow-sm'>
-          <Avatar className='bg-secondary text-secondary-foreground rounded-full flex items-center justify-center w-8 h-8'>
+        value={activeAccount?.id?.toString()}
+      >
+        <SelectTrigger className="flex gap-3 items-center px-3 py-2 rounded-lg border shadow-sm">
+          <Avatar className="bg-secondary text-secondary-foreground rounded-full flex items-center justify-center w-8 h-8">
             <FaAsterisk />
           </Avatar>
-          <span className='font-semibold text-lg truncate'>{activeAccount?.name || "Select account"}</span>
+          <span className="font-semibold text-lg truncate">
+            {activeAccount?.name || "Select account"}
+          </span>
         </SelectTrigger>
-        <SelectContent className='bg-white text-base text-foreground rounded-lg shadow-lg mt-2'>
+        <SelectContent className="bg-white text-base text-foreground rounded-lg shadow-lg mt-2">
           {accounts.map((account) => (
             <SelectItem
               key={account.id}
               value={account.id.toString()}
               className={`flex items-center px-3 py-2 cursor-pointer ${
-                activeAccount && account.id === activeAccount.id ? "font-bold text-primary" : "text-primary"
-              }`}>
-              <span className='truncate'>{account.name}</span>
-              {account.id === defaultAccountId && <span className='ml-2 text-md text-primary'>*</span>}
+                activeAccount && account.id === activeAccount.id
+                  ? "font-bold text-primary"
+                  : "text-primary"
+              }`}
+            >
+              <span className="truncate">{account.name}</span>
+              {account.id === defaultAccountId && (
+                <span className="ml-2 text-md text-primary">*</span>
+              )}
             </SelectItem>
           ))}
         </SelectContent>
