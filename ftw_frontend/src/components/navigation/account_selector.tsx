@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { Avatar } from "../ui/avatar";
 import { useAccount } from "../context/AccountContext";
 import { FaAsterisk } from "react-icons/fa";
