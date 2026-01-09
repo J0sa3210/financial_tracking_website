@@ -20,6 +20,8 @@ import { useAccount } from "../context/AccountContext";
 import { Input } from "../ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import CreateCategoryDialog from "../upload_data_handler/create_category_dialog";
+import type { Counterpart } from "@/assets/types/Counterpart";
 interface TransactionInfo {
   transaction: Transaction | null;
   onSaveEdit: () => {};
@@ -36,28 +38,63 @@ export default function TransactionEditDialog(
   const { activeAccount } = useAccount();
   const [addCounterpart, setAddCounterpart] = useState<boolean>(false);
 
+  const [counterpartOptions, setCounterpartOptions] = useState<
+    { value: string; label: string }[]
+  >([]);
+  const [counterpartMap, setCounterpartMap] = useState<{
+    [name: string]: Counterpart;
+  }>({});
+
+  // fetch counterpart options (independent of categories)
   useEffect(() => {
-    if (!transaction) return; // only fetch categories when we have a transaction
-    async function get_categories() {
-      const resp = await fetch("http://localhost:8000/category", {
+    async function fetchCounterpartOptions() {
+      const resp = await fetch("http://localhost:8000/counterparts", {
         headers: {
           "active-account-id": activeAccount ? activeAccount.id.toString() : "",
         },
       });
       const data = await resp.json();
-      const loadedCategories = data.map(
-        (c: any) =>
-          new Category(
-            c.id,
-            c.name,
-            c.description,
-            c.category_type,
-            c.counterparts
-          )
-      );
-      setCategories(loadedCategories);
+
+      const options = data.map((cp: Counterpart) => ({
+        value: cp.name,
+        label: cp.name,
+      }));
+      setCounterpartOptions(options);
+
+      const map: { [name: string]: Counterpart } = {};
+      data.forEach((cp: any) => {
+        map[cp.name] = cp;
+      });
+      setCounterpartMap(map);
     }
-    get_categories();
+
+    // run when account changes
+    if (activeAccount) fetchCounterpartOptions();
+  }, [activeAccount]);
+
+  async function fetchCategories() {
+    const resp = await fetch("http://localhost:8000/category", {
+      headers: {
+        "active-account-id": activeAccount ? activeAccount.id.toString() : "",
+      },
+    });
+    const data = await resp.json();
+    const loadedCategories = data.map(
+      (c: any) =>
+        new Category(
+          c.id,
+          c.name,
+          c.description,
+          c.category_type,
+          c.counterparts
+        )
+    );
+    setCategories(loadedCategories);
+  }
+
+  useEffect(() => {
+    if (!transaction) return; // only fetch categories when we have a transaction
+    fetchCategories();
   }, [transaction]);
 
   async function handleSave(transaction: Transaction, addCounterpart: boolean) {
@@ -119,7 +156,8 @@ export default function TransactionEditDialog(
             View or edit the selected transaction below.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid grid-cols-2 grid-rows-2 gap-2 mb-4">
+
+        <div className="grid grid-cols-2 grid-rows-2 justify-stretch gap-6 mb-4 w-full">
           {/* Type Selector */}
           <div>
             <p className="font-semibold text-md mb-2">Type:</p>
@@ -162,25 +200,32 @@ export default function TransactionEditDialog(
           <div className="flex flex-col gap-2">
             <p className="font-semibold text-md">Category:</p>
 
-            <Select
-              onValueChange={(category_id) => {
-                transaction.category_id = Number(category_id);
-              }}
-            >
-              <SelectTrigger className="w-[200px] border-primary/50">
-                <SelectValue
-                  placeholder={transaction.category_name ?? "Choose Category"}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((c: Category) => (
-                  <SelectItem key={c.id} value={c.id.toString()}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-                <SelectItem value="None">None</SelectItem>
-              </SelectContent>
-            </Select>
+            <span className="flex gap-2">
+              <Select
+                onValueChange={(category_id) => {
+                  transaction.category_id = Number(category_id);
+                }}
+              >
+                <SelectTrigger className="w-[200px] border-primary/50">
+                  <SelectValue
+                    placeholder={transaction.category_name ?? "Choose Category"}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((c: Category) => (
+                    <SelectItem key={c.id} value={c.id.toString()}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="None">None</SelectItem>
+                </SelectContent>
+              </Select>
+              <CreateCategoryDialog
+                counterpartOptions={counterpartOptions}
+                counterpartMap={counterpartMap}
+                onCreate={fetchCategories}
+              />
+            </span>
             <div className="flex items-center gap-2">
               <Checkbox
                 id="add_counterpart"

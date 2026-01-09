@@ -23,7 +23,7 @@ export default function CategorySubmenu() {
   // fetch counterpart options (independent of categories)
   useEffect(() => {
     async function fetchCounterpartOptions() {
-      const resp = await fetch("http://localhost:8000/counterparts", {
+      const resp = await fetch("http://localhost:8000/counterparts/empty", {
         headers: {
           "active-account-id": activeAccount ? activeAccount.id.toString() : "",
         },
