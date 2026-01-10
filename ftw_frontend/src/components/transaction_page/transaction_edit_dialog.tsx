@@ -114,19 +114,23 @@ export default function TransactionEditDialog(
           (c) => c.id === transaction.category_id
         );
         if (category) {
-          await fetch("http://localhost:8000/category/add_counterpart", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "active-account-id": activeAccount
-                ? activeAccount.id.toString()
-                : "",
-            },
-            body: JSON.stringify({
-              category_id: category.id,
-              counterpart_name: transaction.counterpart_name,
-            }),
-          });
+          await fetch(
+            "http://localhost:8000/category/" +
+              category.id +
+              "/add_counterpart",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "active-account-id": activeAccount
+                  ? activeAccount.id.toString()
+                  : "",
+              },
+              body: JSON.stringify({
+                counterpart_name: transaction.counterpart_name,
+              }),
+            }
+          );
         }
       }
     } catch (error) {

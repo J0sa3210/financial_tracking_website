@@ -138,6 +138,7 @@ class TransactionService:
         """
         # Check if transaction exists
         transaction_schema: Transaction = self.get_transaction(transaction_id=transaction_id, db=db, as_schema=True)
+        
         editted_transaction_schema: Transaction = self.convert_transaction_data(transaction_schema, new_transaction)
 
         # Update the category if needed

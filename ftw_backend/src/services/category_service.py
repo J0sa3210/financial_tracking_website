@@ -154,29 +154,18 @@ class CategoryService():
             filtered_transactions = [transaction for transaction in transactions if transaction.date_executed.year == year]
         return filtered_transactions
 
-    def add_counterpart_to_category(self, db: Session, owner_account: Account, category_id: int, counterpart_name: str):
-        # Check if the category exists (use values from the JSON payload)
-        category = self.get_category(db=db, category_id=category_id, as_schema=True, owner_id=owner_account.id)
-        if category is None:
-            raise HTTPException(status_code=404, detail="Category not found")
-        
-        # Get counterpart
-        counterpart = self.counterpart_service.get_counterpart_by_name(db=db, name=counterpart_name, owner_id=owner_account.id)
-        if counterpart is None:
-            raise HTTPException(status_code=404, detail="Counterpart not found")
-
+    def add_counterpart_to_category(self, db: Session, counterpart: CounterpartSchema, category: CategorySchema):
         # Add counterpart to category
         counterpart.category_id = category.id
-        db.commit()
-
         category.counterparts.append(counterpart)
         db.commit()
 
-        db.refresh(category)
-        db.refresh(counterpart)
-
-        transactions: list[TransactionSchema] = self.transaction_service.get_all_transactions(db=db, iban=owner_account.iban, as_schema=True)
-        self.update_transaction_category(transactions, db, owner_id=owner_account.id)
+        # Update all transactions with the counterpart
+        db.query(TransactionSchema).filter(TransactionSchema.counterpart_id == counterpart.id).update(
+            {TransactionSchema.category_id: category.id,
+             TransactionSchema.category_name: category.name,
+             TransactionSchema.transaction_type: category.category_type}, synchronize_session="fetch"
+        )
         db.commit()
 
         return category

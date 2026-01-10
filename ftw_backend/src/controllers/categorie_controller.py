@@ -4,7 +4,7 @@ from typing import Annotated
 from database.schemas import CategorySchema
 from models.category import CategoryView, CategoryCreate, CategoryEdit
 from database import get_db
-from services import CategoryService, AccountService
+from services import CategoryService, AccountService, CounterpartService
 from utils.logging import setup_loggers
 from logging import Logger, DEBUG
 from fastapi import HTTPException  # type: ignore
@@ -24,6 +24,7 @@ categorie_controller = APIRouter(
 
 category_service: CategoryService = CategoryService()
 account_service: AccountService = AccountService()
+counterpart_service: CounterpartService = CounterpartService()
 
 @categorie_controller.get("", )
 async def get_all_categories(active_account_id: Annotated[str, Header()], db: Session = Depends(get_db)):
@@ -113,20 +114,28 @@ def get_total_expenses(active_account_id: Annotated[str, Header()], db: Session 
 
     return total_expenses
 
+
+### HANDLE ADDING COUNTERPART TO CATEGORY ###
 class AddCounterpartRequest(BaseModel):
-    category_id: int
     counterpart_name: str
 
-@categorie_controller.post("/add_counterpart")
-def add_counterpart_to_category(active_account_id: Annotated[str, Header()], payload: AddCounterpartRequest, db: Session = Depends(get_db)):
+@categorie_controller.post("/{category_id}/add_counterpart")
+def add_counterpart_to_category(active_account_id: Annotated[str, Header()], category_id: int, payload: AddCounterpartRequest,db: Session = Depends(get_db)):
      # Check if the account exists
      active_account = account_service.get_account(db=db, account_id=int(active_account_id))
      if active_account is None:
          raise HTTPException(status_code=404, detail="Account not found")
 
+     # Check if the category exists
+     category = category_service.get_category(db=db, category_id=category_id, owner_id=active_account.id)
+     if category is None:
+         raise HTTPException(status_code=404, detail="Category not found")
+
+     # Check if the counterpart exists
+     counterpart = counterpart_service.get_counterpart_by_name(db=db, name=payload.counterpart_name, owner_id=active_account.id)
+     if counterpart is None:
+         raise HTTPException(status_code=400, detail="Counterpart not found")
+
      # Add the counterpart to the category
-     logger.debug(f"Adding counterpart {payload.counterpart_name} to category ID {payload.category_id} for account ID {active_account.id}")
-     cp = category_service.add_counterpart_to_category(
-         db=db, owner_account=active_account, category_id=payload.category_id, counterpart_name=payload.counterpart_name
-     )
+     cp = category_service.add_counterpart_to_category(db=db, category=category, counterpart=counterpart)
      return {"status": "ok", "counterpart_id": getattr(cp, "id", None)}

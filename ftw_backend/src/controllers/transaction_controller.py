@@ -79,8 +79,8 @@ async def upload_csv(file: UploadFile = File(...), db: Session = Depends(get_db)
     file_handler.process_file(db=db)
     
 @transaction_controller.post("/{transaction_id}", response_model=TransactionView)
-async def edit_transaction(transaction_id: int, new_transaction: TransactionEdit, db: Session = Depends(get_db)):
-    changed_transaction: Transaction = transaction_service.edit_transaction(transaction_id, new_transaction, db)
+async def edit_transaction(transaction_id: int, updated_transaction: TransactionEdit, db: Session = Depends(get_db)):
+    changed_transaction: Transaction = transaction_service.edit_transaction(transaction_id, updated_transaction, db)
     return changed_transaction
 
     

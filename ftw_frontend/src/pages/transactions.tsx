@@ -22,7 +22,9 @@ const defaultTotals: totalsType = {
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [totals, setTotals] = useState<totalsType>(defaultTotals);
-  const [editTransactionId, setEditTransactionId] = useState<number | null>(null);
+  const [editTransactionId, setEditTransactionId] = useState<number | null>(
+    null
+  );
   const { activeAccount } = useAccount();
 
   async function get_transactions() {
@@ -46,7 +48,7 @@ export default function TransactionsPage() {
             t.category_name,
             t.owner_iban,
             t.counterpart_name,
-            t.counterpart_iban
+            t.counterpart_id
           )
       )
     );
@@ -80,11 +82,8 @@ export default function TransactionsPage() {
   }
 
   return (
-    <div className='mx-auto px-20 py-4'>
-      <TransactionInfoTiles
-        transactions={transactions}
-        totals={totals}
-      />
+    <div className="mx-auto px-20 py-4">
+      <TransactionInfoTiles transactions={transactions} totals={totals} />
 
       <TransactionTable
         transactions={transactions}
