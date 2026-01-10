@@ -6,7 +6,7 @@ from database import get_db
 from sqlalchemy.orm import Session
 from .transaction_service import TransactionService
 from models.transaction import TransactionCreate, TransactionTypes
-from models.counterpart import Counterpart
+from models.counterpart import CounterpartCreate
 from models.category import Category
 from models.account import Account
 from database.schemas import CounterpartSchema, CategorySchema, TransactionSchema
@@ -88,12 +88,13 @@ class CSV_handler():
             logger.error(f"Error converting date to ISO format: {e}")
             raise e
 
-    def convert_df_to_transactions(self, df: DataFrame):
+    def convert_df_to_transactions(self, df: DataFrame, counterpart_map: dict[str, CounterpartSchema] = {}) -> list[TransactionCreate]:
         transactions: list[TransactionCreate] = []
 
         for _, row in df.iterrows():
 
             transaction_type: TransactionTypes = TransactionTypes.NONE
+            counterpart: CounterpartSchema = counterpart_map[row["Naam tegenpartij bevat"]]
             date: str = self.convert_to_ISO_format(row["Boekingsdatum"])
 
             transaction: TransactionCreate = TransactionCreate(
@@ -101,6 +102,7 @@ class CSV_handler():
 
                 owner_iban = row["Rekening"],
                 counterpart_name = row["Naam tegenpartij bevat"],
+                counterpart_id = counterpart.id,
                 counterpart_iban = row["Rekening tegenpartij"],
                 value = float(row["Bedrag"]/ 100),  # The value is in cents
                 date_executed = date,  # Convert to YYYY-MM-DD format
@@ -115,23 +117,15 @@ class CSV_handler():
         """
         Export all counterparts to the database.
         """
-        # Get all previous counterparts
-        counterparts_from_db = db.query(CounterpartSchema).filter(CounterpartSchema.id == owner_id).all()
-
-        # Convert them to set of Counterpart names
-        existing_counterparts: set[str] = {counterpart.name.lower() for counterpart in counterparts_from_db}
-
-        # Filter out counterparts that already exist
-        new_counterparts = [CounterpartSchema(name=name, owner_id=owner_id) for name in counterparts if name.lower() not in existing_counterparts]
-
+        counterparts_map: dict[str, CounterpartSchema] = {}
         # Add new counterparts to the database
-        if new_counterparts:
-            db.add_all(new_counterparts)
-            db.commit()
-            logger.info(f"Added {len(new_counterparts)} new counterparts to the database.")
-        else:
-            logger.info("No new counterparts to add to the database.")
-        
+        for cp_name in counterparts:
+            if cp_name not in counterparts_map.keys():
+                logger.debug(f"Checking counterpart {cp_name} in database.")
+                cp: CounterpartSchema = self.counterpart_service.create_counterpart(new_counterpart=CounterpartCreate(name=cp_name, owner_id=owner_id), db=db, owner_id=owner_id)
+                counterparts_map[cp.name] = cp
+
+        return counterparts_map
 
     def process_file(self, db: Session = Depends(get_db)):
         # Convert file to DataFrame
@@ -143,25 +137,28 @@ class CSV_handler():
         owner_ibans: list[str] = df["Rekening"].unique().tolist()
         logger.debug(f"Owner IBANs found in CSV: {owner_ibans}")
 
-
         for owner_iban in owner_ibans:
             logger.debug(f"Processing transactions for account number: {owner_iban}")
             try:
                 owner_account : Account = self.account_service.get_account_by_iban(db=db, iban=owner_iban)
                 logger.debug(f"Found owner account: {owner_account}")
                 
-                # Export all counterparts
-                self.export_counterparts(df["Naam tegenpartij bevat"].unique(), db, owner_id=owner_account.id)
-                
-                transactions: list[TransactionSchema] = self.transaction_service.get_all_transactions(db, iban=owner_iban, as_schema=True)
+                # Gather all present counterparts. If not present, add them to the database
+                counterpart_map: dict[str, CounterpartSchema] = self.export_counterparts(df["Naam tegenpartij bevat"].unique(), db, owner_id=owner_account.id)
+                logger.debug(f"Counterpart map: {counterpart_map}")
+                # Filter DataFrame for the current owner account
 
-                self.category_service.update_transaction_category(transactions, db, owner_id=owner_account.id)
-       
                 # Convert DataFrame to transactions
-                transactions: list[TransactionCreate] = self.convert_df_to_transactions(df)
-                self.transaction_service.add_transactions(transactions, db)
+                new_transactions: list[TransactionCreate] = self.convert_df_to_transactions(df, counterpart_map=counterpart_map)
+                added_transaction: list[TransactionSchema] = self.transaction_service.add_transactions(new_transactions, db)
 
-                db.commit()
+                # Add transactions to the right category based on the counterpart
+                for transaction in added_transaction:
+                    cp: CounterpartSchema = counterpart_map[transaction.counterpart_name]
+                    if cp.category_id is not None:
+                        logger.debug(f"Assigning category ID {cp.category_id} to transaction ID {transaction.id} based on counterpart {cp.name}")
+                        self.category_service.add_transaction_to_category(transaction_id=transaction.id, category_id=cp.category_id, owner_id=owner_account.id, db=db)
+
                 logger.info("CSV file processed and transactions added successfully.")
             
             except AccountNotFoundException as e:

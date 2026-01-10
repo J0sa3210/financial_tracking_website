@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from enum import StrEnum
 from datetime import date
 from typing import List, Optional
+from .counterpart import Counterpart
 
 class TransactionTypes(StrEnum):
     EXPENSES: str = "Expenses"
@@ -17,7 +18,8 @@ class Transaction(BaseModel):
 
     owner_iban: str = ""
     counterpart_name: str = ""
-    counterpart_iban: str = ""
+    counterpart_id: int
+    counterpart: Counterpart
 
     value: float
     date_executed: date
@@ -33,8 +35,8 @@ class TransactionCreate(BaseModel):
     category_name: Optional[str] = None
 
     owner_iban: str
-    counterpart_name: str
-    counterpart_iban: str
+    counterpart_name: str = ""
+    counterpart_id: int
 
     value: float
     date_executed: date
@@ -45,7 +47,7 @@ class TransactionCreate(BaseModel):
 class TransactionEdit(BaseModel):
     transaction_type: TransactionTypes = TransactionTypes.NONE
     category_id: Optional[int] = None 
-
+    counterpart_id: int
     date_executed: Optional[date] = None
     description: Optional[str] = None
 
@@ -59,7 +61,7 @@ class TransactionView(BaseModel):
 
     owner_iban: str
     counterpart_name: str
-    counterpart_iban: str
+    counterpart_id: int
 
     value: float
     date_executed: date

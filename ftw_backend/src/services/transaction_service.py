@@ -85,9 +85,9 @@ class TransactionService:
         Returns:
             Transaction: The added transaction as a Pydantic model.
         """
+        logger.debug(f"Adding {len(new_transactions)} new transactions to the database.")
         new_transaction_schemas: list[TransactionSchema] = [self.convert_transaction_data(TransactionSchema(), transaction) for transaction in new_transactions]
-        db.add(new_transaction_schemas)
-
+        db.add_all(new_transaction_schemas)
         db.commit()
 
         return new_transaction_schemas
@@ -167,7 +167,7 @@ class TransactionService:
         transaction_schema.transaction_type = category_schema.category_type
 
 
-    def convert_transaction_data(self, old_transaction: Transaction | TransactionSchema, new_transaction: TransactionEdit) -> Transaction:
+    def convert_transaction_data(self, old_transaction: Transaction | TransactionSchema, new_transaction: TransactionEdit | TransactionCreate) -> Transaction:
         """
         Update an existing transaction object with new data.
 
@@ -182,6 +182,7 @@ class TransactionService:
             # Convert values into right types
             if field == "category_id":
                 pass
+
             else:
                 setattr(old_transaction, field, value)
         

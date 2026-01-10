@@ -15,8 +15,9 @@ class TransactionSchema(Base):
     category = relationship("CategorySchema", back_populates="transactions", foreign_keys=[category_id])
 
     owner_iban = Column(String, index=True)
+    counterpart_id = Column(Integer, ForeignKey("counterparts.id"), nullable=False)
     counterpart_name = Column(String, index=True)
-    counterpart_iban = Column(String, index=True)
+    counterpart = relationship("CounterpartSchema", foreign_keys=[counterpart_id], back_populates="transactions")
 
     value = Column(Float, index=True)
     description = Column(String)
@@ -52,6 +53,8 @@ class CounterpartSchema(Base):
     owner_id = Column(Integer, index=True)
     name = Column(String, index=True)
 
+    transactions = relationship("TransactionSchema", back_populates="counterpart")
+
     # define FK column first so relationship can reference it unambiguously
     category_id = Column(Integer, ForeignKey("categories.id", ondelete="SET NULL"), nullable=True)
     # relationship referencing the FK
@@ -60,6 +63,8 @@ class CounterpartSchema(Base):
         back_populates="counterparts",
         foreign_keys=[category_id],
     )
+
+
 
 class AccountSchema(Base):
     __tablename__ = "accounts"

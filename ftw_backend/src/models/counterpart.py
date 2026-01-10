@@ -6,6 +6,7 @@ class Counterpart(BaseModel):
     name: str = ""
     owner_id: int = None
     category_id: Optional[int] = None
+    n_transactions: int = 0
 
     # Ensures we can easily convert from schema to model
     model_config = {'from_attributes': True}

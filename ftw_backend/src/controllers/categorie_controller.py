@@ -125,6 +125,7 @@ def add_counterpart_to_category(active_account_id: Annotated[str, Header()], pay
          raise HTTPException(status_code=404, detail="Account not found")
 
      # Add the counterpart to the category
+     logger.debug(f"Adding counterpart {payload.counterpart_name} to category ID {payload.category_id} for account ID {active_account.id}")
      cp = category_service.add_counterpart_to_category(
          db=db, owner_account=active_account, category_id=payload.category_id, counterpart_name=payload.counterpart_name
      )

@@ -167,8 +167,11 @@ class CategoryService():
 
         # Add counterpart to category
         counterpart.category_id = category.id
+        db.commit()
+
         category.counterparts.append(counterpart)
         db.commit()
+
         db.refresh(category)
         db.refresh(counterpart)
 
@@ -193,3 +196,44 @@ class CategoryService():
         #     total = sum(transaction.value for transaction in category.transactions)
         #     total_expenses[category.name] = total
         # return total_expenses
+
+
+
+    ### ADDING/REMOVING TRANSACTION TO/FROM CATEGORY ###
+
+    def add_transaction_to_category(self, db: Session, transaction_id: int, category_id: int, owner_id: int) -> TransactionSchema:
+        # Get the category
+        category = self.get_category(db=db, category_id=category_id, as_schema=True, owner_id=owner_id)
+        if category is None:
+            raise HTTPException(status_code=404, detail="Category not found")
+
+        # Get the transaction
+        transaction = self.transaction_service.get_transaction(db=db, transaction_id=transaction_id, as_schema=True)
+        if transaction is None:
+            raise HTTPException(status_code=404, detail="Transaction not found")
+
+        # Update transaction with category info
+        transaction.category_id = category.id
+        transaction.category_name = category.name
+        transaction.transaction_type = category.category_type
+
+        db.commit()
+        db.refresh(transaction)
+
+        return transaction
+
+    def remove_transaction_from_category(self, db: Session, transaction_id: int, owner_id: int) -> TransactionSchema:
+        # Get the transaction
+        transaction = self.transaction_service.get_transaction(db=db, transaction_id=transaction_id, as_schema=True)
+        if transaction is None:
+            raise HTTPException(status_code=404, detail="Transaction not found")
+
+        # Update transaction with category info
+        transaction.category_id = None
+        transaction.category_name = None
+        transaction.transaction_type = TransactionTypes.NONE
+
+        db.commit()
+        db.refresh(transaction)
+
+        return transaction
