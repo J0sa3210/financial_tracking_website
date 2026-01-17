@@ -45,10 +45,10 @@ export default function CategorySubmenu() {
             c.description,
             c.category_type,
             c.counterparts.map(
-              (c: Counterpart) => new CounterpartEdit(c.id, c.name)
-            )
-          )
-      )
+              (c: Counterpart) => new CounterpartEdit(c.id, c.name),
+            ),
+          ),
+      ),
     );
   }
 
@@ -73,7 +73,7 @@ export default function CategorySubmenu() {
           value: cp.id,
           label: cp.name,
         };
-      })
+      }),
     );
   }
 
@@ -88,12 +88,14 @@ export default function CategorySubmenu() {
           "active-account-id": activeAccount ? activeAccount.id.toString() : "",
         },
         body: JSON.stringify(category),
-      }
+      },
     );
 
     if (!response.ok) {
       throw new Error("Failed to update category " + category.id);
     }
+
+    fetchCategories();
   }
 
   async function handleDelete(categoryId: number) {
@@ -105,32 +107,34 @@ export default function CategorySubmenu() {
           "Content-Type": "application/json",
           "active-account-id": activeAccount ? activeAccount.id.toString() : "",
         },
-      }
+      },
     );
 
     if (!response.ok) {
       throw new Error("Failed to delete category " + categoryId);
     }
+
+    fetchCategories();
   }
 
   async function handleTypeChange(
     categoryId: Number,
-    selectedType: SingleValue<{ label: string; value: string }>
+    selectedType: SingleValue<{ label: string; value: string }>,
   ) {
     if (selectedType) {
       setCategories((prevCategories) =>
         prevCategories.map((category) =>
           category.id === categoryId
             ? { ...category, category_type: selectedType.value }
-            : category
-        )
+            : category,
+        ),
       );
     }
   }
 
   async function handleCounterpartChange(
     categoryId: number,
-    options: CounterpartSelectOption[] | null
+    options: CounterpartSelectOption[] | null,
   ) {
     setCategories((prevCategories: CategoryEdit[]) =>
       prevCategories.map((category: CategoryEdit) =>
@@ -138,11 +142,11 @@ export default function CategorySubmenu() {
           ? {
               ...category,
               counterparts: (options ?? []).map(
-                (cp) => new CounterpartEdit(cp.value, cp.label)
+                (cp) => new CounterpartEdit(cp.value, cp.label),
               ),
             }
-          : category
-      )
+          : category,
+      ),
     );
   }
 
@@ -196,7 +200,7 @@ export default function CategorySubmenu() {
             <label className="font-medium">Type:</label>
             <Select
               options={["None", "Income", "Expenses", "Savings"].map(
-                (type) => ({ value: type, label: type })
+                (type) => ({ value: type, label: type }),
               )}
               value={{
                 value: category.category_type,
@@ -223,7 +227,7 @@ export default function CategorySubmenu() {
               onChange={(selectedOptions) =>
                 handleCounterpartChange(
                   category.id,
-                  selectedOptions as CounterpartSelectOption[] | null
+                  selectedOptions as CounterpartSelectOption[] | null,
                 )
               }
               className="mt-2 w-full"
