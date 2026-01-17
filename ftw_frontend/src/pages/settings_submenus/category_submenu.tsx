@@ -3,100 +3,120 @@ import { Button } from "@/components/ui/button";
 import Select from "react-select";
 import CreateCategoryDialog from "@/components/upload_data_handler/create_category_dialog";
 import { FaTrash } from "react-icons/fa";
-import { Counterpart } from "@/assets/types/Counterpart";
+import {
+  Counterpart,
+  CounterpartEdit,
+  type CounterpartSelectOption,
+} from "@/assets/types/Counterpart";
 import { useAccount } from "@/components/context/AccountContext";
 import type { SingleValue } from "react-select";
+import { Category, CategoryEdit } from "@/assets/types/Category";
 
 export default function CategorySubmenu() {
-  const [categories, setCategories] = useState<any[]>([]); // store plain objects
-  const [counterparts, setCounterparts] = useState<{
-    [key: number]: { value: string; label: string }[];
-  }>({});
-  const [counterpartOptions, setCounterpartOptions] = useState<
-    { value: string; label: string }[]
-  >([]);
-  const [counterpartMap, setCounterpartMap] = useState<{
-    [name: string]: Counterpart;
-  }>({});
   const { activeAccount } = useAccount();
 
-  // fetch counterpart options (independent of categories)
-  useEffect(() => {
-    async function fetchCounterpartOptions() {
-      const resp = await fetch("http://localhost:8000/counterparts/empty", {
-        headers: {
-          "active-account-id": activeAccount ? activeAccount.id.toString() : "",
-        },
-      });
-      const data = await resp.json();
+  const [categories, setCategories] = useState<CategoryEdit[]>([]);
+  const [counterpartOptions, setCounterpartOptions] = useState<
+    CounterpartSelectOption[]
+  >([]);
 
-      const options = data.map((cp: Counterpart) => ({
-        value: cp.name,
-        label: cp.name,
-      }));
-      setCounterpartOptions(options);
-
-      const map: { [name: string]: Counterpart } = {};
-      data.forEach((cp: any) => {
-        map[cp.name] = cp;
-      });
-      setCounterpartMap(map);
-    }
-
-    // run when account changes
-    if (activeAccount) fetchCounterpartOptions();
-  }, [activeAccount]);
-
-  // load categories from backend (store raw objects)
-  async function get_categories() {
-    const resp = await fetch("http://localhost:8000/category", {
+  // Fetch functions
+  async function fetchCategories() {
+    const response = await fetch("http://localhost:8000/category", {
+      method: "GET",
       headers: {
+        "Content-Type": "application/json",
         "active-account-id": activeAccount ? activeAccount.id.toString() : "",
       },
     });
 
-    const data = await resp.json();
+    const data = await response.json();
 
-    // keep plain objects (do not wrap in custom class)
-    setCategories(data);
+    if (!response.ok) {
+      throw new Error("Failed to get categories");
+    }
 
-    // Initialize counterparts state from server data so Select shows current selections
-    const initialCounterparts = data.reduce(
-      (
-        acc: { [key: number]: { value: string; label: string }[] },
-        category: any
-      ) => {
-        acc[category.id] = (category.counterparts || []).map(
-          (counterpart: Counterpart) => ({
-            value: counterpart.name,
-            label: counterpart.name,
-          })
-        );
-        return acc;
-      },
-      {}
+    setCategories(
+      data.map(
+        (c: Category) =>
+          new CategoryEdit(
+            c.id,
+            c.name,
+            c.description,
+            c.category_type,
+            c.counterparts.map(
+              (c: Counterpart) => new CounterpartEdit(c.id, c.name)
+            )
+          )
+      )
     );
-    setCounterparts(initialCounterparts);
   }
 
-  useEffect(() => {
-    if (activeAccount) get_categories();
-  }, [activeAccount]);
+  async function fetchCounterpartOptions() {
+    const response = await fetch("http://localhost:8000/counterpart/empty", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "active-account-id": activeAccount ? activeAccount.id.toString() : "",
+      },
+    });
 
-  const handleCounterpartChange = (
-    categoryId: number,
-    selectedOptions: { value: string; label: string }[] | null
-  ) => {
-    setCounterparts((prev) => ({
-      ...prev,
-      [categoryId]: selectedOptions ? selectedOptions : [],
-    }));
-  };
+    const data = await response.json();
 
-  const handleTypeChange = (
-    categoryId: number,
-    selectedType: SingleValue<{ value: string; label: string }>
-  ) => {
+    if (!response.ok) {
+      throw new Error("Failed to get empty counterparts");
+    }
+
+    setCounterpartOptions(
+      data.map((cp: Counterpart) => {
+        return {
+          value: cp.id,
+          label: cp.name,
+        };
+      })
+    );
+  }
+
+  // Button handlers
+  async function handleSave(category: CategoryEdit) {
+    const response = await fetch(
+      "http://localhost:8000/category/" + category.id,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "active-account-id": activeAccount ? activeAccount.id.toString() : "",
+        },
+        body: JSON.stringify(category),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to update category " + category.id);
+    }
+  }
+
+  async function handleDelete(categoryId: number) {
+    const response = await fetch(
+      "http://localhost:8000/category/" + categoryId,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "active-account-id": activeAccount ? activeAccount.id.toString() : "",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to delete category " + categoryId);
+    }
+  }
+
+  async function handleTypeChange(
+    categoryId: Number,
+    selectedType: SingleValue<{ label: string; value: string }>
+  ) {
     if (selectedType) {
       setCategories((prevCategories) =>
         prevCategories.map((category) =>
@@ -106,69 +126,39 @@ export default function CategorySubmenu() {
         )
       );
     }
-  };
+  }
 
-  const deleteCategory = async (categoryId: number) => {
-    try {
-      await fetch("http://localhost:8000/category/" + categoryId, {
-        method: "DELETE",
-        headers: {
-          "active-account-id": activeAccount ? activeAccount.id.toString() : "",
-        },
-      });
-    } catch (error) {
-      console.error("Error deleting category:", error);
-      alert("An error occurred while deleting the category");
-    } finally {
-      get_categories();
-    }
-  };
+  async function handleCounterpartChange(
+    categoryId: number,
+    options: CounterpartSelectOption[] | null
+  ) {
+    setCategories((prevCategories: CategoryEdit[]) =>
+      prevCategories.map((category: CategoryEdit) =>
+        category.id === categoryId
+          ? {
+              ...category,
+              counterparts: (options ?? []).map(
+                (cp) => new CounterpartEdit(cp.value, cp.label)
+              ),
+            }
+          : category
+      )
+    );
+  }
 
-  // Build final counterpart objects for payload:
-  // - take the selected options if present, otherwise fall back to original category.counterparts
-  // - map names to existing counterpart objects via counterpartMap
-  // - if a name is not found in the map, send a minimal object { name } so backend can create it
-  const buildCounterpartsForCategory = (category: any) => {
-    const selected = counterparts[category.id];
-    const names = (
-      selected ??
-      (category.counterparts || []).map((cp: any) => ({
-        value: cp.name,
-        label: cp.name,
-      }))
-    ).map((opt: any) => opt.value);
+  // Use effects
+  useEffect(() => {
+    fetchCategories();
+    fetchCounterpartOptions();
+  }, []);
 
-    // unique names preserve existing counterparts that weren't removed
-    const uniqueNames = Array.from(new Set(names));
+  useEffect(() => {
+    console.log("Categories updated:", categories);
+  }, [categories]);
 
-    return uniqueNames.map((name) => counterpartMap[name] ?? { name });
-  };
-
-  const handleSave = async (category: any) => {
-    // create a plain payload object
-    const payload = {
-      ...category,
-      counterparts: buildCounterpartsForCategory(category),
-    };
-
-    console.log("Category payload to update: ", payload);
-
-    try {
-      await fetch("http://localhost:8000/category/" + category.id, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "active-account-id": activeAccount ? activeAccount.id.toString() : "",
-        },
-        body: JSON.stringify(payload),
-      });
-    } catch (error) {
-      console.error("Error updating categories:", error);
-      alert("An error occurred while updating categories");
-    } finally {
-      get_categories();
-    }
-  };
+  useEffect(() => {
+    console.log("Counterpart options updated:", counterpartOptions);
+  }, [counterpartOptions]);
 
   return (
     <div className="p-4">
@@ -177,12 +167,11 @@ export default function CategorySubmenu() {
         <span className="flex gap-1">
           <CreateCategoryDialog
             counterpartOptions={counterpartOptions}
-            counterpartMap={counterpartMap}
-            onCreate={get_categories}
+            onCreate={fetchCategories}
           />
         </span>
       </div>
-      {categories.map((category) => (
+      {categories.map((category: CategoryEdit) => (
         <div key={category.id} className="mb-4 p-2 border  rounded-lg">
           <span className="flex gap-1 justify-between items-center">
             <h3 className="text-xl font-semibold">{category.name}</h3>
@@ -195,7 +184,7 @@ export default function CategorySubmenu() {
               </Button>
               <Button
                 className="bg-red-500 text-white hover:bg-white hover:text-red-500 hover:border hover:border-red-500"
-                onClick={() => deleteCategory(category.id)}
+                onClick={() => handleDelete(category.id)}
               >
                 <FaTrash />
               </Button>
@@ -225,11 +214,16 @@ export default function CategorySubmenu() {
             <Select
               isMulti
               options={counterpartOptions}
-              value={counterparts[category.id] || []}
+              value={
+                category.counterparts.map((cp: CounterpartEdit) => ({
+                  value: cp.id,
+                  label: cp.name,
+                })) || []
+              }
               onChange={(selectedOptions) =>
                 handleCounterpartChange(
                   category.id,
-                  selectedOptions as { value: string; label: string }[] | null
+                  selectedOptions as CounterpartSelectOption[] | null
                 )
               }
               className="mt-2 w-full"

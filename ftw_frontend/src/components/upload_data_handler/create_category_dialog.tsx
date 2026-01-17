@@ -1,4 +1,4 @@
-import { act, useState } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogHeader,
@@ -10,26 +10,25 @@ import { Button } from "../ui/button";
 import { FaPlus } from "react-icons/fa";
 import { Card, CardAction, CardContent } from "@/components/ui/card";
 import { Input } from "../ui/input";
-import Select from "react-select";
-import { Counterpart } from "@/assets/types/Counterpart";
+import Select, { type SingleValue } from "react-select";
+import {
+  Counterpart,
+  CounterpartEdit,
+  type CounterpartSelectOption,
+} from "@/assets/types/Counterpart";
 import { useAccount } from "@/components/context/AccountContext";
-
-type CounterpartOptions = { value: string; label: string }[];
-type CounterpartMap = { [name: string]: Counterpart };
 
 export default function CreateCategoryDialog({
   counterpartOptions,
-  counterpartMap,
   onCreate,
 }: {
-  counterpartOptions: CounterpartOptions;
-  counterpartMap: CounterpartMap;
+  counterpartOptions: CounterpartSelectOption[];
   onCreate?: () => void;
 }) {
   const [categoryName, setCategoryName] = useState("");
   const [categoryType, setCategoryType] = useState("None");
   const [description, setDescription] = useState("");
-  const [counterparts, setCounterparts] = useState<Counterpart[]>([]);
+  const [counterparts, setCounterparts] = useState<CounterpartEdit[]>([]);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [open, setOpen] = useState<boolean>(false);
   const { activeAccount } = useAccount();
@@ -125,7 +124,9 @@ export default function CreateCategoryDialog({
               options={counterpartOptions}
               onChange={(selectedOptions) =>
                 setCounterparts(
-                  selectedOptions.map((option) => counterpartMap[option.value])
+                  selectedOptions.map(
+                    (option) => new CounterpartEdit(option.value, option.label)
+                  )
                 )
               }
               className="mt-2"

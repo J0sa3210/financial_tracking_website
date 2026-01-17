@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from .counterpart import CounterpartView, CounterpartEdit
+from .counterpart import CounterpartView, CounterpartEdit, CounterpartFromId
 from .transaction import TransactionView, TransactionTypes
 
 class Category(BaseModel):
@@ -48,7 +48,7 @@ class CategoryEdit(BaseModel):
     description: str = None
     category_type: TransactionTypes = None
     
-    counterparts: list[CounterpartEdit] = []
+    counterparts: list[CounterpartFromId] = []
 
     # Ensures we can easily convert from schema to model
     model_config = {'from_attributes': True}

@@ -24,6 +24,9 @@ class CounterpartEdit(BaseModel):
     # Ensures we can easily convert from schema to model
     model_config = {'from_attributes': True}
 
+class CounterpartFromId(BaseModel):
+    id: int
+
 class CounterpartView(BaseModel):
     id: int
     name: str

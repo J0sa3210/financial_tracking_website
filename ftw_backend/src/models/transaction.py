@@ -18,8 +18,8 @@ class Transaction(BaseModel):
 
     owner_iban: str = ""
     counterpart_name: str = ""
-    counterpart_id: int
-    counterpart: Counterpart
+    counterpart_id: Optional[int] = None
+    counterpart: Optional[Counterpart] = None
 
     value: float
     date_executed: date
@@ -36,7 +36,7 @@ class TransactionCreate(BaseModel):
 
     owner_iban: str
     counterpart_name: str = ""
-    counterpart_id: int
+    counterpart_id: Optional[int] = None
 
     value: float
     date_executed: date
@@ -47,7 +47,7 @@ class TransactionCreate(BaseModel):
 class TransactionEdit(BaseModel):
     transaction_type: TransactionTypes = TransactionTypes.NONE
     category_id: Optional[int] = None 
-    counterpart_id: int
+    counterpart_id: Optional[int] = None
     date_executed: Optional[date] = None
     description: Optional[str] = None
 
@@ -60,8 +60,8 @@ class TransactionView(BaseModel):
     category_name: Optional[str]
 
     owner_iban: str
-    counterpart_name: str
-    counterpart_id: int
+    counterpart_name: str = ""
+    counterpart_id: Optional[int] = None
 
     value: float
     date_executed: date

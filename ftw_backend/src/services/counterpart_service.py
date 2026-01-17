@@ -51,6 +51,15 @@ class CounterpartService():
         counterpart = query.first()
         return counterpart
     
+    def get_counterpart_by_id(self, db: Session, id: int, owner_id: int = None) -> CounterpartSchema | None:
+        query = db.query( CounterpartSchema).filter(CounterpartSchema.id == id)
+        
+        if owner_id is not None:
+            query = query.filter(CounterpartSchema.owner_id == owner_id)
+
+        counterpart = query.first()
+        return counterpart
+    
     """
     CREATE FUNCTIONS
     """

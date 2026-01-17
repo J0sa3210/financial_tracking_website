@@ -10,6 +10,7 @@ from logging import Logger, DEBUG
 from fastapi import HTTPException  # type: ignore
 from datetime import datetime
 from pydantic import BaseModel
+from models.account import Account
 
 
 # TODO: filter get categories by owner_id
@@ -42,18 +43,26 @@ async def get_all_categories(active_account_id: Annotated[str, Header()], db: Se
 @categorie_controller.post("", response_model=CategoryView)
 def create_category(active_account_id: Annotated[str, Header()], category: CategoryCreate, db: Session = Depends(get_db)):
     # Check if the account exists
-    active_account = account_service.get_account(db=db, account_id=int(active_account_id))
-    owner_id: int = active_account.id
+    owner: Account = account_service.get_account(db=db, account_id=int(active_account_id))
+    owner_id: int = owner.id
     
     
-    category = category_service.add_category(new_category=category, owner_id=owner_id, db=db)
+    category = category_service.add_category(new_category=category, owner=owner, db=db)
     return category
 
 # Update an existing category
 @categorie_controller.put("/{category_id}", response_model=CategoryView)
-def update_category(category_id: int, category: CategoryEdit, db: Session = Depends(get_db)):
-    logger.debug(f"Category to update: {category}")
-    updated_category = category_service.update_category(category_id=category_id, updated_category=category, db=db)
+def update_category(active_account_id: Annotated[str, Header()], category_id: int, updated_category: CategoryEdit, db: Session = Depends(get_db)):
+    owner: Account = account_service.get_account(active_account_id, db)
+    if owner is None:
+        raise HTTPException(status_code=404, detail="Owner not found")
+
+    current_category = db.query(CategorySchema).filter(CategorySchema.id == category_id).first()
+    if not current_category:
+        raise HTTPException(status_code=404, detail="Category not found")
+    
+    updated_category = category_service.update_category(current_category=current_category, updated_category=updated_category, owner=owner, db=db)
+    db.commit()
     return updated_category
 
 @categorie_controller.delete("/{category_id}", response_model=CategoryView)

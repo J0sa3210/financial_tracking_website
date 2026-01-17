@@ -21,7 +21,10 @@ import { Input } from "../ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import CreateCategoryDialog from "../upload_data_handler/create_category_dialog";
-import type { Counterpart } from "@/assets/types/Counterpart";
+import {
+  Counterpart,
+  type CounterpartSelectOption,
+} from "@/assets/types/Counterpart";
 interface TransactionInfo {
   transaction: Transaction | null;
   onSaveEdit: () => {};
@@ -39,35 +42,36 @@ export default function TransactionEditDialog(
   const [addCounterpart, setAddCounterpart] = useState<boolean>(false);
 
   const [counterpartOptions, setCounterpartOptions] = useState<
-    { value: string; label: string }[]
+    CounterpartSelectOption[]
   >([]);
-  const [counterpartMap, setCounterpartMap] = useState<{
-    [name: string]: Counterpart;
-  }>({});
+
+  async function fetchCounterpartOptions() {
+    const response = await fetch("http://localhost:8000/counterpart/empty", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "active-account-id": activeAccount ? activeAccount.id.toString() : "",
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error("Failed to get empty counterparts");
+    }
+
+    setCounterpartOptions(
+      data.map((cp: Counterpart) => {
+        return {
+          value: cp.id,
+          label: cp.name,
+        };
+      })
+    );
+  }
 
   // fetch counterpart options (independent of categories)
   useEffect(() => {
-    async function fetchCounterpartOptions() {
-      const resp = await fetch("http://localhost:8000/counterparts", {
-        headers: {
-          "active-account-id": activeAccount ? activeAccount.id.toString() : "",
-        },
-      });
-      const data = await resp.json();
-
-      const options = data.map((cp: Counterpart) => ({
-        value: cp.name,
-        label: cp.name,
-      }));
-      setCounterpartOptions(options);
-
-      const map: { [name: string]: Counterpart } = {};
-      data.forEach((cp: any) => {
-        map[cp.name] = cp;
-      });
-      setCounterpartMap(map);
-    }
-
     // run when account changes
     if (activeAccount) fetchCounterpartOptions();
   }, [activeAccount]);
@@ -226,7 +230,6 @@ export default function TransactionEditDialog(
               </Select>
               <CreateCategoryDialog
                 counterpartOptions={counterpartOptions}
-                counterpartMap={counterpartMap}
                 onCreate={fetchCategories}
               />
             </span>

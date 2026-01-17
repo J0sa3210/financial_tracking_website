@@ -11,7 +11,7 @@ from logging import Logger
 logger: Logger = setup_loggers()
 counterpart_service: CounterpartService = CounterpartService()
 counterpart_controller = APIRouter(
-    prefix="/counterparts",
+    prefix="/counterpart",
 )
 
 @counterpart_controller.get("")

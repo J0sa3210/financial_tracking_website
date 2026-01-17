@@ -1,4 +1,4 @@
-from models.category import Category, CategoryCreate
+from models.category import Category, CategoryCreate, CategoryEdit
 from database.schemas import CategorySchema, CounterpartSchema, TransactionSchema
 from sqlalchemy.orm import Session, joinedload  # type: ignore
 from models.transaction import TransactionCreate, Transaction, TransactionEdit, TransactionTypes
@@ -49,52 +49,56 @@ class CategoryService():
         else:
             return Category.model_validate(category)
 
-    def add_category(self, new_category: CategoryCreate, db: Session, owner_id: int) -> CategorySchema:
+    def add_category(self, new_category: CategoryCreate, db: Session, owner: Account) -> CategorySchema:
         """
         Add a new category to the database.
         """
-        category_instance = self.convert_category_data(CategorySchema(), new_category, db)
-        category_instance.owner_id = owner_id
-        db.add(category_instance)
+        current_category = self.convert_category_data(CategorySchema(), new_category, owner, db)
+        current_category.owner_id = owner.id
+        db.add(current_category)
         db.flush()     
 
         # Update all transaction categories
         transaction_schemas: list[Transaction] = self.transaction_service.get_all_transactions(db, as_schema=True)
-        self.update_transaction_category(transaction_schemas, db, owner_id)
+        self.update_transaction_category(transaction_schemas, db, owner_id=owner.id)
         db.commit()
 
-        return category_instance
+        return current_category
     
-    def update_category(self, category_id: int, updated_category: CategoryCreate, db: Session) -> CategorySchema:
-        existing_category = db.query(CategorySchema).filter(CategorySchema.id == category_id).first()
-        if not existing_category:
-            raise HTTPException(status_code=404, detail="Category not found")
-        updated_category = self.convert_category_data(existing_category, updated_category, db)
-
-        db.commit()
-        db.refresh(updated_category)
-
-        # Update all transaction categories
-        transactions: list[TransactionSchema] = self.transaction_service.get_all_transactions(db, as_schema=True)
-        self.update_transaction_category(transactions, db, existing_category.owner_id)
-        db.commit()
+    def update_category(self, current_category: CategorySchema, updated_category: CategoryEdit, owner: Account, db: Session) -> CategorySchema:
+        
+        updated_category = self.convert_category_data(current_category, updated_category, owner, db)
 
         return updated_category
 
-    def convert_category_data(self, category_instance: CategorySchema, new_category: CategoryCreate, db: Session) -> CategorySchema:
+    def convert_category_data(self, current_category: CategorySchema | Category, new_category: CategoryCreate | CategoryEdit, owner: Account, db: Session) -> CategorySchema:
         """
         Update an existing category object with new data.
         """
+        
         for field, value in new_category.model_dump(exclude_none=True).items():
             if field == "counterparts":
-                # Extract all ids from the given Counterparts and filter out the right CounterpartSchemas based on these ids
-                ids = [cp['id'] if isinstance(cp, dict) else cp.id for cp in value]
-                category_instance.counterparts = db.query(CounterpartSchema).filter(CounterpartSchema.id.in_(ids)).all()
-                logger.info(f"Updated category ({category_instance.name}) counterparts to {len(category_instance.counterparts)}.")
-            else:
-                setattr(category_instance, field, value)
+                current_cp_ids: set[str] = {cp.id for cp in current_category.counterparts}
+                new_cp_ids: set[str] = {cp.id for cp in new_category.counterparts}
 
-        return category_instance
+                # Get counterparts that need to be added to the current category
+                cp_to_add: set[str] = new_cp_ids - current_cp_ids
+                # Get counterpart that need to be removed from the current category
+                cp_to_remove: set[str] = current_cp_ids - new_cp_ids
+
+                for cp_id in cp_to_add:
+                    cp: CategorySchema = self.counterpart_service.get_counterpart_by_id(db=db, id=cp_id, owner_id=owner.id)
+                    self.add_counterpart_to_category(db=db, category=current_category, counterpart=cp)
+                
+                for cp_id in cp_to_remove:
+                    cp: CategorySchema = self.counterpart_service.get_counterpart_by_id(db=db, id=cp_id, owner_id=owner.id)
+                    self.remove_counterpart_from_category(db=db, category=current_category, counterpart=cp)
+
+
+            else:
+                setattr(current_category, field, value)
+
+        return current_category
     
     def delete_category(self, category_id: int, db: Session, owner_id: int) -> CategorySchema:
         # Get the owner account
@@ -167,6 +171,22 @@ class CategoryService():
              TransactionSchema.transaction_type: category.category_type}, synchronize_session="fetch"
         )
         db.commit()
+
+        return category
+    
+    def remove_counterpart_from_category(self, db: Session, counterpart: CounterpartSchema, category: CategorySchema):
+        # Add counterpart to category
+        counterpart.category_id = None
+
+        # Removing counterpart from category makes cp an orphan -> Will be deleted by sqlalchemy due to cascade:"all, delete-orphan". Solution: remove it
+        category.counterparts.remove(counterpart)  
+
+        # Update all transactions with the counterpart
+        db.query(TransactionSchema).filter(TransactionSchema.counterpart_id == counterpart.id).update(
+            {TransactionSchema.category_id: None,
+             TransactionSchema.category_name: None,
+             TransactionSchema.transaction_type: TransactionTypes.NONE}, synchronize_session="fetch"
+        )
 
         return category
 
