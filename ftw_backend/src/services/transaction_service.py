@@ -1,13 +1,15 @@
 from sqlalchemy.orm import Session, joinedload # type: ignore
 from models.transaction import Transaction, TransactionCreate,TransactionTypes, TransactionEdit
-from database.schemas import TransactionSchema, CategorySchema
-from exceptions.exceptions import CategoryNotFoundException
+from database.schemas import TransactionSchema, AccountSchema
+from .account_service import AccountService
 from utils.logging import setup_loggers
 
 logger = setup_loggers()
 
 
 class TransactionService:
+    def __init__(self):
+        self.account_service: AccountService = AccountService()
     # ======================================================================================================== #
     #                                       CREATE FUNCTIONS
     # ======================================================================================================== #
@@ -32,7 +34,7 @@ class TransactionService:
     # ======================================================================================================== #
 
     def get_all_transactions(self, db: Session, iban: str = "", as_schema: bool = False, year: int | None = None, month: int | None = None) -> list[Transaction]:
-        iban = self.format_iban(iban)
+        iban = self.account_service.format_IBAN(iban)
         
         if iban == "":
             transactions = (
@@ -178,8 +180,9 @@ class TransactionService:
 #                                       INFORMATION FUNCTIONS
     # ======================================================================================================== # 
  
-    def calculate_total_amount_of_transactions(self, db: Session, iban: str = "") -> dict[str, float]:
+    def calculate_total_amount_of_transactions(self, db: Session, account: AccountSchema) -> dict[str, float]:
         # Get transactions from the db
+        iban: str = self.account_service.unformat_IBAN(account.iban)
         transaction: list[Transaction] = self.get_all_transactions(db=db, iban=iban, as_schema=True)
 
         total_savings: float = 0

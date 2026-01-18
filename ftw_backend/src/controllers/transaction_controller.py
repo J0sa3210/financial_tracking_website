@@ -76,6 +76,14 @@ async def get_all_transactions(active_account_id: Annotated[str, Header()], db :
     results = transaction_service.get_all_transactions(db, iban=account_iban, year=year, month=month)
     return results
 
+# Needs to be in front of "get /{transaction_id}", otherwise it will parse "total" as an int!!
+@transaction_controller.get("/total", response_model=dict[str, float])
+async def calculate_total_amount(active_account_id: Annotated[str, Header()], db: Session = Depends(get_db)):
+    active_account = account_service.get_account(db=db, account_id=int(active_account_id))    
+    
+    total_amount: dict[str, float] = transaction_service.calculate_total_amount_of_transactions(db=db, account=active_account)
+    return total_amount
+
 @transaction_controller.get("/{transaction_id}", response_model=TransactionView)
 async def get_transaction(active_account_id: Annotated[str, Header()], transaction_id: int, db: Session = Depends(get_db)):
     active_account = account_service.get_account(db=db, account_id=int(active_account_id))    
@@ -108,26 +116,3 @@ async def delete_multiple_transactions(transaction_ids: list[int], db: Session =
 async def delete_transaction( transaction_id: int, db: Session = Depends(get_db)):
     transaction_service.delete_transaction(transaction_id=transaction_id, db=db)
     db.commit()
-    
-# ======================================================================================================== #
-#                                       INFORMATION FUNCTIONS
-# ======================================================================================================== #
-
-@transaction_controller.get("/total", response_model=dict[str, float])
-async def calculate_total_amount(active_account_id: Annotated[str, Header()], db: Session = Depends(get_db)):
-    active_account = account_service.get_account(db=db, account_id=int(active_account_id))    
-    account_iban: str = active_account.iban
-    
-    
-    if not is_IBAN(account_iban):
-        logger.error(f"IBAN is wrong!")
-    account_iban: str = format_IBAN(account_iban)
-    
-    logger.info(f"Calculating totals for IBAN: {account_iban}" )
-    total_amount: dict[str, float] = transaction_service.calculate_total_amount_of_transactions(db=db, iban=account_iban)
-    return total_amount
-
-
-
-
-    
