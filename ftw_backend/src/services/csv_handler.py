@@ -20,6 +20,10 @@ logger = setup_loggers()
 logger.setLevel(logging.DEBUG)
 
 class CSV_handler():
+    # ======================================================================================================== #
+    #                                       SETUP FUNCTIONS
+    # ======================================================================================================== # 
+
     def __init__(self, file: UploadFile):
         self.file = file
         self.category_service = CategoryService()
@@ -34,8 +38,45 @@ class CSV_handler():
         except Exception as e:
             logger.error(f"Error reading file: {e}")
             raise e
+        
+    def process_file(self, db: Session = Depends(get_db)):
+        # Convert file to DataFrame
+        df: DataFrame = self._convert_to_df()
+        df: DataFrame = self._clean_df(df)
+
+        
+        # Export all different owner account numbers
+        owner_ibans: list[str] = df["Rekening"].unique().tolist()
+        
+        for owner_iban in owner_ibans:
+            logger.debug(f"Processing transactions for account number: {owner_iban}")
+            try:
+                owner_account : Account = self.account_service.get_account_by_iban(db=db, iban=owner_iban)
+                
+                # Gather all present counterparts. If not present, add them to the database
+                counterpart_map: dict[str, CounterpartSchema] = self._export_counterparts(df["Naam tegenpartij bevat"].unique(), db, owner_id=owner_account.id)
+                
+                # Convert DataFrame to transactions
+                new_transactions: list[TransactionCreate] = self._convert_df_to_transactions(df, counterpart_map=counterpart_map)
+                added_transaction: list[TransactionSchema] = self.transaction_service.add_transactions(new_transactions, db)
+
+                # Add/sync counterparts with categories
+                for counterpart in counterpart_map.values():
+                    if counterpart.category_id is not None:
+                        category: CategorySchema = self.category_service.get_category(db=db, category_id=counterpart.category_id, as_schema=True, owner_id=owner_account.id)
+                        self.category_service.add_counterpart_to_category(category=category, counterpart=counterpart, db=db)
+
+                logger.info("CSV file processed and transactions added successfully.")
+            
+            except AccountNotFoundException as e:
+                logger.error(f"Error processing transactions for account number {owner_iban}: {e.msg}")
+                continue
     
-    def convert_to_df(self):
+    # ======================================================================================================== #
+    #                                       HELPER FUNCTIONS
+    # ======================================================================================================== #
+    
+    def _convert_to_df(self):
         # Read the file contents
         content = self.read_file()
 
@@ -44,7 +85,7 @@ class CSV_handler():
         df: DataFrame = read_csv(csv_file, delimiter=";")
         return df
 
-    def clean_df(self, df: DataFrame) -> DataFrame:
+    def _clean_df(self, df: DataFrame) -> DataFrame:
         useful_columns =  [
         "Rekening",
         "Boekingsdatum",
@@ -65,18 +106,7 @@ class CSV_handler():
         
         return df
     
-    def get_transaction_type(self, amount: float, counterpart_account: str) -> TransactionTypes:
-        if amount < 0:
-            return TransactionTypes.EXPENSES
-        elif amount > 0:
-            return TransactionTypes.INCOME
-        else:
-            if counterpart_account:
-                return TransactionTypes.SAVINGS
-            else:
-                return TransactionTypes.NONE
-    
-    def convert_to_ISO_format(self, date_str: str) -> str:
+    def _convert_to_ISO_format(self, date_str: str) -> str:
         """
         Convert a date string to ISO format (YYYY-MM-DD).
         """
@@ -88,14 +118,14 @@ class CSV_handler():
             logger.error(f"Error converting date to ISO format: {e}")
             raise e
 
-    def convert_df_to_transactions(self, df: DataFrame, counterpart_map: dict[str, CounterpartSchema] = {}) -> list[TransactionCreate]:
+    def _convert_df_to_transactions(self, df: DataFrame, counterpart_map: dict[str, CounterpartSchema] = {}) -> list[TransactionCreate]:
         transactions: list[TransactionCreate] = []
 
         for _, row in df.iterrows():
 
             transaction_type: TransactionTypes = TransactionTypes.NONE
             counterpart: CounterpartSchema = counterpart_map[row["Naam tegenpartij bevat"]]
-            date: str = self.convert_to_ISO_format(row["Boekingsdatum"])
+            date: str = self._convert_to_ISO_format(row["Boekingsdatum"])
 
             transaction: TransactionCreate = TransactionCreate(
                 transaction_type = transaction_type,
@@ -113,7 +143,7 @@ class CSV_handler():
 
         return transactions
 
-    def export_counterparts(self, counterparts: list[str], db: Session, owner_id: int):
+    def _export_counterparts(self, counterparts: list[str], db: Session, owner_id: int):
         """
         Export all counterparts to the database.
         """
@@ -121,46 +151,9 @@ class CSV_handler():
         # Add new counterparts to the database
         for cp_name in counterparts:
             if cp_name not in counterparts_map.keys():
-                logger.debug(f"Checking counterpart {cp_name} in database.")
                 cp: CounterpartSchema = self.counterpart_service.create_counterpart(new_counterpart=CounterpartCreate(name=cp_name, owner_id=owner_id), db=db, owner_id=owner_id)
                 counterparts_map[cp.name] = cp
 
         return counterparts_map
 
-    def process_file(self, db: Session = Depends(get_db)):
-        # Convert file to DataFrame
-        df: DataFrame = self.convert_to_df()
-        df: DataFrame = self.clean_df(df)
-
-        
-        # Export all different owner account numbers
-        owner_ibans: list[str] = df["Rekening"].unique().tolist()
-        logger.debug(f"Owner IBANs found in CSV: {owner_ibans}")
-
-        for owner_iban in owner_ibans:
-            logger.debug(f"Processing transactions for account number: {owner_iban}")
-            try:
-                owner_account : Account = self.account_service.get_account_by_iban(db=db, iban=owner_iban)
-                logger.debug(f"Found owner account: {owner_account}")
-                
-                # Gather all present counterparts. If not present, add them to the database
-                counterpart_map: dict[str, CounterpartSchema] = self.export_counterparts(df["Naam tegenpartij bevat"].unique(), db, owner_id=owner_account.id)
-                logger.debug(f"Counterpart map: {counterpart_map}")
-                # Filter DataFrame for the current owner account
-
-                # Convert DataFrame to transactions
-                new_transactions: list[TransactionCreate] = self.convert_df_to_transactions(df, counterpart_map=counterpart_map)
-                added_transaction: list[TransactionSchema] = self.transaction_service.add_transactions(new_transactions, db)
-
-                # Add transactions to the right category based on the counterpart
-                for transaction in added_transaction:
-                    cp: CounterpartSchema = counterpart_map[transaction.counterpart_name]
-                    if cp.category_id is not None:
-                        logger.debug(f"Assigning category ID {cp.category_id} to transaction ID {transaction.id} based on counterpart {cp.name}")
-                        self.category_service.add_transaction_to_category(transaction_id=transaction.id, category_id=cp.category_id, owner_id=owner_account.id, db=db)
-
-                logger.info("CSV file processed and transactions added successfully.")
-            
-            except AccountNotFoundException as e:
-                logger.error(f"Error processing transactions for account number {owner_iban}: {e.msg}")
-                continue
+    

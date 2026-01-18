@@ -3,6 +3,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine.url import URL
 from .schemas import Base
 
+# Database information
 URL_DATABASE: URL = URL.create(
     drivername="postgresql+psycopg2",
     username="postgres",
@@ -15,6 +16,7 @@ URL_DATABASE: URL = URL.create(
 engine = create_engine(URL_DATABASE)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+# Helper function
 def get_db():
     db = SessionLocal()
     try:

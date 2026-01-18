@@ -8,6 +8,29 @@ logger = setup_loggers()
 
 
 class TransactionService:
+    # ======================================================================================================== #
+    #                                       CREATE FUNCTIONS
+    # ======================================================================================================== #
+    def add_transactions(self, new_transactions: list[TransactionCreate], db: Session):
+        """
+        Add a new transaction to the database.
+
+        Args:
+            new_transaction (TransactionEdit): The transaction data to add.
+            db (Session): The SQLAlchemy database session.
+
+        Returns:
+            Transaction: The added transaction as a Pydantic model.
+        """
+        new_transaction_schemas: list[TransactionSchema] = [self.convert_transaction_data(TransactionSchema(), transaction) for transaction in new_transactions]
+        db.add_all(new_transaction_schemas)
+
+        return new_transaction_schemas
+
+    # ======================================================================================================== #
+    #                                       GET FUNCTIONS
+    # ======================================================================================================== #
+
     def get_all_transactions(self, db: Session, iban: str = "", as_schema: bool = False, year: int | None = None, month: int | None = None) -> list[Transaction]:
         iban = self.format_iban(iban)
         
@@ -25,18 +48,11 @@ class TransactionService:
             .all()
             )
 
-        logger.info(f"Found {len(transactions)} transactions for IBAN: {iban}")
-
         if year is not None:
             transactions = [transaction for transaction in transactions if transaction.date_executed.year == year]
 
-        logger.info(f"Found {len(transactions)} transactions in year: {year}")
-
         if month is not None and month != 0:
             transactions = [transaction for transaction in transactions if transaction.date_executed.month == month]
-
-        logger.info(f"Found {len(transactions)} transactions in month: {month}")
-
 
         if as_schema:
             return transactions
@@ -73,58 +89,11 @@ class TransactionService:
             return transaction_schema
         else:
             return self.transaction_service.schema_to_model(transaction_schema)
-    
-    def add_transactions(self, new_transactions: list[TransactionCreate], db: Session):
-        """
-        Add a new transaction to the database.
 
-        Args:
-            new_transaction (TransactionEdit): The transaction data to add.
-            db (Session): The SQLAlchemy database session.
-
-        Returns:
-            Transaction: The added transaction as a Pydantic model.
-        """
-        logger.debug(f"Adding {len(new_transactions)} new transactions to the database.")
-        new_transaction_schemas: list[TransactionSchema] = [self.convert_transaction_data(TransactionSchema(), transaction) for transaction in new_transactions]
-        db.add_all(new_transaction_schemas)
-        db.commit()
-
-        return new_transaction_schemas
-  
-    def delete_transaction(self, transaction_id: int, db: Session) -> Transaction | None:
-        """
-        Delete a transaction by its ID.
-
-        Args:
-            transaction_id (int): The ID of the transaction to delete.
-            db (Session): The SQLAlchemy database session.
-
-        Returns:
-            Transaction | None: The deleted transaction as a Pydantic model, or None if not found.
-        """
-        transaction_schema: TransactionSchema = self.get_transaction(transaction_id=transaction_id, db=db, as_schema=True)
-        deleted_transaction = self.schema_to_model(transaction_schema)
-        db.delete(transaction_schema)
-        db.commit()
-        return deleted_transaction
-    
-    def delete_multiple_transactions(self, transaction_ids: list[int], db: Session) -> None:
-        """
-        Delete multiple transactions by their IDs.
-
-        Args:
-            transaction_ids (list[int]): The IDs of the transactions to delete.
-            db (Session): The SQLAlchemy database session.
-
-        Returns:
-            None
-        """
-        db.query(TransactionSchema).filter(TransactionSchema.id.in_(transaction_ids)).delete(synchronize_session=False)
-        db.commit()
-        return None
-    
-    def edit_transaction(self, transaction_id: int, new_transaction: TransactionEdit, db: Session) -> Transaction:
+    # ======================================================================================================== #
+    #                                       UPDATE FUNCTIONS
+    # ======================================================================================================== #   
+    def edit_transaction(self, transaction_id: int, new_transaction: TransactionEdit, db: Session) -> TransactionSchema:
         """
         Edit an existing transaction.
 
@@ -145,28 +114,7 @@ class TransactionService:
         if new_transaction.category_id != transaction_schema.category_id:
             self.add_category_to_transaction(transaction_schema, new_transaction.category_id, db)
 
-        db.commit()
-        db.refresh(editted_transaction_schema)
-        return Transaction.model_validate(editted_transaction_schema)    
-    
-    def add_category_to_transaction(self, transaction_schema: TransactionSchema, category_id: int, db: Session):
-        if category_id is None:
-            transaction_schema.category = None
-            transaction_schema.category_name = None
-            transaction_schema.transaction_type = TransactionTypes.NONE
-            return
-        
-        # Get category
-        category_schema: CategorySchema = db.query(CategorySchema).filter(CategorySchema.id == category_id).first()
-
-        if category_schema is None:
-            raise CategoryNotFoundException(category_id)
-        
-        # Link transaction to category
-        transaction_schema.category = category_schema
-        transaction_schema.category_name = category_schema.name
-        transaction_schema.transaction_type = category_schema.category_type
-
+        return editted_transaction_schema    
 
     def convert_transaction_data(self, old_transaction: Transaction | TransactionSchema, new_transaction: TransactionEdit | TransactionCreate) -> Transaction:
         """
@@ -188,34 +136,48 @@ class TransactionService:
                 setattr(old_transaction, field, value)
         
         return old_transaction
-    
-    
-    def schema_to_model(self, schema: TransactionSchema) -> Transaction:
+
+    # ======================================================================================================== #
+    #                                       DELETE FUNCTIONS
+    # ======================================================================================================== # 
+  
+    def delete_transaction(self, transaction_id: int, db: Session) -> Transaction | None:
         """
-        Convert a SQLAlchemy TransactionSchema object to a Pydantic Transaction model.
+        Delete a transaction by its ID.
 
         Args:
-            schema (TransactionSchema): The SQLAlchemy transaction schema object.
+            transaction_id (int): The ID of the transaction to delete.
+            db (Session): The SQLAlchemy database session.
 
         Returns:
-            Transaction: The transaction as a Pydantic model.
+            Transaction | None: The deleted transaction as a Pydantic model, or None if not found.
         """
-        return Transaction.model_validate(schema)
-    
-    
-    def model_to_schema(self, model: Transaction) -> TransactionSchema:
+        transaction_schema: TransactionSchema = self.get_transaction(transaction_id=transaction_id, db=db, as_schema=True)
+        db.delete(transaction_schema)
+        
+    def delete_multiple_transactions(self, transaction_ids: list[int], db: Session) -> None:
         """
-        Convert a Pydantic Transaction model to a SQLAlchemy TransactionSchema object.
+        Delete multiple transactions by their IDs.
 
         Args:
-            model (Transaction): The Pydantic transaction model.
+            transaction_ids (list[int]): The IDs of the transactions to delete.
+            db (Session): The SQLAlchemy database session.
 
         Returns:
-            TransactionSchema: The SQLAlchemy transaction schema object.
+            None
         """
-        return TransactionSchema(**model.model_dump())
-
+        db.query(TransactionSchema).filter(TransactionSchema.id.in_(transaction_ids)).delete(synchronize_session=False)
+       
+        return None
     
+    # ======================================================================================================== #
+    #                                      HELPER FUNCTIONS
+    # ======================================================================================================== # 
+ 
+    # ======================================================================================================== #
+#                                       INFORMATION FUNCTIONS
+    # ======================================================================================================== # 
+ 
     def calculate_total_amount_of_transactions(self, db: Session, iban: str = "") -> dict[str, float]:
         # Get transactions from the db
         transaction: list[Transaction] = self.get_all_transactions(db=db, iban=iban, as_schema=True)
@@ -242,10 +204,3 @@ class TransactionService:
         }
 
         return response
-
-    def unformat_iban(self, iban: str) -> str:
-        return iban.replace(" ", "").upper()
-    
-    def format_iban(self, iban: str) -> str:
-        iban = iban.replace(" ", "").upper()
-        return ' '.join(iban[i:i+4] for i in range(0, len(iban), 4))

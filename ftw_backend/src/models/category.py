@@ -2,6 +2,10 @@ from pydantic import BaseModel
 from .counterpart import CounterpartView, CounterpartEdit, CounterpartFromId
 from .transaction import TransactionView, TransactionTypes
 
+# ======================================================================================================== #
+#                                       BASE CLASSES
+# ======================================================================================================== #
+
 class Category(BaseModel):
     id: int = None
     owner_id: int = None

@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session # type: ignore
-from models.account import Account, AccountCreate, AccountView, AccountEdit
+from models.account import Account, AccountCreate, AccountEdit
 from database.schemas import AccountSchema
 from utils.logging import setup_loggers
 import logging
@@ -10,9 +10,28 @@ logger.setLevel(logging.DEBUG)
 
 
 class AccountService:
+
+    # ======================================================================================================== #
+    #                                       SETUP CLASS
+    # ======================================================================================================== #
+
     def __init__(self):
         pass
-
+    
+    # ======================================================================================================== #
+    #                                       CREATE FUNCTIONS
+    # ======================================================================================================== #
+    
+    def create_account(self, new_account: AccountCreate, db: Session) -> Account:
+        created_account: AccountSchema = self.convert_account_information(AccountSchema(), new_account)
+        db.add(created_account)
+        
+        return created_account
+    
+    # ======================================================================================================== #
+    #                                       GET FUNCTIONS
+    # ======================================================================================================== #
+    
     def get_all_accounts(self, db: Session) -> list[Account]:
         schemas: list[AccountSchema] = db.query(AccountSchema).all()
 
@@ -26,10 +45,8 @@ class AccountService:
             return None
         
     def get_account_by_iban(self, iban: str, db: Session) -> Account | None:
-        iban = iban.replace(" ", "").upper()
-        logger.debug(f"Searching for account with IBAN: {iban}")
-        accounts= db.query(AccountSchema).all()
-        logger.debug(f"Available accounts in DB: {[account.iban for account in accounts]}")
+        iban = self.unformat_IBAN(iban)
+        
         try:
             account = db.query(AccountSchema).filter(AccountSchema.iban == iban).first()
             if account is None:
@@ -40,13 +57,9 @@ class AccountService:
             logger.error(f"Error retrieving account with IBAN {iban}: {e}")
             raise AccountNotFoundException(iban)
 
-    def create_account(self, new_account: AccountCreate, db: Session) -> Account:
-        created_account: AccountSchema = self.convert_account_information(AccountSchema(), new_account)
-        db.add(created_account)
-        db.commit()
-        db.refresh(created_account)
-
-        return created_account
+    # ======================================================================================================== #
+    #                                       UPDATE FUNCTIONS
+    # ======================================================================================================== #
     
     def update_account(self, account_id: int, new_account: AccountEdit, db: Session) -> Account:
         # Get original account
@@ -55,11 +68,20 @@ class AccountService:
         # Update information
         updated_account: AccountSchema = self.convert_account_information(original_account, new_account)
 
-        # Commit to db
-        db.commit()
-        db.refresh(updated_account)
-
         return updated_account
+    
+    def convert_account_information(self, to_model: Account | AccountSchema, from_model: AccountCreate) -> Account | AccountSchema:
+        for field, value in from_model.model_dump(exclude_none=True).items():
+            if field == "iban":
+                value = self.unformat_IBAN(value)
+
+            setattr(to_model, field, value)
+
+        return to_model
+
+    # ======================================================================================================== #
+    #                                       DELETE FUNCTIONS
+    # ======================================================================================================== # 
 
     def delete_account(self, account_id: int, db: Session):
         # Get original account
@@ -67,22 +89,14 @@ class AccountService:
 
         # Delete account
         db.delete(original_account)
-        db.commit()
-
+        
         return original_account
 
-    def convert_account_information(self, to_model: Account | AccountSchema, from_model: AccountCreate) -> Account | AccountSchema:
-        for field, value in from_model.model_dump(exclude_none=True).items():
-            if field == "iban":
-                value = self.unformat_iban(value)
-
-            setattr(to_model, field, value)
-
-        return to_model
+    def format_IBAN(self, iban: str) -> str:
+        # Formats IBAN by adding a space every 4 characters
+        iban = iban.replace(" ", "")
+        return " ".join(iban[i:i+4] for i in range(0, len(iban), 4))
     
-    def unformat_iban(self, iban: str) -> str:
-        return iban.replace(" ", "").upper()
-    
-    def format_iban(self, iban: str) -> str:
-        iban = iban.replace(" ", "").upper()
-        return ' '.join(iban[i:i+4] for i in range(0, len(iban), 4))
+    def unformat_IBAN(self, iban: str) -> str:
+        iban = iban.replace(" ","").upper()
+        return iban

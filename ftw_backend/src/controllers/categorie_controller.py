@@ -12,9 +12,25 @@ from datetime import datetime
 from pydantic import BaseModel
 from models.account import Account
 
+# ======================================================================================================== #
+#                                       SETUP FUNCTIONS
+# ======================================================================================================== #
 
-# TODO: filter get categories by owner_id
+# ======================================================================================================== #
+#                                       CREATE FUNCTIONS
+# ======================================================================================================== #
 
+# ======================================================================================================== #
+#                                       GET FUNCTIONS
+# ======================================================================================================== #
+
+# ======================================================================================================== #
+#                                       UPDATE FUNCTIONS
+# ======================================================================================================== #
+
+# ======================================================================================================== #
+#                                       DELETE FUNCTIONS
+# ======================================================================================================== #
 
 logger: Logger = setup_loggers()
 # logger.setLevel(DEBUG)
@@ -27,6 +43,24 @@ category_service: CategoryService = CategoryService()
 account_service: AccountService = AccountService()
 counterpart_service: CounterpartService = CounterpartService()
 
+# ======================================================================================================== #
+#                                       CREATE FUNCTIONS
+# ======================================================================================================== #
+
+# Create a new category
+@categorie_controller.post("", response_model=CategoryView)
+def create_category(active_account_id: Annotated[str, Header()], category: CategoryCreate, db: Session = Depends(get_db)):
+    # Check if the account exists
+    owner: Account = account_service.get_account(db=db, account_id=int(active_account_id))
+    category = category_service.add_category(new_category=category, owner=owner, db=db)
+    db.commit()
+    return category
+
+# ======================================================================================================== #
+#                                       GET FUNCTIONS
+# ======================================================================================================== #
+
+# Get all categories
 @categorie_controller.get("", )
 async def get_all_categories(active_account_id: Annotated[str, Header()], db: Session = Depends(get_db)):
     if active_account_id is None:
@@ -39,16 +73,45 @@ async def get_all_categories(active_account_id: Annotated[str, Header()], db: Se
     result = category_service.get_all_categories(owner_id=owner_id, db=db)
     return result
 
-# Create a new category
-@categorie_controller.post("", response_model=CategoryView)
-def create_category(active_account_id: Annotated[str, Header()], category: CategoryCreate, db: Session = Depends(get_db)):
+# Get a certain category based on id
+@categorie_controller.get("/{category_id}", response_model=CategoryView)
+def get_category(active_account_id: Annotated[str, Header()], category_id: int, db: Session = Depends(get_db)):
     # Check if the account exists
-    owner: Account = account_service.get_account(db=db, account_id=int(active_account_id))
-    owner_id: int = owner.id
-    
-    
-    category = category_service.add_category(new_category=category, owner=owner, db=db)
+    active_account = account_service.get_account(db=db, account_id=int(active_account_id))
+    owner_id: int = active_account.id
+
+    category = category_service.get_category(db=db, category_id=category_id, as_schema=True, owner_id=owner_id)
+    if not category:
+        raise HTTPException(status_code=404, detail="Category not found")
     return category
+
+# Get all expenses for a certain category
+# @categorie_controller.get("/total_expenses", response_model=dict[str, float])
+# def get_total_expenses(active_account_id: Annotated[str, Header()], db: Session = Depends(get_db), year: int = None, month: int = None):
+
+#     # Check if the account exists
+#     active_account = account_service.get_account(db=db, account_id=int(active_account_id))
+
+#     # Filter correct year and month
+#     if year is None:
+#         year = datetime.now().year
+
+#     # Get all categories for the active account
+#     categories = category_service.get_all_categories(db=db, owner_id=int(active_account.id))
+
+#     # Filter transactions by date
+#     filtered_categories = categories.copy()
+#     for category in filtered_categories:
+#         category.transactions = category_service.filter_transactions_by_date(category.transactions, year=year, month=month)
+
+#     # For each of the categories, calculate the sum of all transactions in it.
+#     total_expenses = category_service.calculate_total_expenses(categories=filtered_categories)
+#     db.commit()
+#     return total_expenses
+
+# ======================================================================================================== #
+#                                       UPDATE FUNCTIONS
+# ======================================================================================================== #
 
 # Update an existing category
 @categorie_controller.put("/{category_id}", response_model=CategoryView)
@@ -65,86 +128,42 @@ def update_category(active_account_id: Annotated[str, Header()], category_id: in
     db.commit()
     return updated_category
 
+class AddCounterpartRequest(BaseModel):
+    counterpart_name: str
+
+# Add a counterpart to a category
+@categorie_controller.post("/{category_id}/add_counterpart")
+def add_counterpart_to_category(active_account_id: Annotated[str, Header()], category_id: int, payload: AddCounterpartRequest, db: Session = Depends(get_db)):
+    # Check if the account exists
+    active_account = account_service.get_account(db=db, account_id=int(active_account_id))
+    if active_account is None:
+        raise HTTPException(status_code=404, detail="Account not found")
+
+    # Check if the category exists
+    category = category_service.get_category(db=db, category_id=category_id, owner_id=active_account.id, as_schema=True)
+    if category is None:
+        raise HTTPException(status_code=404, detail="Category not found")
+
+    # Check if the counterpart exists
+    counterpart = counterpart_service.get_counterpart_by_name(db=db, name=payload.counterpart_name, owner_id=active_account.id)
+    if counterpart is None:
+        raise HTTPException(status_code=400, detail="Counterpart not found")
+
+    # Add the counterpart to the category
+    category_service.add_counterpart_to_category(db=db, category=category, counterpart=counterpart)
+    db.commit()
+
+# ======================================================================================================== #
+#                                       DELETE FUNCTIONS
+# ======================================================================================================== #
+
+# Delete a caregoty
 @categorie_controller.delete("/{category_id}", response_model=CategoryView)
 def delete_category(active_account_id: Annotated[str, Header()], category_id: int, db: Session = Depends(get_db)):
     active_account = account_service.get_account(account_id=int(active_account_id), db=db)
     owner_id: int = active_account.id
 
     deleted_category = category_service.delete_category(category_id=category_id, db=db, owner_id=owner_id)
-    
+    db.commit()
+
     return deleted_category
-
-# Get all names for a category
-@categorie_controller.get("/{category_id}/counterparts", response_model=list[str])
-def read_names(active_account_id: Annotated[str, Header()], category_id: int, db: Session = Depends(get_db)):
-     # Check if the account exists
-    active_account = account_service.get_account(db=db, account_id=int(active_account_id))
-    owner_id: int = active_account.owner_id
-    
-    
-    category = category_service.get_category(db=db, category_id=category_id, owner_id=owner_id)
-
-    if not category:
-        raise HTTPException(status_code=404, detail="Category not found")
-    return [counterpart.name for counterpart in category.counterparts]
-
-@categorie_controller.get("/{category_id}", response_model=CategoryView)
-def get_category(active_account_id: Annotated[str, Header()], category_id: int, db: Session = Depends(get_db)):
-    # Check if the account exists
-    active_account = account_service.get_account(db=db, account_id=int(active_account_id))
-    owner_id: int = active_account.id
-
-    category = category_service.get_category(db=db, category_id=category_id, as_schema=True, owner_id=owner_id)
-    if not category:
-        raise HTTPException(status_code=404, detail="Category not found")
-    return category
-
-
-@categorie_controller.get("/total_expenses", response_model=dict[str, float])
-def get_total_expenses(active_account_id: Annotated[str, Header()], db: Session = Depends(get_db), year: int = None, month: int = None):
-
-    # Check if the account exists
-    active_account = account_service.get_account(db=db, account_id=int(active_account_id))
-
-    # Filter correct year and month
-    if year is None:
-        year = datetime.now().year
-
-    # Get all categories for the active account
-    categories = category_service.get_all_categories(db=db, owner_id=int(active_account.id))
-
-    # Filter transactions by date
-    filtered_categories = categories.copy()
-    for category in filtered_categories:
-        category.transactions = category_service.filter_transactions_by_date(category.transactions, year=year, month=month)
-
-    # For each of the categories, calculate the sum of all transactions in it.
-    total_expenses = category_service.calculate_total_expenses(categories=filtered_categories)
-
-    return total_expenses
-
-
-### HANDLE ADDING COUNTERPART TO CATEGORY ###
-class AddCounterpartRequest(BaseModel):
-    counterpart_name: str
-
-@categorie_controller.post("/{category_id}/add_counterpart")
-def add_counterpart_to_category(active_account_id: Annotated[str, Header()], category_id: int, payload: AddCounterpartRequest,db: Session = Depends(get_db)):
-     # Check if the account exists
-     active_account = account_service.get_account(db=db, account_id=int(active_account_id))
-     if active_account is None:
-         raise HTTPException(status_code=404, detail="Account not found")
-
-     # Check if the category exists
-     category = category_service.get_category(db=db, category_id=category_id, owner_id=active_account.id)
-     if category is None:
-         raise HTTPException(status_code=404, detail="Category not found")
-
-     # Check if the counterpart exists
-     counterpart = counterpart_service.get_counterpart_by_name(db=db, name=payload.counterpart_name, owner_id=active_account.id)
-     if counterpart is None:
-         raise HTTPException(status_code=400, detail="Counterpart not found")
-
-     # Add the counterpart to the category
-     cp = category_service.add_counterpart_to_category(db=db, category=category, counterpart=counterpart)
-     return {"status": "ok", "counterpart_id": getattr(cp, "id", None)}

@@ -4,11 +4,19 @@ from datetime import date
 from typing import List, Optional
 from .counterpart import Counterpart
 
+# ======================================================================================================== #
+#                                       HELPER ENUMS
+# ======================================================================================================== #
+
 class TransactionTypes(StrEnum):
     EXPENSES: str = "Expenses"
     INCOME: str = "Income"
     SAVINGS: str = "Savings"
     NONE: str = "None"
+
+# ======================================================================================================== #
+#                                       BASE CLASSES
+# ======================================================================================================== #
 
 class Transaction(BaseModel):
     id: int

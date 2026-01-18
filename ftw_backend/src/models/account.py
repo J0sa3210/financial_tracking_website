@@ -1,6 +1,10 @@
 from pydantic import BaseModel, AfterValidator
 from typing import Annotated
 
+# ======================================================================================================== #
+#                                       HELPER FUNCTIONS
+# ======================================================================================================== #
+
 def is_IBAN(iban: str) -> str:
     # Spaties en hoofdletters normaliseren
     iban = iban.replace(" ", "").upper()
@@ -33,10 +37,9 @@ def is_IBAN(iban: str) -> str:
     
     return iban
 
-def format_IBAN(iban: str) -> str:
-    # Formats IBAN by adding a space every 4 characters
-    iban = iban.replace(" ", "")
-    return " ".join(iban[i:i+4] for i in range(0, len(iban), 4))
+# ======================================================================================================== #
+#                                       BASE CLASSES
+# ======================================================================================================== #
 
 class Account(BaseModel):
     id: int

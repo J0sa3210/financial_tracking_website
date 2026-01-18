@@ -64,8 +64,6 @@ class CounterpartSchema(Base):
         
     )
 
-
-
 class AccountSchema(Base):
     __tablename__ = "accounts"
 

@@ -1,6 +1,10 @@
 from pydantic import BaseModel
 from typing import Optional
 
+# ======================================================================================================== #
+#                                       BASE CLASSES
+# ======================================================================================================== #
+
 class Counterpart(BaseModel):
     id: int = None
     name: str = ""
