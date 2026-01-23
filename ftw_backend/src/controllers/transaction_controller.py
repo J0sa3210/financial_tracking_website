@@ -7,6 +7,7 @@ from models.account import is_IBAN
 from database import get_db
 from services import TransactionService, CSV_handler, AccountService
 from exceptions.exceptions import FileTypeExpection
+from fastapi import HTTPException  # type: ignore
 from utils.logging import setup_loggers
 from logging import Logger
 
@@ -90,6 +91,9 @@ async def get_transaction(active_account_id: Annotated[str, Header()], transacti
     account_iban: str = active_account.iban
     
     selected_transaction: Transaction = transaction_service.get_transaction(transaction_id=transaction_id, db=db, iban=account_iban)
+    if selected_transaction is None:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+
     return selected_transaction
 
 # ======================================================================================================== #
@@ -98,9 +102,14 @@ async def get_transaction(active_account_id: Annotated[str, Header()], transacti
 
 @transaction_controller.post("/{transaction_id}", response_model=TransactionView)
 async def edit_transaction(transaction_id: int, updated_transaction: TransactionEdit, db: Session = Depends(get_db)):
-    changed_transaction: Transaction = transaction_service.edit_transaction(transaction_id, updated_transaction, db)
+    current_transaction: TransactionSchema = transaction_service.get_transaction(transaction_id=transaction_id, as_schema=True, db=db)
+
+    if current_transaction is None:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+
+    updated_transaction: Transaction = transaction_service.update_transaction(current_transaction=current_transaction, updated_transaction=updated_transaction, db=db)
     db.commit()
-    return changed_transaction
+    return updated_transaction
 
 # ======================================================================================================== #
 #                                       DELETE FUNCTIONS

@@ -11,6 +11,7 @@ import {
 import { useAccount } from "@/components/context/AccountContext";
 import type { SingleValue } from "react-select";
 import { Category, CategoryEdit } from "@/assets/types/Category";
+import { Input } from "@/components/ui/input";
 
 export default function CategorySubmenu() {
   const { activeAccount } = useAccount();
@@ -178,7 +179,14 @@ export default function CategorySubmenu() {
       {categories.map((category: CategoryEdit) => (
         <div key={category.id} className="mb-4 p-2 border  rounded-lg">
           <span className="flex gap-1 justify-between items-center">
-            <h3 className="text-xl font-semibold">{category.name}</h3>
+            <Input
+              className="text-xl font-semibold w-1/4 pl-1"
+              defaultValue={category.name}
+              type="text"
+              onChange={(e) => {
+                category.name = e.target.value;
+              }}
+            />
             <span className="flex gap-1">
               <Button
                 className="w-15 text-lg hover:bg-background hover:text-primary hover:border hover:border-primary"

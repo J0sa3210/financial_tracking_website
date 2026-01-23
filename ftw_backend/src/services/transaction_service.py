@@ -1,7 +1,8 @@
 from sqlalchemy.orm import Session, joinedload # type: ignore
 from models.transaction import Transaction, TransactionCreate,TransactionTypes, TransactionEdit
-from database.schemas import TransactionSchema, AccountSchema
+from database.schemas import TransactionSchema, AccountSchema, CategorySchema
 from .account_service import AccountService
+from .category_service import CategoryService
 from utils.logging import setup_loggers
 
 logger = setup_loggers()
@@ -10,6 +11,7 @@ logger = setup_loggers()
 class TransactionService:
     def __init__(self):
         self.account_service: AccountService = AccountService()
+        self.category_service: CategoryService = CategoryService()
     # ======================================================================================================== #
     #                                       CREATE FUNCTIONS
     # ======================================================================================================== #
@@ -72,6 +74,7 @@ class TransactionService:
         Returns:
             Transaction: The transaction as a Pydantic model.
         """
+        iban = self.account_service.format_IBAN(iban)
         if iban == "":
             transaction_schema = (
             db.query(TransactionSchema)
@@ -87,57 +90,56 @@ class TransactionService:
             .first()
             )
 
+        if transaction_schema is None:
+            return None
+
         if as_schema:
             return transaction_schema
         else:
-            return self.transaction_service.schema_to_model(transaction_schema)
+            return Transaction.model_validate(transaction_schema)
 
     # ======================================================================================================== #
     #                                       UPDATE FUNCTIONS
-    # ======================================================================================================== #   
-    def edit_transaction(self, transaction_id: int, new_transaction: TransactionEdit, db: Session) -> TransactionSchema:
-        """
-        Edit an existing transaction.
+    # ======================================================================================================== #
+    def update_transaction(self,current_transaction: TransactionSchema, updated_transaction: TransactionSchema, db: Session) -> TransactionSchema:
+        updated_transaction: TransactionSchema = self.convert_transaction_data(current_transaction=current_transaction, updated_transaction=updated_transaction, db=db)
 
-        Args:
-            transaction_id (int): The ID of the transaction to edit.
-            new_transaction (TransactionEdit): The new transaction data.
-            db (Session): The SQLAlchemy database session.
+        return updated_transaction
 
-        Returns:
-            Transaction: The updated transaction as a Pydantic model.
-        """
-        # Check if transaction exists
-        transaction_schema: Transaction = self.get_transaction(transaction_id=transaction_id, db=db, as_schema=True)
-        
-        editted_transaction_schema: Transaction = self.convert_transaction_data(transaction_schema, new_transaction)
-
-        # Update the category if needed
-        if new_transaction.category_id != transaction_schema.category_id:
-            self.add_category_to_transaction(transaction_schema, new_transaction.category_id, db)
-
-        return editted_transaction_schema    
-
-    def convert_transaction_data(self, old_transaction: Transaction | TransactionSchema, new_transaction: TransactionEdit | TransactionCreate) -> Transaction:
+    def convert_transaction_data(self, current_transaction: Transaction | TransactionSchema, updated_transaction: TransactionEdit | TransactionCreate, db: Session) -> Transaction:
         """
         Update an existing transaction object with new data.
 
         Args:
-            old_transaction (Transaction | TransactionSchema): The existing transaction object.
-            new_transaction (TransactionEdit): The new transaction data.
+            current_transaction (Transaction | TransactionSchema): The existing transaction object.
+            updated_transaction (TransactionEdit): The new transaction data.
 
         Returns:
             Transaction: The updated transaction object.
         """
-        for field, value in new_transaction.model_dump(exclude_none=True).items():
-            # Convert values into right types
-            if field == "category_id":
-                pass
+        # Check if category has changed
+        category_changed: bool = updated_transaction.category_id != current_transaction.category_id
+        logger.debug("Current category: " + str(current_transaction.category_id))
+        logger.debug("Updated category: " + str(updated_transaction.category_id))
+        logger.debug("Category has changed: " + str(category_changed))
 
+        for field, value in updated_transaction.__dict__.items():
+            # Convert values into right types
+            setattr(current_transaction, field, value)
+
+        if category_changed:
+            if updated_transaction.category_id is not None:
+                category: CategorySchema = self.category_service.get_category(db=db, category_id=updated_transaction.category_id, as_schema=True)
+                current_transaction.category_id = category.id
+                current_transaction.category_name = category.name
+                current_transaction.transaction_type = category.category_type
+                logger.info(f"Transaction {current_transaction}")
             else:
-                setattr(old_transaction, field, value)
+                current_transaction.category_id = None
+                current_transaction.category_name = None
+                current_transaction.transaction_type = TransactionTypes.NONE
         
-        return old_transaction
+        return current_transaction
 
     # ======================================================================================================== #
     #                                       DELETE FUNCTIONS

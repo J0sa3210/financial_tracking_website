@@ -5,7 +5,6 @@ from models.transaction import TransactionCreate, Transaction, TransactionEdit, 
 from typing import Optional
 from models.counterpart import Counterpart
 from .counterpart_service import CounterpartService
-from .transaction_service import TransactionService
 from .account_service import AccountService
 from fastapi import HTTPException  # type: ignore
 from logging import Logger
@@ -33,7 +32,6 @@ class CategoryService():
  
     def __init__(self):
         self.counterpart_service: CounterpartService = CounterpartService()
-        self.transaction_service: TransactionService = TransactionService()
         self.account_service : AccountService = AccountService()
 
     # ======================================================================================================== #
@@ -88,8 +86,16 @@ class CategoryService():
     # ======================================================================================================== # 
 
     def update_category(self, current_category: CategorySchema, updated_category: CategoryEdit, owner: Account, db: Session) -> CategorySchema:
-        
-        updated_category = self.convert_category_data(current_category, updated_category, owner, db)
+        # Update category values    
+        updated_category: CategorySchema = self.convert_category_data(current_category, updated_category, owner, db)
+
+        # Update all transactions for that category
+        tx: TransactionSchema 
+        # logger.debug(f"Transaction for category {updated_category.id}: {updated_category.transactions}")
+        for tx in updated_category.transactions:
+            # logger.debug(f"Updating transaction: {tx.id}")
+            tx.category_name = updated_category.name
+            tx.transaction_type = updated_category.category_type
 
         return updated_category
 
@@ -169,8 +175,23 @@ class CategoryService():
         return category
 
     # ======================================================================================================== #
-    #                               TRANSACTION RELATIONSHIP HELPER FUNCTIONS
+    #                               TRANSACTION RELATIONSHIP FUNCTIONS
     # ======================================================================================================== # 
+
+    def sync_transaction(self, transaction: TransactionSchema, db: Session):
+        logger.debug(f"Syncing transactions: {transaction}")
+        
+        if transaction.counterpart is not None:
+            category_id: int = transaction.counterpart.category_id
+            if category_id is not None:
+                category: CategorySchema = self.get_category(db=db, category_id=category_id, as_schema=True)
+                transaction.category_id = category.id,
+                transaction.category_name = category.name,
+                transaction.transaction_type = category.category_type,
+            else:
+                transaction.category_id = None,
+                transaction.category_name = None,
+                transaction.transaction_type = TransactionTypes.NONE,
 
     def _sync_transactions_for_counterpart(
         self,
@@ -178,7 +199,7 @@ class CategoryService():
         counterpart: CounterpartSchema,
         category: CategorySchema | None,
     ):
-        
+        logger.debug(f"Syncing ALL transactions for category: {category}")
         # When there is a Category add the category_id to all transactions with that counterpart
         if category:
             values = {
@@ -218,20 +239,4 @@ class CategoryService():
         counterpart.category = None
 
 
-    def calculate_totals(self, categories: list[Category], db: Session, active_account: Account) -> dict[str, dict[str, float]]:
-        pass
-        
-        # totals: dict[str, dict[str, float]] = {}
-
-        # total_amounts = self.transaction_service.calculate_total_amount_of_transactions(db=db, iban=active_account.iban)
-        # for t_type in TransactionTypes:
-        #     # Get total of all transactions
-
-
-
-        # for category in categories:
-        #     total = sum(transaction.value for transaction in category.transactions)
-        #     total_expenses[category.name] = total
-        # return total_expenses
-    
     
