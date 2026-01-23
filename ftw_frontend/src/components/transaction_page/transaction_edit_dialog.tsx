@@ -30,16 +30,18 @@ interface TransactionInfo {
   onSaveEdit: () => {};
 }
 
-type transactionType = "Expenses" | "Income" | "Savings";
+type transactionType = "Expenses" | "Income" | "Savings" | "None";
 
 export default function TransactionEditDialog(
-  transactionInfo: TransactionInfo
+  transactionInfo: TransactionInfo,
 ) {
   const transaction: Transaction | null = transactionInfo.transaction;
   const [categories, setCategories] = useState<Category[]>([]);
   const transactionTypes: transactionType[] = ["Expenses", "Income", "Savings"];
   const { activeAccount } = useAccount();
   const [addCounterpart, setAddCounterpart] = useState<boolean>(false);
+  const [chosenTransactionType, setChosenTransactionType] =
+    useState<transactionType>("None");
 
   const [counterpartOptions, setCounterpartOptions] = useState<
     CounterpartSelectOption[]
@@ -66,7 +68,7 @@ export default function TransactionEditDialog(
           value: cp.id,
           label: cp.name,
         };
-      })
+      }),
     );
   }
 
@@ -90,8 +92,8 @@ export default function TransactionEditDialog(
           c.name,
           c.description,
           c.category_type,
-          c.counterparts
-        )
+          c.counterparts,
+        ),
     );
     setCategories(loadedCategories);
   }
@@ -115,7 +117,7 @@ export default function TransactionEditDialog(
 
       if (addCounterpart) {
         const category: Category | undefined = categories.find(
-          (c) => c.id === transaction.category_id
+          (c) => c.id === transaction.category_id,
         );
         if (category) {
           await fetch(
@@ -133,7 +135,7 @@ export default function TransactionEditDialog(
               body: JSON.stringify({
                 counterpart_name: transaction.counterpart_name,
               }),
-            }
+            },
           );
         }
       }
@@ -173,6 +175,7 @@ export default function TransactionEditDialog(
             <Select
               onValueChange={(type: transactionType) => {
                 transaction.transaction_type = type;
+                setChosenTransactionType(type);
               }}
             >
               <SelectTrigger className="w-[200px] border-primary/50">
@@ -220,11 +223,15 @@ export default function TransactionEditDialog(
                   />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.map((c: Category) => (
-                    <SelectItem key={c.id} value={c.id.toString()}>
-                      {c.name}
-                    </SelectItem>
-                  ))}
+                  {categories
+                    .filter(
+                      (c: Category) => c.category_type == chosenTransactionType,
+                    )
+                    .map((c: Category) => (
+                      <SelectItem key={c.id} value={c.id.toString()}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
                   <SelectItem value="None">None</SelectItem>
                 </SelectContent>
               </Select>
