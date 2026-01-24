@@ -16,6 +16,16 @@ import { Input } from "@/components/ui/input";
 export default function CategorySubmenu() {
   const { activeAccount } = useAccount();
 
+  type transactionType = "Expenses" | "Income" | "Savings" | "None";
+  const transactionTypes: transactionType[] = [
+    "Expenses",
+    "Income",
+    "Savings",
+    "None",
+  ];
+  const [chosenTransactionType, setChosenTransactionType] =
+    useState<transactionType>("None");
+
   const [categories, setCategories] = useState<CategoryEdit[]>([]);
   const [counterpartOptions, setCounterpartOptions] = useState<
     CounterpartSelectOption[]
@@ -158,6 +168,7 @@ export default function CategorySubmenu() {
   }, []);
 
   useEffect(() => {
+    fetchCounterpartOptions();
     console.log("Categories updated:", categories);
   }, [categories]);
 
@@ -169,18 +180,40 @@ export default function CategorySubmenu() {
     <div className="p-4">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold">Category Settings</h2>
-        <span className="flex gap-1">
+        <span className="flex gap-1 justify-center">
           <CreateCategoryDialog
             counterpartOptions={counterpartOptions}
             onCreate={fetchCategories}
           />
+          <div className="py-auto">
+            <Select
+              options={transactionTypes.map((type) => ({
+                value: type,
+                label: type,
+              }))}
+              value={{
+                value: chosenTransactionType,
+                label: chosenTransactionType,
+              }}
+              onChange={(selectedOption) => {
+                setChosenTransactionType(selectedOption?.value ?? "None");
+              }}
+              className="mt-2 mb-2 w-50"
+            />
+          </div>
         </span>
       </div>
-      {categories.map((category: CategoryEdit) => (
+      {(chosenTransactionType === "None"
+        ? categories
+        : categories.filter(
+            (category: CategoryEdit) =>
+              category.category_type === chosenTransactionType,
+          )
+      ).map((category: CategoryEdit) => (
         <div key={category.id} className="mb-4 p-2 border  rounded-lg">
           <span className="flex gap-1 justify-between items-center">
             <Input
-              className="text-xl font-semibold w-1/4 pl-1"
+              className="text-xl font-semibold w-1/4"
               defaultValue={category.name}
               type="text"
               onChange={(e) => {

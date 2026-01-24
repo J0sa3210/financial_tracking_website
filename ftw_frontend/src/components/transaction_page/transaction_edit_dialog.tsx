@@ -25,6 +25,7 @@ import {
   Counterpart,
   type CounterpartSelectOption,
 } from "@/assets/types/Counterpart";
+import { DialogClose } from "@radix-ui/react-dialog";
 interface TransactionInfo {
   transaction: Transaction | null;
   onSaveEdit: () => {};
@@ -144,6 +145,8 @@ export default function TransactionEditDialog(
       alert("An error occurred while updating transactions");
     } finally {
       transactionInfo.onSaveEdit();
+      setChosenTransactionType("None");
+      setAddCounterpart(false);
     }
   }
 
@@ -157,6 +160,8 @@ export default function TransactionEditDialog(
           // close dialog by resetting transaction in parent
           transactionInfo.onSaveEdit();
         }
+        setChosenTransactionType("None");
+        setAddCounterpart(false);
       }}
     >
       <DialogContent className="sm:max-w-2xl w-[90vw]">
@@ -223,15 +228,17 @@ export default function TransactionEditDialog(
                   />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories
-                    .filter(
-                      (c: Category) => c.category_type == chosenTransactionType,
-                    )
-                    .map((c: Category) => (
-                      <SelectItem key={c.id} value={c.id.toString()}>
-                        {c.name}
-                      </SelectItem>
-                    ))}
+                  {(chosenTransactionType === "None"
+                    ? categories
+                    : categories.filter(
+                        (category) =>
+                          category.category_type === chosenTransactionType,
+                      )
+                  ).map((c: Category) => (
+                    <SelectItem key={c.id} value={c.id.toString()}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
                   <SelectItem value="None">None</SelectItem>
                 </SelectContent>
               </Select>
