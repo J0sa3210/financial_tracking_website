@@ -82,11 +82,34 @@
   --input: rgb(248, 253, 252); /* ultra-light input base */
   --ring: rgb(0, 200, 185); /* brighter teal ring */
 
-  --chart-1: rgb(0, 137, 123); /* main teal */
-  --chart-2: rgb(255, 110, 85); /* coral */
-  --chart-3: rgb(255, 200, 50); /* bright golden yellow */
-  --chart-4: rgb(91, 155, 255); /* blue */
-  --chart-5: rgb(110, 220, 180); /* light sea green */
+  /* --- per-type chart palettes (expenses=red, income=blue, savings=dark-green) --- */
+  --expenses-primary: #ff4d3a;
+  --income-primary: #1f8cff;
+  --savings-primary: #006b4e;
+
+  /* Expenses (reds) */
+  --chart-expenses-1: #ff4d3a;
+  --chart-expenses-2: #ff6e55;
+  --chart-expenses-3: #ff8f76;
+  --chart-expenses-4: #ffb49a;
+  --chart-expenses-5: #ffd9c9;
+  --chart-expenses-6: #ffeeea;
+
+  /* Income (blues) */
+  --chart-income-1: #1f8cff;
+  --chart-income-2: #4fa9ff;
+  --chart-income-3: #80c6ff;
+  --chart-income-4: #b3e3ff;
+  --chart-income-5: #dff6ff;
+  --chart-income-6: #eefaff;
+
+  /* Savings (dark greens) */
+  --chart-savings-1: #006b4e;
+  --chart-savings-2: #008b66;
+  --chart-savings-3: #00a67f;
+  --chart-savings-4: #33c39a;
+  --chart-savings-5: #8fe0c9;
+  --chart-savings-6: #dff8f2;
 
   --sidebar: rgb(243, 250, 248); /* light and inviting */
   --sidebar-foreground: rgb(28, 50, 46);
@@ -165,5 +188,33 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+
+  /* Helper classes: map generic --chart-1..6 to a specific type palette.
+   Use on a container (e.g. <div className={`chart-${type}`}>), then child code
+   can reference var(--chart-1) ... var(--chart-6). */
+  .chart-expenses {
+    --chart-1: var(--chart-expenses-1);
+    --chart-2: var(--chart-expenses-2);
+    --chart-3: var(--chart-expenses-3);
+    --chart-4: var(--chart-expenses-4);
+    --chart-5: var(--chart-expenses-5);
+    --chart-6: var(--chart-expenses-6);
+  }
+  .chart-income {
+    --chart-1: var(--chart-income-1);
+    --chart-2: var(--chart-income-2);
+    --chart-3: var(--chart-income-3);
+    --chart-4: var(--chart-income-4);
+    --chart-5: var(--chart-income-5);
+    --chart-6: var(--chart-income-6);
+  }
+  .chart-savings {
+    --chart-1: var(--chart-savings-1);
+    --chart-2: var(--chart-savings-2);
+    --chart-3: var(--chart-savings-3);
+    --chart-4: var(--chart-savings-4);
+    --chart-5: var(--chart-savings-5);
+    --chart-6: var(--chart-savings-6);
   }
 }

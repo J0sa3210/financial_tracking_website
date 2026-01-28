@@ -25,7 +25,6 @@ import {
   Counterpart,
   type CounterpartSelectOption,
 } from "@/assets/types/Counterpart";
-import { DialogClose } from "@radix-ui/react-dialog";
 interface TransactionInfo {
   transaction: Transaction | null;
   onSaveEdit: () => {};
