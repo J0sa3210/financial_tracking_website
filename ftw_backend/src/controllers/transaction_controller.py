@@ -116,12 +116,12 @@ async def edit_transaction(transaction_id: int, updated_transaction: Transaction
 # ======================================================================================================== #
 
 
-@transaction_controller.delete("", response_model=dict[str, str])
+@transaction_controller.delete("")
 async def delete_multiple_transactions(transaction_ids: list[int], db: Session = Depends(get_db)):
     transaction_service.delete_multiple_transactions(transaction_ids=transaction_ids, db=db)
-    db.commmit()
+    db.commit()
 
-@transaction_controller.delete("/{transaction_id}", response_model=TransactionView)
+@transaction_controller.delete("/{transaction_id}")
 async def delete_transaction( transaction_id: int, db: Session = Depends(get_db)):
     transaction_service.delete_transaction(transaction_id=transaction_id, db=db)
     db.commit()

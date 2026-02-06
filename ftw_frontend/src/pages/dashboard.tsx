@@ -6,7 +6,13 @@ import NTransactionsInfoTile from "@/components/info_tiles/number_of_transaction
 import SelectedPeriodInfoTile from "@/components/info_tiles/selected_period_info_tile";
 import { useTime } from "@/components/context/TimeContext";
 import TypeSummaryTile from "@/components/dashboard_page/typeSummaryTile";
+import YearSummaryGraph from "@/components/dashboard_page/yearSummaryGraph";
 
+import type {
+  MonthOverview,
+  CategorySummary,
+  YearOverview,
+} from "@/assets/types/TypeOverview";
 interface totalsType {
   total_income: number;
   total_expenses: number;
@@ -21,18 +27,15 @@ const defaultTotals: totalsType = {
   total_unaccounted: 0,
 };
 
-type TypeBreakdown = { category_name: string; category_amount: number }[];
-type TypeBreakdownResponse = {
-  typeName: string;
-  typeBreakdown: TypeBreakdown;
-}[];
-
 export default function DashboardPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [totals, setTotals] = useState<totalsType>(defaultTotals);
   const { activeAccount } = useAccount();
   const { activeYear, activeMonth } = useTime();
-  const [typeBreakdown, setTypeBreakdown] = useState<TypeBreakdownResponse>([]);
+  const [type_overview_response, setMonthOverviewResponse] = useState<
+    MonthOverview[]
+  >([]);
+  const [year_overview, setYearOverview] = useState<YearOverview>();
 
   async function get_transactions(
     year: number | null = null,
@@ -79,7 +82,7 @@ export default function DashboardPage() {
 
   async function get_totals() {
     if (!activeAccount) return; // Wait until activeAccount is set
-    const resp = await fetch("http://localhost:8000/transaction/total", {
+    const resp = await fetch(`http://localhost:8000/transaction/total`, {
       headers: {
         "Content-Type": "application/json",
         "active-account-id": activeAccount?.id.toString() ?? "",
@@ -89,23 +92,48 @@ export default function DashboardPage() {
     setTotals(data);
   }
 
-  async function get_type_breakdown() {
+  async function get_type_month_overview(
+    year: number | null = null,
+    month: number | null = null,
+  ) {
     if (!activeAccount) return; // Wait until activeAccount is set
-    const resp = await fetch("http://localhost:8000/category/typeBreakdown", {
-      headers: {
-        "Content-Type": "application/json",
-        "active-account-id": activeAccount?.id.toString() ?? "",
+    const resp = await fetch(
+      `http://localhost:8000/type/overview/month/all/?year=${year}&month=${month}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "active-account-id": activeAccount?.id.toString() ?? "",
+        },
       },
-    });
+    );
     const data = await resp.json();
-    setTypeBreakdown(data);
+    console.log("Data: ", data);
+    setMonthOverviewResponse(data);
+  }
+
+  async function get_type_year_overview(year: number) {
+    if (!activeAccount) return; // Wait until activeAccount is set
+    const resp = await fetch(
+      `http://localhost:8000/type/overview/year/?year=${year}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "active-account-id": activeAccount?.id.toString() ?? "",
+        },
+      },
+    );
+    const data = await resp.json();
+
+    console.log("Yearoverview: ", data);
+    setYearOverview(data);
   }
 
   useEffect(() => {
     if (activeAccount) {
       get_transactions(activeYear, activeMonth);
       get_totals();
-      get_type_breakdown();
+      get_type_month_overview(activeYear, activeMonth);
+      get_type_year_overview(activeYear);
     }
   }, [activeAccount, activeYear, activeMonth]);
 
@@ -116,46 +144,27 @@ export default function DashboardPage() {
         <TotalTrackingBalanceInfoTile {...totals} />
         <NTransactionsInfoTile transactions={transactions} />
       </div>
-      <div className="w-full flex gap-4">
-        {typeBreakdown.map(
-          ({
-            typeName,
-            typeBreakdown,
-          }: {
-            typeName: string;
-            typeBreakdown: TypeBreakdown;
-          }) => (
-            <div>{typeName}</div>
-          ),
-        )}
-        <TypeSummaryTile
-          typeName="Income"
-          typeBreakdown={[
-            { category_name: "Salary", category_amount: 5000 },
-            { category_name: "Investments", category_amount: 2000 },
-          ]}
-        />
-        <TypeSummaryTile
-          typeName="Expenses"
-          typeBreakdown={[
-            { category_name: "Rent", category_amount: 1200 },
-            { category_name: "Groceries", category_amount: 300 },
-            { category_name: "Utilities", category_amount: 150 },
-            { category_name: "Transportation", category_amount: 100 },
-            { category_name: "Utilities", category_amount: 150 },
-            { category_name: "Transportation", category_amount: 100 },
-            { category_name: "Utilities", category_amount: 150 },
-            { category_name: "Transportation", category_amount: 100 },
-          ]}
-        />
-        <TypeSummaryTile
-          typeName="Savings"
-          typeBreakdown={[
-            { category_name: "Emergency Fund", category_amount: 1000 },
-            { category_name: "Retirement", category_amount: 1500 },
-          ]}
-        />
+      <div className="w-full grid grid-cols-1 sm:grid-cols-2 sm:grid-rows-2 gap-4 my-4">
+        {type_overview_response
+          .slice(0, 4)
+          .map(
+            ({
+              type_name,
+              type_overview,
+            }: {
+              type_name: string;
+              type_overview: CategorySummary[];
+            }) => (
+              <div key={type_name} className="h-full">
+                <TypeSummaryTile
+                  type_name={type_name}
+                  type_overview={type_overview}
+                />
+              </div>
+            ),
+          )}
       </div>
+      {year_overview && <YearSummaryGraph chartData={year_overview} />}
     </div>
   );
 }

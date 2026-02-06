@@ -1,6 +1,7 @@
 from models.category import Category, CategoryCreate, CategoryEdit
 from database.schemas import CategorySchema, CounterpartSchema, TransactionSchema
 from sqlalchemy.orm import Session, joinedload  # type: ignore
+from sqlalchemy import func, or_
 from models.transaction import TransactionCreate, Transaction, TransactionEdit, TransactionTypes
 from typing import Optional
 from models.counterpart import Counterpart
@@ -112,23 +113,43 @@ class CategoryService():
 
         # Update counterpart relationships
         if "counterparts" in data:
+            # Resolve incoming counterpart payloads into persistent CounterpartSchema objects
+            resolved_counterparts: list[CounterpartSchema] = []
+            for cp_payload in new_category.counterparts or []:
+                cp_id = getattr(cp_payload, "id", None)
+                cp_name = getattr(cp_payload, "name", None)
+
+                cp_obj = None
+                if cp_id is not None:
+                    cp_obj = self.counterpart_service.get_counterpart_by_id(db=db, id=cp_id, owner_id=owner.id)
+                if cp_obj is None and cp_name:
+                    # try to find by name for this owner
+                    cp_obj = self.counterpart_service.get_counterpart_by_name(db=db, name=cp_name, owner_id=owner.id)
+                if cp_obj is None and cp_name:
+                    # create a new counterpart for this owner
+                    # Counterpart model expected by counterpart_service.create_counterpart may vary;
+                    # here we use Counterpart Pydantic/model object (imported as Counterpart)
+                    cp_obj = self.counterpart_service.create_counterpart(new_counterpart=Counterpart(name=cp_name), db=db, owner_id=owner.id)
+
+                if cp_obj is not None:
+                    resolved_counterparts.append(cp_obj)
+
             current_ids = {cp.id for cp in current_category.counterparts}
-            new_ids = {cp.id for cp in new_category.counterparts}
+            new_ids = {cp.id for cp in resolved_counterparts}
 
-            for cp_id in new_ids - current_ids:
-                cp = self.counterpart_service.get_counterpart_by_id(
-                    db=db, id=cp_id, owner_id=owner.id
-                )
-                self._attach_counterpart(current_category, cp)
-                self._sync_transactions_for_counterpart(db=db, counterpart=cp, category=current_category)
+            # Attach new counterparts
+            for cp in resolved_counterparts:
+                if cp.id not in current_ids:
+                    self._attach_counterpart(current_category, cp)
+                    db.flush()
+                    self._sync_transactions_for_counterpart(db=db, counterpart=cp, category=current_category)
 
-            for cp_id in current_ids - new_ids:
-                cp = self.counterpart_service.get_counterpart_by_id(
-                    db=db, id=cp_id, owner_id=owner.id
-                )
-                self._detach_counterpart(current_category, cp)
-                self._sync_transactions_for_counterpart(db=db, counterpart=cp, category=None)
-
+            # Detach removed counterparts
+            for cp in list(current_category.counterparts):
+                if cp.id not in new_ids:
+                    self._detach_counterpart(current_category, cp)
+                    db.flush()
+                    self._sync_transactions_for_counterpart(db=db, counterpart=cp, category=None)
 
         return current_category
     
@@ -185,13 +206,13 @@ class CategoryService():
             category_id: int = transaction.counterpart.category_id
             if category_id is not None:
                 category: CategorySchema = self.get_category(db=db, category_id=category_id, as_schema=True)
-                transaction.category_id = category.id,
-                transaction.category_name = category.name,
-                transaction.transaction_type = category.category_type,
+                transaction.category_id = category.id
+                transaction.category_name = category.name
+                transaction.transaction_type = category.category_type
             else:
-                transaction.category_id = None,
-                transaction.category_name = None,
-                transaction.transaction_type = TransactionTypes.NONE,
+                transaction.category_id = None
+                transaction.category_name = None
+                transaction.transaction_type = TransactionTypes.NONE
 
     def _sync_transactions_for_counterpart(
         self,
@@ -199,27 +220,39 @@ class CategoryService():
         counterpart: CounterpartSchema,
         category: CategorySchema | None,
     ):
-        logger.debug(f"Syncing ALL transactions for category: {category}")
         # When there is a Category add the category_id to all transactions with that counterpart
         if category:
+            logger.debug(f"Adding txs to {category.name} with cp {counterpart.name}")
             values = {
-                    TransactionSchema.category_id: category.id,
-                    TransactionSchema.category_name: category.name,
-                    TransactionSchema.transaction_type: category.category_type,
-                }
-            
+                TransactionSchema.category_id: category.id,
+                TransactionSchema.category_name: category.name,
+                TransactionSchema.transaction_type: category.category_type,
+            }
         # When there is no Category remove the current category_id for all transactions with that counterpart.
         else:
+            logger.debug(f"Removing txs from category with cp {counterpart.name}")
             values = {
                 TransactionSchema.category_id: None,
                 TransactionSchema.category_name: None,
                 TransactionSchema.transaction_type: TransactionTypes.NONE,
             }
-        
 
-        db.query(TransactionSchema).filter(
-            TransactionSchema.counterpart_id == counterpart.id
-        ).update(values, synchronize_session="fetch")
+        # Match by counterpart_id OR (fallback) by normalized counterpart_name for existing rows that weren't linked by id.
+        query = db.query(TransactionSchema).filter(
+            or_(
+                TransactionSchema.counterpart_id == counterpart.id,
+                func.lower(func.coalesce(TransactionSchema.counterpart_name, "")) == func.lower(counterpart.name)
+            )
+        )
+
+        updated = query.update(values, synchronize_session="fetch")
+        logger.debug(f"_sync_transactions_for_counterpart: updated {updated} rows for counterpart id {counterpart.id} / name '{counterpart.name}'")
+
+        # Ensure session sees changes
+        try:
+            db.flush()
+        except Exception:
+            logger.debug("flush after _sync_transactions_for_counterpart update failed or not required")
 
     def filter_transactions_by_date(self, transactions: list[TransactionSchema], year: int, month: Optional[int] = None) -> list[Transaction]:
         if month is not None:
@@ -234,9 +267,8 @@ class CategoryService():
 
     def _attach_counterpart(self, category: CategorySchema, counterpart: CounterpartSchema):
         counterpart.category = category
+        counterpart.category_id = category.id
 
     def _detach_counterpart(self, category: CategorySchema, counterpart: CounterpartSchema):
         counterpart.category = None
-
-
-    
+        counterpart.category_id = None

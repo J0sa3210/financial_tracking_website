@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Header  # type: ignore
 from sqlalchemy.orm import Session  # type: ignore
-from typing import Annotated
+from typing import Annotated, Any
 from database.schemas import CategorySchema
 from models.category import CategoryView, CategoryCreate, CategoryEdit
 from database import get_db
@@ -59,7 +59,6 @@ def create_category(active_account_id: Annotated[str, Header()], category: Categ
 # ======================================================================================================== #
 #                                       GET FUNCTIONS
 # ======================================================================================================== #
-
 # Get all categories
 @categorie_controller.get("", )
 async def get_all_categories(active_account_id: Annotated[str, Header()], db: Session = Depends(get_db)):
@@ -85,29 +84,8 @@ def get_category(active_account_id: Annotated[str, Header()], category_id: int, 
         raise HTTPException(status_code=404, detail="Category not found")
     return category
 
-# Get all expenses for a certain category
-# @categorie_controller.get("/total_expenses", response_model=dict[str, float])
-# def get_total_expenses(active_account_id: Annotated[str, Header()], db: Session = Depends(get_db), year: int = None, month: int = None):
 
-#     # Check if the account exists
-#     active_account = account_service.get_account(db=db, account_id=int(active_account_id))
-
-#     # Filter correct year and month
-#     if year is None:
-#         year = datetime.now().year
-
-#     # Get all categories for the active account
-#     categories = category_service.get_all_categories(db=db, owner_id=int(active_account.id))
-
-#     # Filter transactions by date
-#     filtered_categories = categories.copy()
-#     for category in filtered_categories:
-#         category.transactions = category_service.filter_transactions_by_date(category.transactions, year=year, month=month)
-
-#     # For each of the categories, calculate the sum of all transactions in it.
-#     total_expenses = category_service.calculate_total_expenses(categories=filtered_categories)
-#     db.commit()
-#     return total_expenses
+    
 
 # ======================================================================================================== #
 #                                       UPDATE FUNCTIONS

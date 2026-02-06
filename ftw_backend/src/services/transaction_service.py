@@ -26,7 +26,7 @@ class TransactionService:
         Returns:
             Transaction: The added transaction as a Pydantic model.
         """
-        new_transaction_schemas: list[TransactionSchema] = [self.convert_transaction_data(TransactionSchema(), transaction) for transaction in new_transactions]
+        new_transaction_schemas: list[TransactionSchema] = [self.convert_transaction_data(TransactionSchema(), transaction, db=db) for transaction in new_transactions]
         db.add_all(new_transaction_schemas)
 
         return new_transaction_schemas
