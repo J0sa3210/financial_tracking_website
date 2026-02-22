@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogHeader,
@@ -19,10 +19,8 @@ import {
 import { useAccount } from "@/components/context/AccountContext";
 
 export default function CreateCategoryDialog({
-  counterpartOptions,
   onCreate,
 }: {
-  counterpartOptions: CounterpartSelectOption[];
   onCreate?: () => void;
 }) {
   const [categoryName, setCategoryName] = useState("");
@@ -32,6 +30,40 @@ export default function CreateCategoryDialog({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [open, setOpen] = useState<boolean>(false);
   const { activeAccount } = useAccount();
+  const [counterpartOptions, setCounterpartOptions] = useState<
+    CounterpartSelectOption[]
+  >([]);
+
+  async function fetchCounterpartOptions() {
+    const response = await fetch("http://localhost:8000/counterpart/empty", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "active-account-id": activeAccount ? activeAccount.id.toString() : "",
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error("Failed to get empty counterparts");
+    }
+
+    setCounterpartOptions(
+      data.map((cp: Counterpart) => {
+        return {
+          value: cp.id,
+          label: cp.name,
+        };
+      }),
+    );
+  }
+
+  // fetch counterpart options (independent of categories)
+  useEffect(() => {
+    // run when account changes
+    if (activeAccount) fetchCounterpartOptions();
+  }, [activeAccount]);
 
   const handleCreateCategory = async () => {
     if (!categoryName) {
@@ -111,7 +143,7 @@ export default function CreateCategoryDialog({
             <Select
               placeholder="Select Category Type"
               options={["None", "Income", "Expenses", "Savings"].map(
-                (type) => ({ value: type, label: type })
+                (type) => ({ value: type, label: type }),
               )}
               onChange={(e) => {
                 setCategoryType(e ? e.value : "None");
@@ -125,8 +157,8 @@ export default function CreateCategoryDialog({
               onChange={(selectedOptions) =>
                 setCounterparts(
                   selectedOptions.map(
-                    (option) => new CounterpartEdit(option.value, option.label)
-                  )
+                    (option) => new CounterpartEdit(option.value, option.label),
+                  ),
                 )
               }
               className="mt-2"

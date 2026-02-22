@@ -21,10 +21,6 @@ import { Input } from "../ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import CreateCategoryDialog from "../upload_data_handler/create_category_dialog";
-import {
-  Counterpart,
-  type CounterpartSelectOption,
-} from "@/assets/types/Counterpart";
 interface TransactionInfo {
   transaction: Transaction | null;
   onSaveEdit: () => {};
@@ -42,41 +38,6 @@ export default function TransactionEditDialog(
   const [addCounterpart, setAddCounterpart] = useState<boolean>(false);
   const [chosenTransactionType, setChosenTransactionType] =
     useState<transactionType>("None");
-
-  const [counterpartOptions, setCounterpartOptions] = useState<
-    CounterpartSelectOption[]
-  >([]);
-
-  async function fetchCounterpartOptions() {
-    const response = await fetch("http://localhost:8000/counterpart/empty", {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "active-account-id": activeAccount ? activeAccount.id.toString() : "",
-      },
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error("Failed to get empty counterparts");
-    }
-
-    setCounterpartOptions(
-      data.map((cp: Counterpart) => {
-        return {
-          value: cp.id,
-          label: cp.name,
-        };
-      }),
-    );
-  }
-
-  // fetch counterpart options (independent of categories)
-  useEffect(() => {
-    // run when account changes
-    if (activeAccount) fetchCounterpartOptions();
-  }, [activeAccount]);
 
   async function fetchCategories() {
     const resp = await fetch("http://localhost:8000/category", {
@@ -111,6 +72,7 @@ export default function TransactionEditDialog(
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "active-account-id": activeAccount?.id.toString() ?? "",
         },
         body: JSON.stringify(transaction),
       });
@@ -241,10 +203,7 @@ export default function TransactionEditDialog(
                   <SelectItem value="None">None</SelectItem>
                 </SelectContent>
               </Select>
-              <CreateCategoryDialog
-                counterpartOptions={counterpartOptions}
-                onCreate={fetchCategories}
-              />
+              <CreateCategoryDialog onCreate={fetchCategories} />
             </span>
             <div className="flex items-center gap-2">
               <Checkbox

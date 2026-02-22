@@ -4,6 +4,7 @@ import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import axios, { type AxiosProgressEvent, type AxiosRequestConfig } from "axios";
 import { Progress } from "../ui/progress";
+import { useAccount } from "../context/AccountContext";
 
 type uploadStatus = "idle" | "uploading" | "success" | "error";
 
@@ -16,6 +17,7 @@ export default function CsvUploadHandler(props: CsvUploadHandlerProps) {
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState<uploadStatus>("idle");
   const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const { activeAccount } = useAccount();
 
   function handeFileChange(e: ChangeEvent<HTMLInputElement>) {
     if (e.target.files) {
@@ -38,9 +40,12 @@ export default function CsvUploadHandler(props: CsvUploadHandlerProps) {
       method: "POST",
       headers: {
         "Content-Type": "multipart/form-data",
+        "active-account-id": activeAccount ? activeAccount.id.toString() : "",
       },
       onUploadProgress: (progressEvent: AxiosProgressEvent) => {
-        const progress = progressEvent.total ? Math.round((progressEvent.loaded * 100) / progressEvent.total) : 0;
+        const progress = progressEvent.total
+          ? Math.round((progressEvent.loaded * 100) / progressEvent.total)
+          : 0;
         setUploadProgress(progress);
       },
     };
@@ -58,49 +63,46 @@ export default function CsvUploadHandler(props: CsvUploadHandlerProps) {
       .catch((error) => {
         setStatus("error");
         console.log(error);
-        setErrorMsg(error.response?.data?.detail || "An error occurred while uploading the file.");
+        setErrorMsg(
+          error.response?.data?.detail ||
+            "An error occurred while uploading the file.",
+        );
         setUploadProgress(0);
       });
   }
 
   return (
     <div>
-      <DialogHeader className='px-2'>
-        <DialogTitle className='pb-2'>Add transactions</DialogTitle>
+      <DialogHeader className="px-2">
+        <DialogTitle className="pb-2">Add transactions</DialogTitle>
       </DialogHeader>
-      <Input
-        type='file'
-        accept='.csv'
-        id='file'
-        onChange={handeFileChange}
-      />
+      <Input type="file" accept=".csv" id="file" onChange={handeFileChange} />
       {file && status === "idle" && (
-        <div className=' pt-4 flex justify-between items-center'>
-          <span className='flex gap-2'>
-            <p className='font-semibold'>File size:</p>
+        <div className=" pt-4 flex justify-between items-center">
+          <span className="flex gap-2">
+            <p className="font-semibold">File size:</p>
             <p> {(file.size / 1024).toFixed(2)} Kb</p>
           </span>
-          <Button
-            size='sm'
-            onClick={handleFileUpload}>
+          <Button size="sm" onClick={handleFileUpload}>
             Upload
           </Button>
         </div>
       )}
       {status === "uploading" && (
         <div>
-          <div className='pl-2 pt-1 text-yellow-400'>Uploading file...</div>
-          <Progress
-            value={uploadProgress}
-            className='mt-2'
-          />
+          <div className="pl-2 pt-1 text-yellow-400">Uploading file...</div>
+          <Progress value={uploadProgress} className="mt-2" />
         </div>
       )}
       {status === "error" && (
-        <div className='pl-2 pt-1 text-red-600'>{errorMsg || "An error occurred while uploading the file."}</div>
+        <div className="pl-2 pt-1 text-red-600">
+          {errorMsg || "An error occurred while uploading the file."}
+        </div>
       )}
       {status === "success" && (
-        <div className='pl-2 pt-1 text-green-600 font-semibold'>Succesfully uploaded file...</div>
+        <div className="pl-2 pt-1 text-green-600 font-semibold">
+          Succesfully uploaded file...
+        </div>
       )}
     </div>
   );

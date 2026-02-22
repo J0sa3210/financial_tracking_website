@@ -15,7 +15,7 @@ class TransactionService:
     # ======================================================================================================== #
     #                                       CREATE FUNCTIONS
     # ======================================================================================================== #
-    def add_transactions(self, new_transactions: list[TransactionCreate], db: Session):
+    def add_transactions(self, new_transactions: list[TransactionCreate], db: Session, active_account: AccountSchema):
         """
         Add a new transaction to the database.
 
@@ -26,7 +26,7 @@ class TransactionService:
         Returns:
             Transaction: The added transaction as a Pydantic model.
         """
-        new_transaction_schemas: list[TransactionSchema] = [self.convert_transaction_data(TransactionSchema(), transaction, db=db) for transaction in new_transactions]
+        new_transaction_schemas: list[TransactionSchema] = [self.convert_transaction_data(TransactionSchema(), transaction, db=db, active_account=active_account) for transaction in new_transactions]
         db.add_all(new_transaction_schemas)
 
         return new_transaction_schemas
@@ -38,19 +38,13 @@ class TransactionService:
     def get_all_transactions(self, db: Session, iban: str = "", as_schema: bool = False, year: int | None = None, month: int | None = None) -> list[Transaction]:
         iban = self.account_service.format_IBAN(iban)
         
-        if iban == "":
-            transactions = (
-            db.query(TransactionSchema)
-            .options(joinedload(TransactionSchema.category))
-            .all()
-            )
-        else:
-            transactions = (
-            db.query(TransactionSchema)
-            .filter(TransactionSchema.owner_iban == iban)
-            .options(joinedload(TransactionSchema.category))
-            .all()
-            )
+    
+        transactions = (
+        db.query(TransactionSchema)
+        .filter(TransactionSchema.owner_iban == iban)
+        .options(joinedload(TransactionSchema.category))
+        .all()
+        )
 
         if year is not None:
             transactions = [transaction for transaction in transactions if transaction.date_executed.year == year]
@@ -75,20 +69,13 @@ class TransactionService:
             Transaction: The transaction as a Pydantic model.
         """
         iban = self.account_service.format_IBAN(iban)
-        if iban == "":
-            transaction_schema = (
-            db.query(TransactionSchema)
-            .filter(TransactionSchema.id == transaction_id)
-            .options(joinedload(TransactionSchema.category))
-            .first())
-        else:
-            transaction_schema = (
-            db.query(TransactionSchema)
-            .filter(TransactionSchema.owner_iban == iban)
-            .filter(TransactionSchema.id == transaction_id)
-            .options(joinedload(TransactionSchema.category))
-            .first()
-            )
+        transaction_schema = (
+        db.query(TransactionSchema)
+        .filter(TransactionSchema.owner_iban == iban)
+        .filter(TransactionSchema.id == transaction_id)
+        .options(joinedload(TransactionSchema.category))
+        .first()
+        )
 
         if transaction_schema is None:
             return None
@@ -101,12 +88,12 @@ class TransactionService:
     # ======================================================================================================== #
     #                                       UPDATE FUNCTIONS
     # ======================================================================================================== #
-    def update_transaction(self,current_transaction: TransactionSchema, updated_transaction: TransactionSchema, db: Session) -> TransactionSchema:
-        updated_transaction: TransactionSchema = self.convert_transaction_data(current_transaction=current_transaction, updated_transaction=updated_transaction, db=db)
+    def update_transaction(self,current_transaction: TransactionSchema, updated_transaction: TransactionSchema, db: Session, active_account: AccountSchema) -> TransactionSchema:
+        updated_transaction: TransactionSchema = self.convert_transaction_data(current_transaction=current_transaction, updated_transaction=updated_transaction, db=db, active_account=active_account)
 
         return updated_transaction
 
-    def convert_transaction_data(self, current_transaction: Transaction | TransactionSchema, updated_transaction: TransactionEdit | TransactionCreate, db: Session) -> Transaction:
+    def convert_transaction_data(self, current_transaction: Transaction | TransactionSchema, updated_transaction: TransactionEdit | TransactionCreate, db: Session, active_account: AccountSchema) -> Transaction:
         """
         Update an existing transaction object with new data.
 
@@ -129,7 +116,7 @@ class TransactionService:
 
         if category_changed:
             if updated_transaction.category_id is not None:
-                category: CategorySchema = self.category_service.get_category(db=db, category_id=updated_transaction.category_id, as_schema=True)
+                category: CategorySchema = self.category_service.get_category(db=db, category_id=updated_transaction.category_id, as_schema=True, owner_id=active_account.id)
                 current_transaction.category_id = category.id
                 current_transaction.category_name = category.name
                 current_transaction.transaction_type = category.category_type

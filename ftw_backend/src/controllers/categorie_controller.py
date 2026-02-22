@@ -128,7 +128,23 @@ def add_counterpart_to_category(active_account_id: Annotated[str, Header()], cat
         raise HTTPException(status_code=400, detail="Counterpart not found")
 
     # Add the counterpart to the category
-    category_service.add_counterpart_to_category(db=db, category=category, counterpart=counterpart)
+    category_service.add_counterpart_to_category(db=db, category=category, counterpart=counterpart, owner_account=active_account)
+    db.commit()
+
+# Add transactions to the category
+@categorie_controller.post("/{category_id}/add_transactions")
+def add_transaciton_to_category(active_account_id: Annotated[str, Header()], category_id: int, payload: list[int], db: Session = Depends(get_db)):
+    # Check if the account exists
+    active_account = account_service.get_account(db=db, account_id=int(active_account_id))
+    if active_account is None:
+        raise HTTPException(status_code=404, detail="Account not found")
+
+    # Check if the category exists
+    category = category_service.get_category(db=db, category_id=category_id, owner_id=active_account.id, as_schema=True)
+    if category is None:
+        raise HTTPException(status_code=404, detail="Category not found")
+
+    category_service.add_transactions_to_category(db=db, category=category, transaction_ids=payload)
     db.commit()
 
 # ======================================================================================================== #

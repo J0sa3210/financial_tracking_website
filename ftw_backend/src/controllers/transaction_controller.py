@@ -29,19 +29,23 @@ account_service: AccountService = AccountService()
 # ======================================================================================================== #
 
 @transaction_controller.put("", response_model=TransactionView)
-async def add_transactions(transactions: list[TransactionCreate], db : Session = Depends(get_db)):
+async def add_transactions(active_account_id: Annotated[str, Header()], transactions: list[TransactionCreate], db : Session = Depends(get_db)):
+    active_account = account_service.get_account(db=db, account_id=int(active_account_id))    
+
     added_transaction: Transaction = transaction_service.add_transactions(transactions, db=db)
     
     db.commit()
     return added_transaction
 
 @transaction_controller.post("/upload_csv")
-async def upload_csv(file: UploadFile = File(...), db: Session = Depends(get_db)):
+async def upload_csv(active_account_id: Annotated[str, Header()], file: UploadFile = File(...), db: Session = Depends(get_db)):
+    active_account = account_service.get_account(db=db, account_id=int(active_account_id))    
+
     if not file.filename.endswith('.csv'):
         raise FileTypeExpection(file_type=file.filename.split('.')[-1])
     
     file_handler: CSV_handler = CSV_handler(file=file)
-    file_handler.process_file(db=db)
+    file_handler.process_file(db=db, owner_account=active_account)
 
     db.commit()
     
@@ -101,13 +105,16 @@ async def get_transaction(active_account_id: Annotated[str, Header()], transacti
 # ======================================================================================================== #
 
 @transaction_controller.post("/{transaction_id}", response_model=TransactionView)
-async def edit_transaction(transaction_id: int, updated_transaction: TransactionEdit, db: Session = Depends(get_db)):
-    current_transaction: TransactionSchema = transaction_service.get_transaction(transaction_id=transaction_id, as_schema=True, db=db)
+async def edit_transaction(active_account_id: Annotated[str, Header()], transaction_id: int, updated_transaction: TransactionEdit, db: Session = Depends(get_db)):
+    active_account = account_service.get_account(db=db, account_id=int(active_account_id))    
+    account_iban: str = active_account.iban
+    
+    current_transaction: TransactionSchema = transaction_service.get_transaction(transaction_id=transaction_id, as_schema=True, db=db, iban=account_iban)
 
     if current_transaction is None:
         raise HTTPException(status_code=404, detail="Transaction not found")
 
-    updated_transaction: Transaction = transaction_service.update_transaction(current_transaction=current_transaction, updated_transaction=updated_transaction, db=db)
+    updated_transaction: Transaction = transaction_service.update_transaction(current_transaction=current_transaction, updated_transaction=updated_transaction, db=db, active_account=active_account)
     db.commit()
     return updated_transaction
 

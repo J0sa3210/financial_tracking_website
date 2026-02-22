@@ -34,52 +34,40 @@ class CounterpartService():
     #                                       GET FUNCTIONS
     # ======================================================================================================== # 
     
-    def get_all_counterparts(self, db: Session, as_schema: bool = False, owner_id: int = None) -> list[Counterpart]:
+    def get_all_counterparts(self, db: Session, owner_id: int, as_schema: bool = False) -> list[Counterpart]:
         if owner_id is not None:
            counterparts = db.query(CounterpartSchema).options(joinedload(CounterpartSchema.category)).filter(CounterpartSchema.owner_id==owner_id).all()
-        else:
-           counterparts = db.query(CounterpartSchema).options(joinedload(CounterpartSchema.category)).all()
         
-
         if as_schema:
             return counterparts
         else:
             return [Counterpart.model_validate(counterpart) for counterpart in counterparts]
         
-    def get_empty_counterparts(self, db: Session, as_schema: bool = False, owner_id: int = None) -> list[Counterpart]:
+    def get_empty_counterparts(self, db: Session, owner_id: int, as_schema: bool = False) -> list[Counterpart]:
         if owner_id is not None:
            counterparts = db.query(CounterpartSchema).options(joinedload(CounterpartSchema.category)).filter(CounterpartSchema.owner_id==owner_id, CounterpartSchema.category_id == None).all()
-        else:
-           counterparts = db.query(CounterpartSchema).options(joinedload(CounterpartSchema.category)).filter(CounterpartSchema.category_id == None).all()
         
-
         if as_schema:
             return counterparts
         else:
             return [Counterpart.model_validate(counterpart) for counterpart in counterparts]
     
-    def get_counterpart_names(self, db: Session, owner_id: int = None) -> list[str]:
+    def get_counterpart_names(self, db: Session, owner_id: int) -> list[str]:
         if owner_id is not None:
            counterparts = db.query(CounterpartSchema).options(joinedload(CounterpartSchema.category)).filter(CounterpartSchema.owner_id==owner_id).all()
-        else:
-           counterparts = db.query(CounterpartSchema).options(joinedload(CounterpartSchema.category)).all()
-        
+                
         return [cp.name for cp in counterparts]
 
-    def get_counterpart_by_name(self, db: Session, name: str, owner_id: int = None) -> CounterpartSchema | None:
+    def get_counterpart_by_name(self, db: Session, name: str, owner_id: int) -> CounterpartSchema | None:
         query = db.query(CounterpartSchema).filter(CounterpartSchema.name == name)
-        
-        if owner_id is not None:
-            query = query.filter(CounterpartSchema.owner_id == owner_id)
+        query = query.filter(CounterpartSchema.owner_id == owner_id)
 
         counterpart = query.first()
         return counterpart
     
-    def get_counterpart_by_id(self, db: Session, id: int, owner_id: int = None) -> CounterpartSchema | None:
+    def get_counterpart_by_id(self, db: Session, id: int, owner_id: int) -> CounterpartSchema | None:
         query = db.query( CounterpartSchema).filter(CounterpartSchema.id == id)
-        
-        if owner_id is not None:
-            query = query.filter(CounterpartSchema.owner_id == owner_id)
+        query = query.filter(CounterpartSchema.owner_id == owner_id)
 
         counterpart = query.first()
         return counterpart

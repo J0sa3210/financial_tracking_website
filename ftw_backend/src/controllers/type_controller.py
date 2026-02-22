@@ -40,7 +40,7 @@ def get_type_overview(active_account_id: Annotated[str, Header()], db: Session =
     for t_type in TransactionTypes:
         if t_type == TransactionTypes.NONE:
             continue
-        type_overview_response.append(type_service.get_type_month_breakdown(type_name=t_type, db=db, year=year, month=month))
+        type_overview_response.append(type_service.get_type_month_breakdown(type_name=t_type, db=db, year=year, month=month, active_account=active_account))
 
     return type_overview_response
 
@@ -52,6 +52,6 @@ def get_year_overview(active_account_id: Annotated[str, Header()], year: int, db
     if not active_account:
         raise AccountNotFoundException(active_account_id)
 
-    year_overview_response: YearOverview = type_service.get_year_overview(year=year, db=db)
+    year_overview_response: YearOverview = type_service.get_year_overview(year=year, db=db, active_account=active_account)
 
     return year_overview_response

@@ -40,7 +40,7 @@ class CSV_handler():
             logger.error(f"Error reading file: {e}")
             raise e
         
-    def process_file(self, db: Session = Depends(get_db)):
+    def process_file(self, owner_account: Account, db: Session = Depends(get_db)):
         # Convert file to DataFrame
         df: DataFrame = self._convert_to_df()
         df: DataFrame = self._clean_df(df)
@@ -59,7 +59,7 @@ class CSV_handler():
                 
                 # Convert DataFrame to transactions
                 new_transactions: list[TransactionCreate] = self._convert_df_to_transactions(df, counterpart_map=counterpart_map)
-                added_transaction: list[TransactionSchema] = self.transaction_service.add_transactions(new_transactions, db)
+                added_transaction: list[TransactionSchema] = self.transaction_service.add_transactions(new_transactions=new_transactions, db=db, active_account=owner_account)
 
                 # Ensure pending inserts are sent to the DB so subsequent Query.update() in
                 # _sync_transactions_for_counterpart can find and update the new rows.
@@ -70,7 +70,7 @@ class CSV_handler():
                     if counterpart.category_id is not None:
                         logger.debug(f"Adding counterpart {counterpart.name} to category {counterpart.category_id}")
                         category: CategorySchema = self.category_service.get_category(db=db, category_id=counterpart.category_id, as_schema=True, owner_id=owner_account.id)
-                        self.category_service.add_counterpart_to_category(category=category, counterpart=counterpart, db=db)
+                        self.category_service.add_counterpart_to_category(category=category, counterpart=counterpart, db=db, owner_account=owner_account)
 
                 logger.info("CSV file processed and transactions added successfully.")
             

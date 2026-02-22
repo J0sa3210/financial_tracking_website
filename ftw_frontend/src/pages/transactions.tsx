@@ -23,7 +23,7 @@ export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [totals, setTotals] = useState<totalsType>(defaultTotals);
   const [editTransactionId, setEditTransactionId] = useState<number | null>(
-    null
+    null,
   );
   const { activeAccount } = useAccount();
 
@@ -48,9 +48,9 @@ export default function TransactionsPage() {
             t.category_name,
             t.owner_iban,
             t.counterpart_name,
-            t.counterpart_id
-          )
-      )
+            t.counterpart_id,
+          ),
+      ),
     );
   }
 
@@ -79,6 +79,7 @@ export default function TransactionsPage() {
     get_transactions();
     get_totals();
     setEditTransactionId(null);
+    return;
   }
 
   return (
@@ -88,7 +89,7 @@ export default function TransactionsPage() {
       <TransactionTable
         transactions={transactions}
         onEditTransaction={setEditTransactionId}
-        refreshTransactions={resetTable}
+        onSaveEdit={resetTable}
       />
 
       <TransactionEditDialog

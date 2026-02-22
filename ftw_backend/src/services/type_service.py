@@ -2,7 +2,9 @@ from dataclasses import dataclass, field
 from sqlalchemy.orm import Session  # type: ignore
 from models.transaction import TransactionTypes
 from models.type_overview import CategorySummary, MonthOverview, YearOverview
-from database.schemas import CategorySchema, TransactionSchema
+from database.schemas import CategorySchema, TransactionSchema, AccountSchema
+from .category_service import CategoryService
+from .account_service import AccountService
 from datetime import date
 from typing import Any
 from sqlalchemy import extract
@@ -11,13 +13,16 @@ from utils.logging import setup_loggers
 
 
 
+
 class TypeService():
     def __init__(self):
         self.logger = setup_loggers()
+        self.category_service: CategoryService = CategoryService() 
+        self.account_service: AccountService = AccountService()
 
      # Go over all categories with the type_name matching this type and create CategorySummary
-    def get_type_month_breakdown(self, type_name: TransactionTypes, db: Session, year: int | None = None, month: int | None = None):
-        categories: list[CategorySchema] = db.query(CategorySchema).filter(CategorySchema.category_type == type_name).all()
+    def get_type_month_breakdown(self, active_account: AccountSchema, type_name: TransactionTypes, db: Session, year: int | None = None, month: int | None = None):
+        categories: list[CategorySchema] = self.category_service.get_all_categories_of_type(type_name=type_name, db=db, owner_id=active_account.id)
 
         category_overview: list[CategorySummary] = []
         for c in categories:
@@ -44,14 +49,17 @@ class TypeService():
 
         return MonthOverview(type_name=type_name, type_overview=category_overview)
 
-    def get_year_overview(self, year: int, db: Session):
+    def get_year_overview(self, year: int, db: Session, active_account: AccountSchema):
         months_str: list[str] = ["January", "Februari", "March", "April", "May", "June", "Juli", "August", "September","October", "November", "December"]
         year_overview: list[dict[str, Any]] = []
+
+        active_iban: str = self.account_service.format_IBAN(active_account.iban)
 
         # For each month:
         for month in range(1,13):
             # Get all transactions in that year and month
             txs: list[TransactionSchema] = db.query(TransactionSchema).filter(
+                TransactionSchema.owner_iban==active_iban,
                 extract('year', TransactionSchema.date_executed) == year,
                 extract('month', TransactionSchema.date_executed) == month
             ).all()

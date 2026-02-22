@@ -67,14 +67,15 @@ class CategoryService():
         else:
             return [Category.model_validate(category) for category in categories]
         
-        
-    def get_category(self, db: Session, category_id: int, as_schema: bool = False, owner_id: int = None) -> list[Category]:
+    def get_all_categories_of_type(self, type_name: TransactionTypes, db: Session, owner_id: int = None) -> list[Category]:
         if owner_id is not None:
-            category = db.query(CategorySchema).options(joinedload(CategorySchema.transactions),
+            categories: list[CategorySchema] = db.query(CategorySchema).filter(CategorySchema.category_type == type_name, CategorySchema.owner_id==owner_id).all()
+        
+        return categories
+        
+    def get_category(self, db: Session, category_id: int, owner_id: int, as_schema: bool = False) -> list[Category]:
+        category = db.query(CategorySchema).options(joinedload(CategorySchema.transactions),
                 joinedload(CategorySchema.counterparts)).filter(CategorySchema.owner_id==owner_id).filter(CategorySchema.id==category_id).first()
-        else:
-            category = db.query(CategorySchema).options(joinedload(CategorySchema.transactions),
-                joinedload(CategorySchema.counterparts)).filter(CategorySchema.id==category_id).first()
         
 
         if as_schema:
@@ -142,20 +143,52 @@ class CategoryService():
                 if cp.id not in current_ids:
                     self._attach_counterpart(current_category, cp)
                     db.flush()
-                    self._sync_transactions_for_counterpart(db=db, counterpart=cp, category=current_category)
+                    self._sync_transactions_for_counterpart(db=db, counterpart=cp, category=current_category, owner_account=owner)
 
             # Detach removed counterparts
             for cp in list(current_category.counterparts):
                 if cp.id not in new_ids:
                     self._detach_counterpart(current_category, cp)
                     db.flush()
-                    self._sync_transactions_for_counterpart(db=db, counterpart=cp, category=None)
+                    self._sync_transactions_for_counterpart(db=db, counterpart=cp, category=None, owner_account=owner)
 
         return current_category
     
-    def add_counterpart_to_category(self, category: CategorySchema, counterpart: CounterpartSchema, db: Session):
+    def add_counterpart_to_category(self, category: CategorySchema, counterpart: CounterpartSchema, db: Session, owner_account: Account):
         self._attach_counterpart(category=category, counterpart=counterpart)
-        self._sync_transactions_for_counterpart(db=db,counterpart=counterpart, category=category)
+        self._sync_transactions_for_counterpart(db=db,counterpart=counterpart, category=category, owner_account=owner_account)
+    
+    def add_transactions_to_category(self, category: CategorySchema, transaction_ids: list[int], db: Session):
+        """
+        Assign the given category to transactions with the provided ids and update related fields.
+        Returns the number of rows updated.
+        """
+        if not transaction_ids:
+            return 0
+
+        ids = set(transaction_ids)
+
+        values = {
+            TransactionSchema.category_id: category.id,
+            TransactionSchema.category_name: category.name,
+            TransactionSchema.transaction_type: category.category_type,
+        }
+
+        query = db.query(TransactionSchema).filter(TransactionSchema.id.in_(ids))
+        updated = query.update(values, synchronize_session="fetch")
+
+        # Ensure ORM session objects reflect the relationship
+        try:
+            tx_rows = db.query(TransactionSchema).filter(TransactionSchema.id.in_(ids)).all()
+            for tx in tx_rows:
+                tx.category = category
+                tx.category_name = category.name
+                tx.transaction_type = category.category_type
+            db.flush()
+        except Exception:
+            logger.debug("flush or post-update sync in add_transaction_to_category failed or not required")
+
+        return updated
 
     # ======================================================================================================== #
     #                                       DELETE FUNCTIONS
@@ -219,7 +252,10 @@ class CategoryService():
         db: Session,
         counterpart: CounterpartSchema,
         category: CategorySchema | None,
+        owner_account: Account
     ):
+        owner_iban: str = self.account_service.format_IBAN(owner_account.iban)
+
         # When there is a Category add the category_id to all transactions with that counterpart
         if category:
             logger.debug(f"Adding txs to {category.name} with cp {counterpart.name}")
@@ -239,10 +275,8 @@ class CategoryService():
 
         # Match by counterpart_id OR (fallback) by normalized counterpart_name for existing rows that weren't linked by id.
         query = db.query(TransactionSchema).filter(
-            or_(
-                TransactionSchema.counterpart_id == counterpart.id,
-                func.lower(func.coalesce(TransactionSchema.counterpart_name, "")) == func.lower(counterpart.name)
-            )
+            TransactionSchema.owner_iban==owner_iban,
+            or_(TransactionSchema.counterpart_id == counterpart.id, TransactionSchema.counterpart_name == counterpart.name)
         )
 
         updated = query.update(values, synchronize_session="fetch")
