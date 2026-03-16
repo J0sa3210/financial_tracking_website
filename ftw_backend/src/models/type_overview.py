@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from sqlalchemy.orm import Session  # type: ignore
-from .transaction import TransactionTypes
+from .category_type import CategoryType
 from database.schemas import CategorySchema, TransactionSchema
 from typing import Any
 
@@ -11,7 +11,7 @@ class CategorySummary:
 
 @dataclass
 class MonthOverview:
-    type_name: TransactionTypes = TransactionTypes.NONE
+    category_type: CategoryType = ""
     type_overview: list[CategorySummary] = field(default_factory=list)
 
 @dataclass

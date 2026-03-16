@@ -2,17 +2,9 @@ from pydantic import BaseModel
 from enum import StrEnum
 from datetime import date
 from typing import List, Optional
-from .counterpart import Counterpart
-
-# ======================================================================================================== #
-#                                       HELPER ENUMS
-# ======================================================================================================== #
-
-class TransactionTypes(StrEnum):
-    EXPENSES: str = "Expenses"
-    INCOME: str = "Income"
-    SAVINGS: str = "Savings"
-    NONE: str = "None"
+from .counterpart import Counterpart, CounterpartView
+from .category import Category
+from decimal import Decimal
 
 # ======================================================================================================== #
 #                                       BASE CLASSES
@@ -20,40 +12,36 @@ class TransactionTypes(StrEnum):
 
 class Transaction(BaseModel):
     id: int
-    transaction_type: TransactionTypes = TransactionTypes.NONE
-    category_id: Optional[int]
-    category_name: Optional[str] = None
-
+    
+    value: Decimal
+    description: Optional[str]
+    date_executed: date
     owner_iban: str = ""
-    counterpart_name: str = ""
+
     counterpart_id: Optional[int] = None
     counterpart: Optional[Counterpart] = None
 
-    value: float
-    date_executed: date
-    description: Optional[str]
+    category_id: Optional[int]
+    category: Optional[Category]
 
     # Ensures we can easily convert from schema to model
     model_config = {'from_attributes': True}
 
 
 class TransactionCreate(BaseModel):
-    transaction_type: TransactionTypes = TransactionTypes.NONE
     category_id: Optional[int] = None
-    category_name: Optional[str] = None
 
     owner_iban: str
-    counterpart_name: str = ""
     counterpart_id: Optional[int] = None
 
-    value: float
+    value: Decimal
     date_executed: date
     description: Optional[str] = ""
 
     model_config = {'from_attributes': True}
 
 class TransactionEdit(BaseModel):
-    transaction_type: TransactionTypes = TransactionTypes.NONE
+    
     category_id: Optional[int] = None 
     counterpart_id: Optional[int] = None
     date_executed: Optional[date] = None
@@ -61,18 +49,37 @@ class TransactionEdit(BaseModel):
 
     model_config = {'from_attributes': True}
 
-class TransactionView(BaseModel):
+class TransactionTableView(BaseModel):
     id: int
-    transaction_type: TransactionTypes
-    category_id: Optional[int]
-    category_name: Optional[str]
+
+    category_id: Optional[int] = None
+    category_name: Optional[str] = None
+    category_type_name: Optional[str] = None
+
+    counterpart_id: Optional[int] = None
+    counterpart: Optional[CounterpartView] = None
 
     owner_iban: str
-    counterpart_name: str = ""
-    counterpart_id: Optional[int] = None
 
-    value: float
+    value: Decimal
     date_executed: date
-    description: Optional[str]
+    description: Optional[str] = None
 
-    model_config = {'from_attributes': True}
+    @classmethod
+    def from_schema(cls, t) -> "TransactionTableView":
+        return cls(
+            id=t.id,
+
+            category_id=t.category.id if t.category else None,
+            category_name=t.category.name if t.category else None,
+            category_type_name=t.category.category_type.name if t.category else None,
+
+            counterpart_id=t.counterpart_id,
+            counterpart=CounterpartView.model_validate(t.counterpart) if t.counterpart else None,
+
+            owner_iban=t.owner_iban,
+
+            value=t.value,
+            date_executed=t.date_executed,
+            description=t.description,
+        )

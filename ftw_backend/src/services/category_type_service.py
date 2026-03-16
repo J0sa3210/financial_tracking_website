@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
 from sqlalchemy.orm import Session  # type: ignore
-from models.transaction import TransactionTypes
+from models.category_type import CategoryType
 from models.type_overview import CategorySummary, MonthOverview, YearOverview
-from database.schemas import CategorySchema, TransactionSchema, AccountSchema
+from database.schemas import CategorySchema, TransactionSchema, AccountSchema, CategoryTypeSchema
 from .category_service import CategoryService
 from .account_service import AccountService
 from datetime import date
@@ -14,17 +14,37 @@ from utils.logging import setup_loggers
 
 
 
-class TypeService():
+class CategoryTypeService():
     def __init__(self):
         self.logger = setup_loggers()
         self.category_service: CategoryService = CategoryService() 
         self.account_service: AccountService = AccountService()
 
+    def get_all_category_types(self, active_account: AccountSchema, db: Session):
+        category_types: list[CategoryTypeSchema] = db.query(CategoryTypeSchema).filter(
+            CategoryTypeSchema.owner_id == active_account.id
+        ).all()
+
+        return category_types
+    
+    def get_category_type_by_name(self, name: str, db: Session, as_schema: bool = False):
+        category_type: CategoryTypeSchema = db.query(CategoryTypeSchema).filter(
+            CategoryTypeSchema.name == name
+        ).first()
+
+        if not as_schema:
+            print(category_type.__dict__)
+            return CategoryType.model_validate(category_type)
+
+        return category_type
+
      # Go over all categories with the type_name matching this type and create CategorySummary
-    def get_type_month_breakdown(self, active_account: AccountSchema, type_name: TransactionTypes, db: Session, year: int | None = None, month: int | None = None):
+    def get_type_month_breakdown(self, active_account: AccountSchema, type_name: str, db: Session, year: int | None = None, month: int | None = None):
         categories: list[CategorySchema] = self.category_service.get_all_categories_of_type(type_name=type_name, db=db, owner_id=active_account.id)
 
         category_overview: list[CategorySummary] = []
+        
+        c: CategorySchema
         for c in categories:
             category_amount: int = 0
 
@@ -36,7 +56,8 @@ class TypeService():
                     if month == 0 or execution_date.month == month:
                         category_amount += tx.value
 
-            if c.category_type == TransactionTypes.EXPENSES or c.category_type == TransactionTypes.SAVINGS:
+            category_type: CategoryTypeSchema = c.category_type
+            if not category_type.is_positive:
                 category_amount = -category_amount
 
             # Round the total amount
@@ -70,19 +91,18 @@ class TypeService():
             # Create initial overview
             
             month_overview: dict[str, Any] = {"month": month_name}
-            for tx_type in TransactionTypes:
-                if tx_type is not TransactionTypes.NONE:
-                    month_overview[tx_type] = 0
+            for c_type in CategoryTypeSchema:
+                month_overview[c_type.name] = 0
             
             # For all transactions:
             for tx in txs:
-                tx_type: TransactionTypes = tx.transaction_type
-                
-                if tx_type is not TransactionTypes.NONE:
-                    month_overview[tx_type] += tx.value
-
-            month_overview[TransactionTypes.EXPENSES] = -month_overview[TransactionTypes.EXPENSES]
-            month_overview[TransactionTypes.SAVINGS] = -month_overview[TransactionTypes.SAVINGS]
+                c: CategorySchema = tx.category
+                c_type: CategoryTypeSchema = c.category_type
+                if c_type.is_positive:
+                    month_overview[c_type.name] += tx.value
+                else:
+                    month_overview[c_type.name] -= tx.value
+                    
             year_overview.append(month_overview)
 
         return YearOverview(year_overview=year_overview)

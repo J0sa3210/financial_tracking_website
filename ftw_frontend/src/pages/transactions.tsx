@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Transaction } from "@/assets/types/Transaction";
+import { TransactionTableView } from "@/assets/types/Transaction";
 import TransactionTable from "@/components/transaction_page/transaction_table";
 import TransactionInfoTiles from "@/components/transaction_page/transaction_info_tiles";
 import { useAccount } from "@/components/context/AccountContext";
@@ -20,7 +20,7 @@ const defaultTotals: totalsType = {
 };
 
 export default function TransactionsPage() {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [transactions, setTransactions] = useState<TransactionTableView[]>([]);
   const [totals, setTotals] = useState<totalsType>(defaultTotals);
   const [editTransactionId, setEditTransactionId] = useState<number | null>(
     null,
@@ -35,23 +35,7 @@ export default function TransactionsPage() {
       },
     });
     const data = await resp.json();
-    setTransactions(
-      data.map(
-        (t: any) =>
-          new Transaction(
-            t.id,
-            t.value,
-            t.description,
-            t.date_executed,
-            t.transaction_type,
-            t.category_id,
-            t.category_name,
-            t.owner_iban,
-            t.counterpart_name,
-            t.counterpart_id,
-          ),
-      ),
-    );
+    setTransactions(data.map((t: any) => new TransactionTableView(t)));
   }
 
   async function get_totals() {
@@ -94,7 +78,7 @@ export default function TransactionsPage() {
 
       <TransactionEditDialog
         transaction={
-          transactions.filter((t: Transaction) => {
+          transactions.filter((t: TransactionTableView) => {
             return t.id == editTransactionId;
           })[0]
         }

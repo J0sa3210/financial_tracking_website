@@ -1,36 +1,32 @@
-export class Transaction {
-  id: number;
-  value: number;
-  description: string;
-  date_executed: Date; // e.g., "2024-06-10"
-  transaction_type: string;
-  category_id: number;
-  category_name: string;
-  owner_iban: string;
-  counterpart_name: string;
-  counterpart_id: number;
+import { CounterpartView } from "./Counterpart";
 
-  constructor(
-    id: number,
-    value: number,
-    description: string,
-    date_executed: string,
-    transaction_type: string,
-    category_id: number,
-    category_name: string,
-    owner_iban: string,
-    counterpart_name: string,
-    counterpart_id: number
-  ) {
-    this.id = id;
-    this.value = value;
-    this.description = description;
-    this.date_executed = new Date(date_executed);
-    this.transaction_type = transaction_type;
-    this.category_id = category_id;
-    this.category_name = category_name;
-    this.owner_iban = owner_iban;
-    this.counterpart_name = counterpart_name;
-    this.counterpart_id = counterpart_id;
+export class TransactionTableView {
+  id!: number;
+  category_id!: number | null;
+
+  category_name: string | null = null;
+  category_type_name: string | null = null;
+
+  counterpart_id: number | null = null;
+  counterpart: CounterpartView | null = null;
+
+  owner_iban!: string;
+
+  value!: number;
+  date_executed!: Date;
+  description!: string | null;
+
+  constructor(data?: Partial<TransactionTableView>) {
+    if (!data) return;
+
+    Object.assign(this, data);
+
+    this.date_executed = data.date_executed
+      ? new Date(data.date_executed as any)
+      : this.date_executed;
+
+    this.counterpart = data.counterpart
+      ? new CounterpartView(data.counterpart.id, data.counterpart.name)
+      : null;
   }
 }

@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, Header  # type: ignore
 from sqlalchemy.orm import Session  # type: ignore
 from typing import Annotated, Any
-from database.schemas import CategorySchema
+from database.schemas import CategorySchema, CategoryTypeSchema
 from models.category import CategoryView, CategoryCreate, CategoryEdit
 from database import get_db
-from services import CategoryService, AccountService, CounterpartService
+from services import CategoryService, AccountService, CounterpartService, CategoryTypeService
 from utils.logging import setup_loggers
 from logging import Logger, DEBUG
 from fastapi import HTTPException  # type: ignore
@@ -42,6 +42,7 @@ categorie_controller = APIRouter(
 category_service: CategoryService = CategoryService()
 account_service: AccountService = AccountService()
 counterpart_service: CounterpartService = CounterpartService()
+category_type_service: CategoryTypeService = CategoryTypeService()
 
 # ======================================================================================================== #
 #                                       CREATE FUNCTIONS
@@ -52,9 +53,11 @@ counterpart_service: CounterpartService = CounterpartService()
 def create_category(active_account_id: Annotated[str, Header()], category: CategoryCreate, db: Session = Depends(get_db)):
     # Check if the account exists
     owner: Account = account_service.get_account(db=db, account_id=int(active_account_id))
+    category_type: CategoryTypeSchema = category_type_service.get_category_type_by_name(name=category.category_type,db=db)
+    category.category_type = category_type
     category = category_service.add_category(new_category=category, owner=owner, db=db)
     db.commit()
-    return category
+    return CategoryView.model_validate(category, from_attributes=True)
 
 # ======================================================================================================== #
 #                                       GET FUNCTIONS
@@ -82,7 +85,7 @@ def get_category(active_account_id: Annotated[str, Header()], category_id: int, 
     category = category_service.get_category(db=db, category_id=category_id, as_schema=True, owner_id=owner_id)
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
-    return category
+    return CategoryView.model_validate(category, from_attributes=True)
 
 
     

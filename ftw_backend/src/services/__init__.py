@@ -3,3 +3,4 @@ from .transaction_service import TransactionService
 from .category_service import CategoryService
 from .account_service import AccountService
 from .counterpart_service import CounterpartService
+from .category_type_service import CategoryTypeService

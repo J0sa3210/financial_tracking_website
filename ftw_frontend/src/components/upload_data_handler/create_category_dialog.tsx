@@ -142,9 +142,10 @@ export default function CreateCategoryDialog({
             />
             <Select
               placeholder="Select Category Type"
-              options={["None", "Income", "Expenses", "Savings"].map(
-                (type) => ({ value: type, label: type }),
-              )}
+              options={["Income", "Expenses", "Savings"].map((type) => ({
+                value: type,
+                label: type,
+              }))}
               onChange={(e) => {
                 setCategoryType(e ? e.value : "None");
               }}

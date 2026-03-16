@@ -20,6 +20,16 @@ export class CounterpartEdit {
   }
 }
 
+export class CounterpartView {
+  id: number;
+  name: string;
+
+  constructor(id: number, name: string) {
+    this.id = id;
+    this.name = name;
+  }
+}
+
 export class CounterpartSelectOption {
   value: number;
   label: string;

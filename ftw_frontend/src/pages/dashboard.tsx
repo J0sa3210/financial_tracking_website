@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Transaction } from "@/assets/types/Transaction";
+import { TransactionTableView } from "@/assets/types/Transaction";
 import { useAccount } from "@/components/context/AccountContext";
 import TotalTrackingBalanceInfoTile from "@/components/info_tiles/total_tracking_balance_info_tile";
 import NTransactionsInfoTile from "@/components/info_tiles/number_of_transactions_info_tile";
@@ -28,7 +28,7 @@ const defaultTotals: totalsType = {
 };
 
 export default function DashboardPage() {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [transactions, setTransactions] = useState<TransactionTableView[]>([]);
   const [totals, setTotals] = useState<totalsType>(defaultTotals);
   const { activeAccount } = useAccount();
   const { activeYear, activeMonth } = useTime();

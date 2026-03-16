@@ -12,19 +12,14 @@ import { useAccount } from "@/components/context/AccountContext";
 import type { SingleValue } from "react-select";
 import { Category, CategoryEdit } from "@/assets/types/Category";
 import { Input } from "@/components/ui/input";
+import { CategoryType, CategoryTypeEdit } from "@/assets/types/CategoryType";
 
 export default function CategorySubmenu() {
   const { activeAccount } = useAccount();
 
-  type transactionType = "Expenses" | "Income" | "Savings" | "None";
-  const transactionTypes: transactionType[] = [
-    "Expenses",
-    "Income",
-    "Savings",
-    "None",
-  ];
-  const [chosenTransactionType, setChosenTransactionType] =
-    useState<transactionType>("None");
+  const [chosenCategoryType, setChosenCategoryType] =
+    useState<CategoryTypeEdit>(new CategoryTypeEdit(0, 0, "None"));
+  const [categoryTypes, setCategoryTypes] = useState<CategoryTypeEdit[]>([]);
 
   const [categories, setCategories] = useState<CategoryEdit[]>([]);
   const [counterpartOptions, setCounterpartOptions] = useState<
@@ -59,6 +54,28 @@ export default function CategorySubmenu() {
               (c: Counterpart) => new CounterpartEdit(c.id, c.name),
             ),
           ),
+      ),
+    );
+  }
+
+  async function fetchCategoryTypes() {
+    const response = await fetch("https://localhost:8000/category_types/", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "active-account-id": activeAccount ? activeAccount.id.toString() : "",
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error("Failed to get categories");
+    }
+
+    setCategoryTypes(
+      data.map(
+        (ct: CategoryType) => new CategoryTypeEdit(ct.id, ct.owner_id, ct.name),
       ),
     );
   }
@@ -129,14 +146,21 @@ export default function CategorySubmenu() {
   }
 
   async function handleTypeChange(
-    categoryId: Number,
-    selectedType: SingleValue<{ label: string; value: string }>,
+    categoryId: number,
+    selectedType: SingleValue<{ label: string; value: number }>,
   ) {
     if (selectedType) {
       setCategories((prevCategories) =>
-        prevCategories.map((category) =>
+        prevCategories.map((category: CategoryEdit) =>
           category.id === categoryId
-            ? { ...category, category_type: selectedType.value }
+            ? {
+                ...category,
+                category_type: new CategoryTypeEdit(
+                  selectedType.value,
+                  activeAccount!.id,
+                  selectedType.label,
+                ),
+              }
             : category,
         ),
       );
@@ -165,6 +189,7 @@ export default function CategorySubmenu() {
   useEffect(() => {
     fetchCategories();
     fetchCounterpartOptions();
+    fetchCategoryTypes();
   }, []);
 
   useEffect(() => {
@@ -181,33 +206,36 @@ export default function CategorySubmenu() {
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold">Category Settings</h2>
         <span className="flex gap-1 justify-center">
-          <CreateCategoryDialog
-            counterpartOptions={counterpartOptions}
-            onCreate={fetchCategories}
-          />
+          <CreateCategoryDialog onCreate={fetchCategories} />
           <div className="py-auto">
             <Select
-              options={transactionTypes.map((type) => ({
-                value: type,
-                label: type,
+              options={categoryTypes.map((ct: CategoryTypeEdit) => ({
+                value: ct.id,
+                label: ct.name,
               }))}
               value={{
-                value: chosenTransactionType,
-                label: chosenTransactionType,
+                value: chosenCategoryType.id,
+                label: chosenCategoryType.name,
               }}
               onChange={(selectedOption) => {
-                setChosenTransactionType(selectedOption?.value ?? "None");
+                setChosenCategoryType(
+                  new CategoryTypeEdit(
+                    selectedOption!.value,
+                    activeAccount!.id,
+                    selectedOption!.label,
+                  ) ?? "None",
+                );
               }}
               className="mt-2 mb-2 w-50"
             />
           </div>
         </span>
       </div>
-      {(chosenTransactionType === "None"
+      {(chosenCategoryType.name === "None"
         ? categories
         : categories.filter(
             (category: CategoryEdit) =>
-              category.category_type === chosenTransactionType,
+              category.category_type.id === chosenCategoryType.id,
           )
       ).map((category: CategoryEdit) => (
         <div key={category.id} className="mb-4 p-2 border  rounded-lg">
@@ -240,12 +268,13 @@ export default function CategorySubmenu() {
           <span className="flex gap-2 items-center">
             <label className="font-medium">Type:</label>
             <Select
-              options={["None", "Income", "Expenses", "Savings"].map(
-                (type) => ({ value: type, label: type }),
-              )}
+              options={categoryTypes.map((ct: CategoryTypeEdit) => ({
+                value: ct.id,
+                label: ct.name,
+              }))}
               value={{
-                value: category.category_type,
-                label: category.category_type,
+                value: category.category_type.id,
+                label: category.category_type.name,
               }}
               onChange={(selectedOption) => {
                 handleTypeChange(category.id, selectedOption);

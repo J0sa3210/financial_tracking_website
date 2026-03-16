@@ -5,9 +5,9 @@ from io import BytesIO
 from database import get_db
 from sqlalchemy.orm import Session
 from .transaction_service import TransactionService
-from models.transaction import TransactionCreate, TransactionTypes
+from models.transaction import TransactionCreate
+from decimal import Decimal
 from models.counterpart import CounterpartCreate
-from models.category import Category
 from models.account import Account
 from database.schemas import CounterpartSchema, CategorySchema, TransactionSchema
 from .category_service import CategoryService
@@ -147,25 +147,24 @@ class CSV_handler():
 
     def _convert_df_to_transactions(self, df: DataFrame, counterpart_map: dict[str, CounterpartSchema] = {}) -> list[TransactionCreate]:
         transactions: list[TransactionCreate] = []
+        print(counterpart_map.items())
 
         for _, row in df.iterrows():
 
-            transaction_type: TransactionTypes = TransactionTypes.NONE
             counterpart: CounterpartSchema = counterpart_map[row["Naam tegenpartij bevat"]]
             date: str = self._convert_to_ISO_format(row["Boekingsdatum"])
 
             transaction: TransactionCreate = TransactionCreate(
-                transaction_type = transaction_type,
-
                 owner_iban = row["Rekening"],
                 counterpart_name = row["Naam tegenpartij bevat"],
                 counterpart_id = counterpart.id,
                 counterpart_iban = row["Rekening tegenpartij"],
-                value = float(row["Bedrag"].replace(",",".")),  # The value is in euros
+                value = Decimal(row["Bedrag"].replace(",",".")),  # The value is in euros
                 date_executed = date,  # Convert to YYYY-MM-DD format
                 description = row["Mededelingen"]
             )
 
+            logger.debug(f"Added transaction: {transaction.__dict__}")
             transactions.append(transaction)
 
         return transactions

@@ -1,3 +1,4 @@
+import type { CategoryType, CategoryTypeEdit } from "./CategoryType";
 import type { Counterpart, CounterpartEdit } from "./Counterpart";
 
 export class Category {
@@ -5,7 +6,7 @@ export class Category {
 
   name: string;
   description: string;
-  category_type: string;
+  category_type: CategoryType;
 
   counterparts: Counterpart[];
 
@@ -13,8 +14,8 @@ export class Category {
     id: number,
     name: string,
     description: string,
-    category_type: string,
-    counterparts: Counterpart[]
+    category_type: CategoryType,
+    counterparts: Counterpart[],
   ) {
     this.id = id;
     this.name = name;
@@ -28,15 +29,15 @@ export class CategoryEdit {
   id: number;
   name: string;
   description: string;
-  category_type: string;
+  category_type: CategoryTypeEdit;
   counterparts: CounterpartEdit[];
 
   constructor(
     id: number,
     name: string,
     description: string,
-    category_type: string,
-    counterparts: CounterpartEdit[]
+    category_type: CategoryTypeEdit,
+    counterparts: CounterpartEdit[],
   ) {
     this.id = id;
     this.name = name;

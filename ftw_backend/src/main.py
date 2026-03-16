@@ -3,8 +3,9 @@ from logging import Logger
 from fastapi import FastAPI
 from utils.logging import setup_loggers
 from fastapi.middleware.cors import CORSMiddleware
-from controllers import transaction_controller, categorie_controller, counterpart_controller, account_controller, type_controller
+from controllers import transaction_controller, categorie_controller, counterpart_controller, account_controller, category_type_controller
 from exceptions.global_exception_handler import register_global_exception_handlers
+from database.database import create_category_types
 logger: Logger = setup_loggers()
 app = FastAPI()
 
@@ -12,7 +13,7 @@ app.include_router(transaction_controller)
 app.include_router(categorie_controller)
 app.include_router(counterpart_controller)
 app.include_router(account_controller)
-app.include_router(type_controller)
+app.include_router(category_type_controller)
 
 register_global_exception_handlers(app)
 
@@ -33,3 +34,7 @@ app.add_middleware(
 @app.get("")
 async def root():
     return {"message": "Welcome to my Financial Tracker Website (FTW)"}
+
+@app.on_event("startup")
+def seed_transaction_types():
+    create_category_types()

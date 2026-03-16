@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, UploadFile, File, Header
 from sqlalchemy.orm import Session
 from typing import Annotated
 from database.schemas import TransactionSchema
-from models.transaction import Transaction, TransactionView, TransactionCreate, TransactionEdit
+from models.transaction import Transaction, TransactionTableView, TransactionCreate, TransactionEdit
 from models.account import is_IBAN
 from database import get_db
 from services import TransactionService, CSV_handler, AccountService
@@ -28,7 +28,7 @@ account_service: AccountService = AccountService()
 #                                       CREATE FUNCTIONS
 # ======================================================================================================== #
 
-@transaction_controller.put("", response_model=TransactionView)
+@transaction_controller.put("", response_model=TransactionTableView)
 async def add_transactions(active_account_id: Annotated[str, Header()], transactions: list[TransactionCreate], db : Session = Depends(get_db)):
     active_account = account_service.get_account(db=db, account_id=int(active_account_id))    
 
@@ -54,10 +54,10 @@ async def upload_csv(active_account_id: Annotated[str, Header()], file: UploadFi
 # ======================================================================================================== #
 
 
-@transaction_controller.get("", response_model=list[TransactionView])
+@transaction_controller.get("", response_model=list[TransactionTableView])
 async def get_all_transactions(active_account_id: Annotated[str, Header()], db : Session = Depends(get_db), year: int | None = None, month: int | None = None):
     """
-    Get all transactions either as list of TransactionView. These can be filtered based on a date.
+    Get all transactions either as list of TransactionTableView. These can be filtered based on a date.
 
     Args:
         active_account_id (Annotated[str, Header): The account id that requests the transactions
@@ -66,7 +66,7 @@ async def get_all_transactions(active_account_id: Annotated[str, Header()], db :
         month (int | None, optional): The month of the requested transactoins. Defaults to None.
 
     Returns:
-        list[TransactionView]: A list of the requested transactions
+        list[TransactionTableView]: A list of the requested transactions
     """
     
     active_account = account_service.get_account(db=db, account_id=int(active_account_id))    
@@ -78,8 +78,9 @@ async def get_all_transactions(active_account_id: Annotated[str, Header()], db :
         logger.error(f"IBAN is wrong!")
     account_iban: str = account_service.format_IBAN(account_iban)
     
-    results = transaction_service.get_all_transactions(db, iban=account_iban, year=year, month=month)
-    return results
+    results = transaction_service.get_all_transactions(db, iban=account_iban, year=year, month=month, as_schema=True)
+
+    return [TransactionTableView.from_schema(tx) for tx in results]
 
 # Needs to be in front of "get /{transaction_id}", otherwise it will parse "total" as an int!!
 @transaction_controller.get("/total", response_model=dict[str, float])
@@ -89,7 +90,7 @@ async def calculate_total_amount(active_account_id: Annotated[str, Header()], db
     total_amount: dict[str, float] = transaction_service.calculate_total_amount_of_transactions(db=db, account=active_account)
     return total_amount
 
-@transaction_controller.get("/{transaction_id}", response_model=TransactionView)
+@transaction_controller.get("/{transaction_id}", response_model=TransactionTableView)
 async def get_transaction(active_account_id: Annotated[str, Header()], transaction_id: int, db: Session = Depends(get_db)):
     active_account = account_service.get_account(db=db, account_id=int(active_account_id))    
     account_iban: str = active_account.iban
@@ -98,13 +99,13 @@ async def get_transaction(active_account_id: Annotated[str, Header()], transacti
     if selected_transaction is None:
         raise HTTPException(status_code=404, detail="Transaction not found")
 
-    return selected_transaction
+    return TransactionTableView.from_schema(selected_transaction)
 
 # ======================================================================================================== #
 #                                       UPDATE FUNCTIONS
 # ======================================================================================================== #
 
-@transaction_controller.post("/{transaction_id}", response_model=TransactionView)
+@transaction_controller.post("/{transaction_id}", response_model=TransactionTableView)
 async def edit_transaction(active_account_id: Annotated[str, Header()], transaction_id: int, updated_transaction: TransactionEdit, db: Session = Depends(get_db)):
     active_account = account_service.get_account(db=db, account_id=int(active_account_id))    
     account_iban: str = active_account.iban

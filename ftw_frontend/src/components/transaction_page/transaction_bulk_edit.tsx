@@ -18,13 +18,12 @@ import {
 } from "@/components/ui/dialog";
 import CreateCategoryDialog from "../upload_data_handler/create_category_dialog";
 import { useAccount } from "../context/AccountContext";
+import { CategoryType, CategoryTypeEdit } from "@/assets/types/CategoryType";
 
 interface TransactionInfo {
   transactions: number[] | null;
   onSaveEdit: () => void;
 }
-
-type transactionType = "Expenses" | "Income" | "Savings" | "None";
 
 export default function TransactionBulkEditDialog(
   transactionInfo: TransactionInfo,
@@ -32,11 +31,12 @@ export default function TransactionBulkEditDialog(
   const [showDialog, setShowDialog] = useState(false);
   const transactions: number[] | null = transactionInfo.transactions;
   const [categories, setCategories] = useState<Category[]>([]);
-  const transactionTypes: transactionType[] = ["Expenses", "Income", "Savings"];
   const { activeAccount } = useAccount();
 
-  const [chosenTransactionType, setChosenTransactionType] =
-    useState<transactionType>("None");
+  const [chosenCategoryType, setChosenCategoryType] =
+    useState<CategoryTypeEdit>(new CategoryTypeEdit(0, 0, "None"));
+  const [categoryTypes, setCategoryTypes] = useState<CategoryTypeEdit[]>([]);
+
   const [chosenCategory, setChosenCategory] = useState<number>(0);
 
   async function fetchCategories() {
@@ -59,9 +59,32 @@ export default function TransactionBulkEditDialog(
     setCategories(loadedCategories);
   }
 
+  async function fetchCategoryTypes() {
+    const response = await fetch("https://localhost:8000/category_types/", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "active-account-id": activeAccount ? activeAccount.id.toString() : "",
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error("Failed to get categories");
+    }
+
+    setCategoryTypes(
+      data.map(
+        (ct: CategoryType) => new CategoryTypeEdit(ct.id, ct.owner_id, ct.name),
+      ),
+    );
+  }
+
   useEffect(() => {
     if (!transactions) return; // only fetch categories when we have a transaction
     fetchCategories();
+    fetchCategoryTypes();
   }, [transactions]);
 
   async function handleSave(
@@ -106,24 +129,33 @@ export default function TransactionBulkEditDialog(
         <div className="grid grid-cols-2 grid-rows-1 justify-stretch gap-6 mb-4 w-full">
           {/* Type Selector */}
           <div>
-            <p className="font-semibold text-md mb-2">Type:</p>
-
-            <Select
-              onValueChange={(type: transactionType) => {
-                setChosenTransactionType(type);
-              }}
-            >
-              <SelectTrigger className="w-[200px] border-primary/50">
-                <SelectValue placeholder={"Choose Type"} />
-              </SelectTrigger>
-              <SelectContent>
-                {transactionTypes.map((type, type_idx) => (
-                  <SelectItem key={type_idx} value={type}>
-                    {type}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <span className="flex gap-2 items-center">
+              <label className="font-medium">Type:</label>
+              <Select
+                onValueChange={(val: string) => {
+                  const id = Number(val);
+                  const ct = categoryTypes.find((c) => c.id === id);
+                  setChosenCategoryType(
+                    new CategoryTypeEdit(
+                      id,
+                      activeAccount?.id ?? 0,
+                      ct?.name ?? "",
+                    ),
+                  );
+                }}
+              >
+                <SelectTrigger className="mt-2 mb-2 w-[200px]">
+                  <SelectValue placeholder="Choose Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categoryTypes.map((ct) => (
+                    <SelectItem key={ct.id} value={ct.id.toString()}>
+                      {ct.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </span>
           </div>
 
           {/* Category Selector */}
@@ -140,11 +172,12 @@ export default function TransactionBulkEditDialog(
                   <SelectValue placeholder={"Choose Category"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {(chosenTransactionType === "None"
+                  {(chosenCategoryType.name === ""
                     ? categories
                     : categories.filter(
                         (category) =>
-                          category.category_type === chosenTransactionType,
+                          category.category_type.name ===
+                          chosenCategoryType.name,
                       )
                   ).map((c: Category) => (
                     <SelectItem key={c.id} value={c.id.toString()}>

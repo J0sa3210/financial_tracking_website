@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session, joinedload # type: ignore
-from models.transaction import Transaction, TransactionCreate,TransactionTypes, TransactionEdit
-from database.schemas import TransactionSchema, AccountSchema, CategorySchema
+from models.transaction import Transaction, TransactionCreate, TransactionEdit
+from database.schemas import TransactionSchema, AccountSchema, CategorySchema, CategoryTypeSchema
 from .account_service import AccountService
 from .category_service import CategoryService
 from utils.logging import setup_loggers
@@ -42,7 +42,7 @@ class TransactionService:
         transactions = (
         db.query(TransactionSchema)
         .filter(TransactionSchema.owner_iban == iban)
-        .options(joinedload(TransactionSchema.category))
+        .options(joinedload(TransactionSchema.category).joinedload(CategorySchema.category_type),joinedload(TransactionSchema.counterpart))
         .all()
         )
 
@@ -118,13 +118,10 @@ class TransactionService:
             if updated_transaction.category_id is not None:
                 category: CategorySchema = self.category_service.get_category(db=db, category_id=updated_transaction.category_id, as_schema=True, owner_id=active_account.id)
                 current_transaction.category_id = category.id
-                current_transaction.category_name = category.name
-                current_transaction.transaction_type = category.category_type
+
                 logger.info(f"Transaction {current_transaction}")
             else:
                 current_transaction.category_id = None
-                current_transaction.category_name = None
-                current_transaction.transaction_type = TransactionTypes.NONE
         
         return current_transaction
 
@@ -168,31 +165,24 @@ class TransactionService:
     # ======================================================================================================== #
 #                                       INFORMATION FUNCTIONS
     # ======================================================================================================== # 
- 
+    from decimal import Decimal
+
     def calculate_total_amount_of_transactions(self, db: Session, account: AccountSchema) -> dict[str, float]:
         # Get transactions from the db
         iban: str = self.account_service.unformat_IBAN(account.iban)
-        transaction: list[Transaction] = self.get_all_transactions(db=db, iban=iban, as_schema=True)
+        transaction: list[TransactionSchema] = self.get_all_transactions(db=db, iban=iban, as_schema=True)
 
-        total_savings: float = 0
-        total_income: float = 0
-        total_expenses: float = 0
-        total_unaccounted: float = 0
-        for transaction in transaction:
-            match transaction.transaction_type:
-                case TransactionTypes.EXPENSES:
-                    total_expenses += transaction.value
-                case TransactionTypes.SAVINGS:
-                    total_savings += transaction.value
-                case TransactionTypes.INCOME:
-                    total_income += transaction.value
-                case TransactionTypes.NONE:
-                    total_unaccounted += abs(transaction.value)
-        response: dict[str, float] = {
-            "total_income": total_income,
-            "total_expenses": total_expenses,
-            "total_savings": total_savings,
-            "total_unaccounted": total_unaccounted
-        }
+        total_dict: dict[str, float] = {}
+        for tx in transaction:
+            tx_category: CategorySchema = tx.category
+            if tx.category is not None:
+                tx_category_type: CategoryTypeSchema = tx_category.category_type
+                tx_category_type_name: str = tx_category_type.name
 
-        return response
+                if tx_category_type_name not in total_dict.keys():
+                    total_dict[tx_category_type_name] = tx.value
+                
+                else:
+                    total_dict[tx_category_type_name] += tx.value
+
+        return total_dict

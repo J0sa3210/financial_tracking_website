@@ -1,5 +1,5 @@
 import { Category } from "@/assets/types/Category";
-import type { Transaction } from "@/assets/types/Transaction";
+import type { TransactionTableView } from "@/assets/types/Transaction";
 import {
   Select,
   SelectContent,
@@ -37,7 +37,7 @@ export default function TransactionEditDialog(
   const { activeAccount } = useAccount();
   const [addCounterpart, setAddCounterpart] = useState<boolean>(false);
   const [chosenTransactionType, setChosenTransactionType] =
-    useState<transactionType>("None");
+    useState<string>("");
 
   async function fetchCategories() {
     const resp = await fetch("http://localhost:8000/category", {
@@ -106,7 +106,7 @@ export default function TransactionEditDialog(
       alert("An error occurred while updating transactions");
     } finally {
       transactionInfo.onSaveEdit();
-      setChosenTransactionType("None");
+      setChosenTransactionType("");
       setAddCounterpart(false);
     }
   }
@@ -121,7 +121,7 @@ export default function TransactionEditDialog(
           // close dialog by resetting transaction in parent
           transactionInfo.onSaveEdit();
         }
-        setChosenTransactionType("None");
+        setChosenTransactionType("");
         setAddCounterpart(false);
       }}
     >
@@ -140,7 +140,6 @@ export default function TransactionEditDialog(
 
             <Select
               onValueChange={(type: transactionType) => {
-                transaction.transaction_type = type;
                 setChosenTransactionType(type);
               }}
             >
@@ -189,11 +188,11 @@ export default function TransactionEditDialog(
                   />
                 </SelectTrigger>
                 <SelectContent>
-                  {(chosenTransactionType === "None"
+                  {(chosenTransactionType === ""
                     ? categories
                     : categories.filter(
                         (category) =>
-                          category.category_type === chosenTransactionType,
+                          category.category_type.name === chosenTransactionType,
                       )
                   ).map((c: Category) => (
                     <SelectItem key={c.id} value={c.id.toString()}>

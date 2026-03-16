@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from .counterpart import CounterpartView, CounterpartEdit, CounterpartFromId
-from .transaction import TransactionView, TransactionTypes
+from .category_type import CategoryType
 
 # ======================================================================================================== #
 #                                       BASE CLASSES
@@ -12,10 +12,8 @@ class Category(BaseModel):
 
     name: str = ""
     description: str = ""
-    category_type: TransactionTypes = TransactionTypes.NONE 
-    
+    category_type: CategoryType
     counterparts: list[CounterpartView] = []
-    transactions: list[TransactionView] = []
 
     # Ensures we can easily convert from schema to model
     model_config = {'from_attributes': True}
@@ -25,7 +23,7 @@ class CategoryCreate(BaseModel):
 
     name: str
     description: str = ""
-    category_type: TransactionTypes = TransactionTypes.NONE
+    category_type: str | CategoryType
 
     counterparts: list[CounterpartEdit] = []
 
@@ -34,13 +32,10 @@ class CategoryCreate(BaseModel):
 
 class CategoryView(BaseModel):
     id: int
-    
     name: str
     description: str = ""
-    category_type: TransactionTypes = TransactionTypes.NONE
-    
+    category_type: CategoryType
     counterparts: list[CounterpartView] = []
-    transactions: list[TransactionView] = []
 
     # Ensures we can easily convert from schema to model
     model_config = {'from_attributes': True}
@@ -50,7 +45,7 @@ class CategoryEdit(BaseModel):
 
     name: str
     description: str = None
-    category_type: TransactionTypes = None
+    category_type: CategoryType
     
     counterparts: list[CounterpartFromId] = []
 

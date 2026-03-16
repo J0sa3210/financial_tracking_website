@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useEffect } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -29,7 +30,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import { Transaction } from "@/assets/types/Transaction";
+import { TransactionTableView } from "@/assets/types/Transaction";
 import TransactionInput from "@/components/transaction_page/transaction_input_dialog";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
@@ -39,7 +40,7 @@ import { FaTrash } from "react-icons/fa";
 import TransactionBulkEditDialog from "./transaction_bulk_edit";
 
 interface TransactionListProps {
-  transactions: Transaction[];
+  transactions: TransactionTableView[];
   onEditTransaction: (id: number) => void; // new
   onSaveEdit: () => void;
 }
@@ -58,7 +59,7 @@ const dateTimeFormatter = new Intl.DateTimeFormat("nl-BE", {
 // --------------------- //
 // Table Column Defs
 // --------------------- //
-const getColumns = (): ColumnDef<Transaction>[] => [
+const getColumns = (): ColumnDef<TransactionTableView>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -89,7 +90,7 @@ const getColumns = (): ColumnDef<Transaction>[] => [
     cell: ({ row }) => row.index + 1, // display index + 1
   },
   {
-    accessorKey: "transaction_type",
+    accessorKey: "category_type_name",
     header: "Type",
     cell: (info) => info.getValue(),
     filterFn: "equals",
@@ -123,9 +124,11 @@ const getColumns = (): ColumnDef<Transaction>[] => [
     },
   },
   {
-    accessorKey: "counterpart_name",
+    id: "counterpart",
     header: "Counterpart",
-    cell: (info) => info.getValue(),
+    accessorFn: (row: TransactionTableView) =>
+      // prefer nested object, fallback to flat field
+      row.counterpart?.name,
   },
   {
     accessorKey: "date_executed",
@@ -156,6 +159,10 @@ export default function TransactionTable({
     React.useState<VisibilityState>({});
   const [pageSize, setPageSize] = React.useState(25);
   const [pageIndex, setPageIndex] = React.useState(0);
+
+  useEffect(() => {
+    console.log("TransactionTable: transactions payload", transactions);
+  }, [transactions]);
 
   const table = useReactTable({
     data: transactions,
@@ -207,7 +214,7 @@ export default function TransactionTable({
 
   async function deleteAllTransactions() {
     const transaction_ids: number[] = [];
-    transactions.map((t: Transaction) => {
+    transactions.map((t: TransactionTableView) => {
       transaction_ids.push(t.id);
     });
     deleteTransactions(transaction_ids);

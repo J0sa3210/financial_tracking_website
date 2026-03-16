@@ -1,4 +1,4 @@
-import { Transaction } from "@/assets/types/Transaction";
+import { TransactionTableView } from "@/assets/types/Transaction";
 
 import TotalTrackingBalanceInfoTile from "../info_tiles/total_tracking_balance_info_tile";
 import NTransactionsInfoTile from "../info_tiles/number_of_transactions_info_tile";
@@ -12,17 +12,19 @@ interface totalsType {
 }
 
 interface TransactionProps {
-  transactions: Transaction[];
+  transactions: TransactionTableView[];
   totals: totalsType;
 }
 
-export default function TransactionInfoTiles(transactionProps: TransactionProps) {
-  const transactions: Transaction[] = transactionProps.transactions;
+export default function TransactionInfoTiles(
+  transactionProps: TransactionProps,
+) {
+  const transactions: TransactionTableView[] = transactionProps.transactions;
   const totals: totalsType = transactionProps.totals;
 
   return (
-    <div className='rounded-lg py-2'>
-      <div className='flex gap-4'>
+    <div className="rounded-lg py-2">
+      <div className="flex gap-4">
         <TotalTrackingBalanceInfoTile {...totals} />
         <NTransactionsInfoTile transactions={transactions} />
         <DateLastTransactionInfoTile transactions={transactions} />
