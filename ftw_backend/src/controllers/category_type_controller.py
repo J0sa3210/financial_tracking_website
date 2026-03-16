@@ -14,6 +14,7 @@ from models.account import Account
 from database.schemas import CategoryTypeSchema
 from exceptions.exceptions import AccountNotFoundException
 from models.type_overview import YearOverview, MonthOverview
+from models.category_type import CategoryTypeTableView
 
 logger: Logger = setup_loggers()
 # logger.setLevel(DEBUG)
@@ -26,6 +27,12 @@ category_service: CategoryService = CategoryService()
 account_service: AccountService = AccountService()
 counterpart_service: CounterpartService = CounterpartService()
 category_type_service: CategoryTypeService = CategoryTypeService()
+
+
+@category_type_controller.get("", response_model = list[CategoryTypeTableView])
+def get_all_types(db: Session = Depends(get_db)):
+    category_types: list[CategoryTypeSchema] = category_type_service.get_all_category_types(db=db)
+    return [CategoryTypeTableView.from_schema(ct) for ct in category_types]
 
 @category_type_controller.get("/overview/month/all")
 def get_type_overview(active_account_id: Annotated[str, Header()], db: Session = Depends(get_db), year: int | None = None, month: int | None = None) -> list[MonthOverview]:

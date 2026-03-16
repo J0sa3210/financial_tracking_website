@@ -18,7 +18,7 @@ export default function CategorySubmenu() {
   const { activeAccount } = useAccount();
 
   const [chosenCategoryType, setChosenCategoryType] =
-    useState<CategoryTypeEdit>(new CategoryTypeEdit(0, 0, "None"));
+    useState<CategoryTypeEdit>(new CategoryTypeEdit(0, "None"));
   const [categoryTypes, setCategoryTypes] = useState<CategoryTypeEdit[]>([]);
 
   const [categories, setCategories] = useState<CategoryEdit[]>([]);
@@ -59,24 +59,22 @@ export default function CategorySubmenu() {
   }
 
   async function fetchCategoryTypes() {
-    const response = await fetch("https://localhost:8000/category_types/", {
+    const response = await fetch("http://localhost:8000/type", {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        "active-account-id": activeAccount ? activeAccount.id.toString() : "",
       },
     });
 
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error("Failed to get categories");
+      console.log(data);
+      throw new Error("Failed to fetch types");
     }
 
     setCategoryTypes(
-      data.map(
-        (ct: CategoryType) => new CategoryTypeEdit(ct.id, ct.owner_id, ct.name),
-      ),
+      data.map((ct: CategoryType) => new CategoryTypeEdit(ct.id, ct.name)),
     );
   }
 
@@ -157,7 +155,6 @@ export default function CategorySubmenu() {
                 ...category,
                 category_type: new CategoryTypeEdit(
                   selectedType.value,
-                  activeAccount!.id,
                   selectedType.label,
                 ),
               }
@@ -221,7 +218,6 @@ export default function CategorySubmenu() {
                 setChosenCategoryType(
                   new CategoryTypeEdit(
                     selectedOption!.value,
-                    activeAccount!.id,
                     selectedOption!.label,
                   ) ?? "None",
                 );

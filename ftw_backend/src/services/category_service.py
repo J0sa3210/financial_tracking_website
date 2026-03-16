@@ -1,5 +1,5 @@
 from models.category import Category, CategoryCreate, CategoryEdit
-from database.schemas import CategorySchema, CounterpartSchema, TransactionSchema
+from database.schemas import CategorySchema, CounterpartSchema, TransactionSchema, CategoryTypeSchema
 from sqlalchemy.orm import Session, joinedload  # type: ignore
 from sqlalchemy import func, or_
 from models.transaction import Transaction
@@ -110,6 +110,30 @@ class CategoryService():
 
         # Update scalar fields
         for field, value in data:
+            # handle category_type specially: resolve to ORM CategoryTypeSchema
+            if field == "category_type" and value is not None:
+                incoming = value
+                ct_obj = None
+                ct_id = getattr(incoming, "id", None) if hasattr(incoming, "id") else None
+                ct_name = getattr(incoming, "name", None) if hasattr(incoming, "name") else (
+                    incoming if isinstance(incoming, str) else None
+                )
+                if ct_id:
+                    ct_obj = db.query(CategoryTypeSchema).filter(CategoryTypeSchema.id == ct_id).first()
+                elif ct_name:
+                    ct_obj = (
+                        db.query(CategoryTypeSchema)
+                        .filter(func.lower(CategoryTypeSchema.name) == ct_name.lower())
+                        .first()
+                    )
+                if ct_obj:
+                    current_category.category_type = ct_obj
+                    current_category.category_type_id = ct_obj.id
+                else:
+                    # leave unchanged or raise if strict required
+                    logger.debug(f"convert_category_data: could not resolve category_type '{value}' to ORM")
+                continue
+
             if field != "counterparts":
                 setattr(current_category, field, value)
 

@@ -20,10 +20,8 @@ class CategoryTypeService():
         self.category_service: CategoryService = CategoryService() 
         self.account_service: AccountService = AccountService()
 
-    def get_all_category_types(self, active_account: AccountSchema, db: Session):
-        category_types: list[CategoryTypeSchema] = db.query(CategoryTypeSchema).filter(
-            CategoryTypeSchema.owner_id == active_account.id
-        ).all()
+    def get_all_category_types(self, db: Session):
+        category_types: list[CategoryTypeSchema] = db.query(CategoryTypeSchema).all()
 
         return category_types
     
